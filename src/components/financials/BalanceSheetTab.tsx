@@ -89,9 +89,7 @@ interface Props {
 
 
 export const BalanceSheetTab: React.FC<Props> = ({symbol}) => {
-    const [data, setData] = useState<CompanyBalanceSheet[]>(sampleBalanceSheets);
-    const [period, setPeriod] = useState<"annual" | "quarter">("annual");
-    const [loading, setLoading] = useState(true);
+    const [data] = useState<CompanyBalanceSheet[]>(sampleBalanceSheets);
 
     if (!data || data.length === 0) {
         return <p className="text-center text-gray-500">No data available</p>;

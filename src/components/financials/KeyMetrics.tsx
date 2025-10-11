@@ -71,9 +71,7 @@ interface Props {
 
 
 export const KeyMetricsTab: React.FC<Props> = ({symbol}) => {
-    const [data, setData] = useState<CompanyKeyMetrics[]>(sampleRatio);
-    const [period, setPeriod] = useState<"annual" | "quarter">("annual");
-    const [loading, setLoading] = useState(true);
+    const [data] = useState<CompanyKeyMetrics[]>(sampleRatio);
 
     if (!data || data.length === 0) {
         return <p className="text-center text-gray-500">No data available</p>;

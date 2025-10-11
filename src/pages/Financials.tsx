@@ -10,6 +10,7 @@ import {RatiosTab} from "../components/financials/RatiosTab";
 import {Button} from "../components/ui/button.tsx";
 import {ArrowLeft} from "lucide-react";
 import {KeyMetricsTab} from "../components/financials/KeyMetrics.tsx";
+import {DividendTab} from "../components/financials/Dividend.tsx";
 
 const FinancialsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -40,12 +41,13 @@ const FinancialsPage: React.FC = () => {
             </Card>
 
             <Tabs defaultValue="income" className="space-y-4">
-                <TabsList className="grid grid-cols-5 gap-2">
+                <TabsList className="grid grid-cols-6 gap-2">
                     <TabsTrigger value="income">Income Statements</TabsTrigger>
                     <TabsTrigger value="balance">Balance Sheets</TabsTrigger>
                     <TabsTrigger value="cashflow">Cash Flow Statements</TabsTrigger>
                     <TabsTrigger value="ratios">Financial Ratios</TabsTrigger>
                     <TabsTrigger value="metrics">Key Metrics</TabsTrigger>
+                    <TabsTrigger value="dividend">Dividends</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="income"><IncomeStatementTab symbol={symbol!}/></TabsContent>
@@ -53,6 +55,7 @@ const FinancialsPage: React.FC = () => {
                 <TabsContent value="cashflow"><CashFlowTab symbol={symbol!}/></TabsContent>
                 <TabsContent value="ratios"><RatiosTab symbol={symbol!}/></TabsContent>
                 <TabsContent value="metrics"><KeyMetricsTab symbol={symbol!}/></TabsContent>
+                <TabsContent value="dividend"><DividendTab symbol={symbol!}/></TabsContent>
             </Tabs>
         </div>
     );

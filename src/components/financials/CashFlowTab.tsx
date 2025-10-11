@@ -72,9 +72,7 @@ interface Props {
 
 
 export const CashFlowTab: React.FC<Props> = ({symbol}) => {
-    const [data, setData] = useState<CompanyCashFlowStatement[]>(sampleCashFlow);
-    const [period, setPeriod] = useState<"annual" | "quarter">("annual");
-    const [loading, setLoading] = useState(true);
+    const [data] = useState<CompanyCashFlowStatement[]>(sampleCashFlow);
 
     if (!data || data.length === 0) {
         return <p className="text-center text-gray-500">No data available</p>;
