@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardTitle } from "../ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import React, {useState} from "react";
+import {Card, CardContent, CardTitle} from "../ui/card";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../ui/table";
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "../ui/accordion";
 import {sampleRatio} from "../../data/sample_ratio.tsx";
 
 export interface CompanyKeyMetrics {
@@ -70,7 +70,7 @@ interface Props {
 }
 
 
-export const KeyMetricsTab: React.FC<Props> = ({ symbol }) => {
+export const KeyMetricsTab: React.FC<Props> = ({symbol}) => {
     const [data, setData] = useState<CompanyKeyMetrics[]>(sampleRatio);
     const [period, setPeriod] = useState<"annual" | "quarter">("annual");
     const [loading, setLoading] = useState(true);

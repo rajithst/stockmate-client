@@ -1,19 +1,19 @@
 import React from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
-import { FinancialSummary } from "../components/financials/FinancialSummary";
-import { IncomeStatementTab } from "../components/financials/IncomeStatementTab";
-import { BalanceSheetTab } from "../components/financials/BalanceSheetTab";
-import { CashFlowTab } from "../components/financials/CashFlowTab";
-import { RatiosTab } from "../components/financials/RatiosTab";
+import {Card, CardContent, CardHeader, CardTitle} from "../components/ui/card";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "../components/ui/tabs";
+import {FinancialSummary} from "../components/financials/FinancialSummary";
+import {IncomeStatementTab} from "../components/financials/IncomeStatementTab";
+import {BalanceSheetTab} from "../components/financials/BalanceSheetTab";
+import {CashFlowTab} from "../components/financials/CashFlowTab";
+import {RatiosTab} from "../components/financials/RatiosTab";
 import {Button} from "../components/ui/button.tsx";
 import {ArrowLeft} from "lucide-react";
 import {KeyMetricsTab} from "../components/financials/KeyMetrics.tsx";
 
 const FinancialsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { symbol } = useParams<{ symbol: string }>();
+    const {symbol} = useParams<{ symbol: string }>();
 
     return (
         <div className="space-y-6">
@@ -25,7 +25,7 @@ const FinancialsPage: React.FC = () => {
                     className="flex items-center"
                     onClick={() => navigate(`/company/${symbol}`)}
                 >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    <ArrowLeft className="w-4 h-4 mr-1"/>
                     Back to Company
                 </Button>
                 <h1 className="text-xl font-semibold">{symbol} Financials</h1>
@@ -35,7 +35,7 @@ const FinancialsPage: React.FC = () => {
                     <CardTitle>{symbol} — Financial Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <FinancialSummary symbol={symbol} />
+                    <FinancialSummary symbol={symbol}/>
                 </CardContent>
             </Card>
 
@@ -48,11 +48,11 @@ const FinancialsPage: React.FC = () => {
                     <TabsTrigger value="metrics">Key Metrics</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="income"><IncomeStatementTab symbol={symbol!} /></TabsContent>
-                <TabsContent value="balance"><BalanceSheetTab symbol={symbol!} /></TabsContent>
-                <TabsContent value="cashflow"><CashFlowTab symbol={symbol!} /></TabsContent>
-                <TabsContent value="ratios"><RatiosTab symbol={symbol!} /></TabsContent>
-                <TabsContent value="metrics"><KeyMetricsTab symbol={symbol!} /></TabsContent>
+                <TabsContent value="income"><IncomeStatementTab symbol={symbol!}/></TabsContent>
+                <TabsContent value="balance"><BalanceSheetTab symbol={symbol!}/></TabsContent>
+                <TabsContent value="cashflow"><CashFlowTab symbol={symbol!}/></TabsContent>
+                <TabsContent value="ratios"><RatiosTab symbol={symbol!}/></TabsContent>
+                <TabsContent value="metrics"><KeyMetricsTab symbol={symbol!}/></TabsContent>
             </Tabs>
         </div>
     );

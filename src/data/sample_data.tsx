@@ -1,4 +1,3 @@
-
 export const sampleCompany = {
     id: 1,
     symbol: "AAPL",

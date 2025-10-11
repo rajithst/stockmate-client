@@ -1,11 +1,11 @@
 import React from "react";
-import { Card } from "../ui/card";
+import {Card} from "../ui/card";
 
 interface FinancialSummaryProps {
     symbol: string;
 }
 
-export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ symbol }) => {
+export const FinancialSummary: React.FC<FinancialSummaryProps> = ({symbol}) => {
     // Sample static data — replace later with API call
     const summary = {
         pe: 28.5,
@@ -18,13 +18,13 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ symbol }) =>
     };
 
     const items = [
-        { label: "P/E Ratio", value: summary.pe },
-        { label: "Forward P/E", value: summary.forwardPE },
-        { label: "ROE (%)", value: summary.roe },
-        { label: "ROA (%)", value: summary.roa },
-        { label: "EPS", value: summary.eps },
-        { label: "Market Cap", value: summary.marketCap },
-        { label: "Dividend Yield", value: summary.dividendYield },
+        {label: "P/E Ratio", value: summary.pe},
+        {label: "Forward P/E", value: summary.forwardPE},
+        {label: "ROE (%)", value: summary.roe},
+        {label: "ROA (%)", value: summary.roa},
+        {label: "EPS", value: summary.eps},
+        {label: "Market Cap", value: summary.marketCap},
+        {label: "Dividend Yield", value: summary.dividendYield},
     ];
 
     return (

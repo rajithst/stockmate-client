@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "../ui/table";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../ui/table";
 import {Card, CardContent, CardTitle} from "../ui/card.tsx";
 import {sampleIncomeStatements} from "../../data/sample_income_statement.tsx";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "../ui/accordion.tsx";
@@ -70,7 +70,7 @@ interface Props {
     symbol: string;
 }
 
-export const IncomeStatementTab: React.FC<Props> = ({ symbol }) => {
+export const IncomeStatementTab: React.FC<Props> = ({symbol}) => {
     const [data, setData] = useState<IncomeStatement[]>(sampleIncomeStatements);
     const [period, setPeriod] = useState<"annual" | "quarter">("annual");
     const [loading, setLoading] = useState(true);

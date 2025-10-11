@@ -1,14 +1,14 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Briefcase, Eye, FileText, Settings } from "lucide-react";
-import { cn } from "../lib/utils";
+import {NavLink} from "react-router-dom";
+import {Briefcase, Eye, FileText, LayoutDashboard, Settings} from "lucide-react";
+import {cn} from "../lib/utils";
 
 const navItems = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/" },
-    { name: "Portfolio", icon: Briefcase, path: "/portfolio" },
-    { name: "Watchlist", icon: Eye, path: "/watchlist" },
-    { name: "Financials", icon: FileText, path: "/financials" },
-    { name: "Settings", icon: Settings, path: "/settings" },
+    {name: "Dashboard", icon: LayoutDashboard, path: "/"},
+    {name: "Portfolio", icon: Briefcase, path: "/portfolio"},
+    {name: "Watchlist", icon: Eye, path: "/watchlist"},
+    {name: "Financials", icon: FileText, path: "/financials"},
+    {name: "Settings", icon: Settings, path: "/settings"},
 ];
 
 export const Sidebar: React.FC = () => {
@@ -21,7 +21,7 @@ export const Sidebar: React.FC = () => {
                         <li key={item.name}>
                             <NavLink
                                 to={item.path}
-                                className={({ isActive }) =>
+                                className={({isActive}) =>
                                     cn(
                                         "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors rounded-md",
                                         isActive
@@ -30,7 +30,7 @@ export const Sidebar: React.FC = () => {
                                     )
                                 }
                             >
-                                <item.icon className="w-4 h-4" />
+                                <item.icon className="w-4 h-4"/>
                                 {item.name}
                             </NavLink>
                         </li>

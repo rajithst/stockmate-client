@@ -1,13 +1,13 @@
 import React from "react";
-import { Sidebar } from "./Sidebar";
-import { AppHeader } from "./AppHeader";
+import {Sidebar} from "./Sidebar";
+import {AppHeader} from "./AppHeader";
 
-export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppLayout: React.FC<{ children: React.ReactNode }> = ({children}) => {
     return (
         <div className="flex">
-            <Sidebar />
+            <Sidebar/>
             <div className="flex-1 ml-56">
-                <AppHeader />
+                <AppHeader/>
                 <main className="pt-16 px-6 pb-10 bg-muted/10 min-h-screen">
                     {children}
                 </main>

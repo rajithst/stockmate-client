@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardTitle } from "../ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import React, {useState} from "react";
+import {Card, CardContent, CardTitle} from "../ui/card";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../ui/table";
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "../ui/accordion";
 import {sampleCashFlow} from "../../data/sample_cashflow_sheet.tsx";
 
 export interface CompanyCashFlowStatement {
@@ -71,7 +71,7 @@ interface Props {
 }
 
 
-export const CashFlowTab: React.FC<Props> = ({ symbol }) => {
+export const CashFlowTab: React.FC<Props> = ({symbol}) => {
     const [data, setData] = useState<CompanyCashFlowStatement[]>(sampleCashFlow);
     const [period, setPeriod] = useState<"annual" | "quarter">("annual");
     const [loading, setLoading] = useState(true);

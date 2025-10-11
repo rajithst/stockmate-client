@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Card, CardTitle, CardContent } from "../ui/card";
+import React, {useState} from "react";
+import {Card, CardContent, CardTitle} from "../ui/card";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../ui/table";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "../ui/accordion.tsx";
 import {sampleBalanceSheets} from "../../data/sample_balance_sheet.tsx";
@@ -88,7 +88,7 @@ interface Props {
 }
 
 
-export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
+export const BalanceSheetTab: React.FC<Props> = ({symbol}) => {
     const [data, setData] = useState<CompanyBalanceSheet[]>(sampleBalanceSheets);
     const [period, setPeriod] = useState<"annual" | "quarter">("annual");
     const [loading, setLoading] = useState(true);
