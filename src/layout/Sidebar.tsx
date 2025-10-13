@@ -4,10 +4,10 @@ import {Briefcase, Eye, FileText, LayoutDashboard, Settings} from "lucide-react"
 import {cn} from "../lib/utils";
 
 const navItems = [
-    {name: "Dashboard", icon: LayoutDashboard, path: "/"},
-    {name: "Portfolio", icon: Briefcase, path: "/portfolio"},
+    {name: "Portfolio", icon: Briefcase, path: "/"},
+    {name: "Holdings", icon: Briefcase, path: "/holdings"},
     {name: "Watchlist", icon: Eye, path: "/watchlist"},
-    {name: "Financials", icon: FileText, path: "/financials"},
+    {name: "Screener", icon: Eye, path: "/screener"},
     {name: "Settings", icon: Settings, path: "/settings"},
 ];
 

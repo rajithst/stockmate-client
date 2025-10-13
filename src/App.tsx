@@ -4,6 +4,8 @@ import {CompanyPage} from "./pages/Company.tsx";
 import FinancialsPage from "./pages/Financials.tsx";
 import WatchlistPage from "./pages/Watchlist.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
+import HoldingsPage from "./pages/Holdings.tsx";
+import StockScreener from "./pages/Screener.tsx";
 
 
 function App() {
@@ -12,9 +14,10 @@ function App() {
             <AppLayout>
                 <Routes>
                     {/*<Route path="/" element={<Dashboard />} />*/}
-                    <Route path="/portfolio" element={<Portfolio/>}/>
+                    <Route path="/" element={<Portfolio/>}/>
                     <Route path="/watchlist" element={<WatchlistPage/>}/>
-                    {/*<Route path="/financials" element={<Financials />} />*/}
+                    <Route path="/holdings" element={<HoldingsPage />} />
+                    <Route path="/screener" element={<StockScreener />} />
                     <Route path="/company/:symbol" element={<CompanyPage/>}/>
                     <Route path="/financials/:symbol" element={<FinancialsPage/>}/>
                 </Routes>
