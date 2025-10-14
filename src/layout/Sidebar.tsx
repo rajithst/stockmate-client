@@ -1,6 +1,6 @@
 import React from "react";
 import {NavLink} from "react-router-dom";
-import {Briefcase, Eye, FileText, LayoutDashboard, Settings} from "lucide-react";
+import {Briefcase, Eye, Settings} from "lucide-react";
 import {cn} from "../lib/utils";
 
 const navItems = [

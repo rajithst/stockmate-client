@@ -148,12 +148,10 @@ const Portfolio: React.FC = () => {
 
             <PortfolioSummaryCards
                 data={data}
-                currency={selectedPortfolio.currency}
             />
 
             <PortfolioGrowthChart
                 data={data.portfolioHistory}
-                currency={selectedPortfolio.currency}
             />
 
             <PortfolioAllocationCharts

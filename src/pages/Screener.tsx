@@ -95,7 +95,7 @@ const StockScreener: React.FC = () => {
     const [page, setPage] = useState(1);
     const rowsPerPage = 10;
 
-    const handleInputChange = (key: keyof ScreenParams, value: any) => {
+    const handleInputChange = (key: keyof ScreenParams, value: string | number | boolean) => {
         setParams((prev) => ({...prev, [key]: value}));
     };
 

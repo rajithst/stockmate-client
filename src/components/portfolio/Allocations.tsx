@@ -29,13 +29,13 @@ interface CategoryBreakdownProps {
     data: BreakdownItem[];
 }
 
-const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) => {
+const PortfolioAllocationCharts: React.FC<Props> = ({allocation, currency}) => {
     const renderChart = (
         title: string,
         dataObj: Record<string, number>,
         fullWidth = true
     ) => {
-        const pieData = Object.entries(dataObj).map(([name, value]) => ({ name, value }));
+        const pieData = Object.entries(dataObj).map(([name, value]) => ({name, value}));
 
         return (
             <div
@@ -56,12 +56,12 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
                                 nameKey="name"
                                 outerRadius={fullWidth ? 160 : 120}
                                 labelLine
-                                label={({ name, percent }) =>
-                                    `${name}: ${(percent * 100).toFixed(1)}%`
+                                label={({name, percent}) =>
+                                    `${name}: ${((percent as number) * 100).toFixed(1)}%`
                                 }
                             >
                                 {pieData.map((_, i) => (
-                                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                                    <Cell key={i} fill={COLORS[i % COLORS.length]}/>
                                 ))}
                             </Pie>
                             <Tooltip
@@ -96,7 +96,7 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
                     {renderChart("Industry", allocation.industry)}
                 </div>
                 <div className="flex-1 flex">
-                    <CategoryBreakdown data={makeBreakdownData(allocation.industry)} />
+                    <CategoryBreakdown data={makeBreakdownData(allocation.industry)}/>
                 </div>
             </div>
 
@@ -106,7 +106,7 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
                     {renderChart("Sector", allocation.sector)}
                 </div>
                 <div className="flex-1 flex">
-                    <CategoryBreakdown data={makeBreakdownData(allocation.sector)} />
+                    <CategoryBreakdown data={makeBreakdownData(allocation.sector)}/>
                 </div>
             </div>
 
@@ -119,7 +119,7 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
 };
 
 
-export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data }) => {
+export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({data}) => {
     return (
         <div className="bg-white rounded-xl shadow-md p-4 flex flex-col w-full">
             <h3 className="font-semibold mb-4 text-lg">Breakdown</h3>
@@ -136,7 +136,7 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data }) =>
                             <div className="flex items-center gap-2 min-w-0">
                 <span
                     className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
+                    style={{backgroundColor: item.color}}
                 />
                                 <span className="text-gray-800 font-medium truncate">{item.name}</span>
                             </div>
@@ -155,9 +155,9 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data }) =>
                             {/* Right section — Gain/loss */}
                             <div className="flex items-center gap-1 text-sm font-medium w-16 justify-end">
                                 {isGain ? (
-                                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                                    <ArrowUpRight className="w-4 h-4 text-green-500"/>
                                 ) : (
-                                    <ArrowDownRight className="w-4 h-4 text-red-500" />
+                                    <ArrowDownRight className="w-4 h-4 text-red-500"/>
                                 )}
                                 <span className={isGain ? "text-green-600" : "text-red-600"}>
                   {item.gain.toFixed(1)}%

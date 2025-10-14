@@ -17,13 +17,13 @@ export const PriceTargetCard: React.FC<{ target: PriceTarget }> = ({target}) => 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Price Target Summary</CardTitle>
+                <CardTitle className="text-base font-semibold">Price Target Summary</CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
                 {/* Range bar */}
-                <div className="relative h-4 bg-gray-200 rounded-md overflow-hidden">
-                    {/* range fill */}
+                <div className="relative h-3 bg-gray-200 rounded-md overflow-hidden">
+                    {/* range gradient */}
                     <div
                         className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 opacity-70"/>
 
@@ -42,28 +42,28 @@ export const PriceTargetCard: React.FC<{ target: PriceTarget }> = ({target}) => 
                     />
                 </div>
 
-                {/* Labels row */}
-                <div className="flex justify-between text-sm font-medium text-gray-700">
-                    <div>Low: ${target.targetLow}</div>
-                    <div>High: ${target.targetHigh}</div>
+                {/* Range endpoints */}
+                <div className="flex justify-between text-xs text-gray-500">
+                    <span>Low: ${target.targetLow}</span>
+                    <span>High: ${target.targetHigh}</span>
                 </div>
 
                 {/* Key stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div>
-                        <div className="text-gray-500">Low</div>
+                <div className="flex justify-around text-sm font-medium mt-2">
+                    <div className="text-center">
+                        <div className="text-gray-500 text-xs">Low</div>
                         <div className="font-semibold">${target.targetLow}</div>
                     </div>
-                    <div>
-                        <div className="text-gray-500">Median</div>
+                    <div className="text-center">
+                        <div className="text-gray-500 text-xs">Median</div>
                         <div className="font-semibold text-purple-600">${target.targetMedian}</div>
                     </div>
-                    <div>
-                        <div className="text-gray-500">Consensus</div>
+                    <div className="text-center">
+                        <div className="text-gray-500 text-xs">Consensus</div>
                         <div className="font-semibold text-blue-600">${target.targetConsensus}</div>
                     </div>
-                    <div>
-                        <div className="text-gray-500">High</div>
+                    <div className="text-center">
+                        <div className="text-gray-500 text-xs">High</div>
                         <div className="font-semibold text-green-600">${target.targetHigh}</div>
                     </div>
                 </div>

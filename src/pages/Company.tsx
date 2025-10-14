@@ -6,6 +6,7 @@ import {
     sampleGeneralNews,
     sampleGrading,
     sampleGradingNews,
+    sampleLatestGrading,
     samplePriceChange,
     samplePriceTarget,
     samplePriceTargetNews,
@@ -18,12 +19,14 @@ import {StockGradingSummaryCard} from "../components/company/GradingSummary.tsx"
 import {DcfSummaryCard} from "../components/company/DiscountedCashFlow.tsx";
 import {PriceTargetCard} from "../components/company/PriceTarget.tsx";
 import {RatingSummaryCard} from "../components/company/RatingSummary.tsx";
+import LatestGrading from "../components/company/LatestGrading.tsx";
 
 export const CompanyPage: React.FC = () => {
     const {symbol} = useParams<{ symbol: string }>();
     const company = sampleCompany;
     const priceChange = samplePriceChange;
     const gradingSummary = sampleGrading;
+    const latestGrading = sampleLatestGrading;
     const priceTarget = samplePriceTarget;
     const ratingSummary = sampleRatingSummary;
     const companyNews = {
@@ -46,6 +49,7 @@ export const CompanyPage: React.FC = () => {
                 <div className="lg:col-span-2 space-y-4">
                     <CompanyHeader company={company}/>
                     <PriceChangeChart data={priceChange}/>
+                    <LatestGrading gradings={latestGrading}/>
                     <CompanyNewsTabs news={companyNews}/>
                 </div>
 

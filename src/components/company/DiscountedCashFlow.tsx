@@ -1,7 +1,7 @@
 import React from "react";
 import {ArrowDownRight, ArrowUpRight, MinusCircle} from "lucide-react";
-import {Card, CardContent, CardHeader, CardTitle} from "../ui/card.tsx";
-import {Button} from "../ui/button.tsx";
+import {Card, CardContent, CardHeader, CardTitle} from "../ui/card";
+import {Button} from "../ui/button";
 
 interface DiscountedCashFlowData {
     symbol: string;
@@ -38,36 +38,37 @@ export const DcfSummaryCard: React.FC<DiscountedCashFlowSummary> = ({dcfData}) =
     }
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Discounted Cash Flow (DCF)</CardTitle>
-                <Button variant="outline">
-                    Run DCF Analysis
+        <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-gray-800">
+                    Discounted Cash Flow
+                </CardTitle>
+                <Button variant="outline" size="sm" className="text-xs">
+                    Custom DCF
                 </Button>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-gray-500">DCF Value:</span>
-                        <span className="font-semibold">${dcf.toFixed(2)}</span>
+            <CardContent className="text-sm space-y-1.5">
+                <div className="flex items-center justify-between">
+                    <span className="text-gray-500">DCF Value:</span>
+                    <span className="font-medium text-gray-800">${dcf.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Stock Price:</span>
+                    <span className="font-medium text-gray-800">${stockPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-gray-500">As of:</span>
+                    <span className="text-gray-700">{date}</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
+                    <div className="flex items-center gap-2">
+                        <Icon className={`${colorClass} w-4 h-4`}/>
+                        <span className={`font-medium ${colorClass}`}>{status}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-gray-500">Stock Price:</span>
-                        <span className="font-semibold">${stockPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-gray-500">As of:</span>
-                        <span>{date}</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-2">
-                            <Icon className={`${colorClass} w-5 h-5`}/>
-                            <span className={`font-semibold ${colorClass}`}>{status}</span>
-                        </div>
-                        <span className={`${colorClass} font-medium`}>
-              {percentageDiff}% difference
-            </span>
-                    </div>
+                    <span className={`${colorClass} text-xs font-medium`}>
+            {percentageDiff}% difference
+          </span>
                 </div>
             </CardContent>
         </Card>

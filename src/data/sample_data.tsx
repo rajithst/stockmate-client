@@ -20,6 +20,59 @@ export const sampleGrading = {
     consensus: "Buy",
 };
 
+export const sampleLatestGrading = [
+    {
+        id: 1,
+        company_id: 101,
+        symbol: "AAPL",
+        date: "2025-10-10",
+        grading_company: "Goldman Sachs",
+        previous_grade: "Hold",
+        new_grade: "Underperform",
+        action: "Upgrade",
+    },
+    {
+        id: 2,
+        company_id: 101,
+        symbol: "AAPL",
+        date: "2025-09-05",
+        grading_company: "JP Morgan",
+        previous_grade: "Outperform",
+        new_grade: "Outperform",
+        action: "maintain",
+    },
+    {
+        id: 3,
+        company_id: 101,
+        symbol: "AAPL",
+        date: "2025-07-21",
+        grading_company: "Morgan Stanley",
+        previous_grade: "Buy",
+        new_grade: "Strong Buy",
+        action: "upgrade",
+    },
+    {
+        id: 4,
+        company_id: 101,
+        symbol: "AAPL",
+        date: "2025-04-15",
+        grading_company: "Barclays",
+        previous_grade: "Hold",
+        new_grade: "Underperform",
+        action: "Upgrade",
+    },
+    {
+        id: 5,
+        company_id: 101,
+        symbol: "AAPL",
+        date: "2025-02-10",
+        grading_company: "UBS",
+        previous_grade: "Hold",
+        new_grade: "Underperform",
+        action: "Maintain",
+    },
+]
+
 export const sampleNews = [
     {
         published_date: "2025-10-01T12:00:00Z",
