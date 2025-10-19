@@ -1,66 +1,80 @@
-import React from "react";
+import React from 'react';
 
-import {useParams} from "react-router-dom";
+import { useParams } from 'react-router-dom';
 import {
-    sampleCompany,
-    sampleGeneralNews,
-    sampleGrading,
-    sampleGradingNews,
-    sampleLatestGrading,
-    samplePriceChange,
-    samplePriceTarget,
-    samplePriceTargetNews,
-    sampleRatingSummary,
-} from "../data/sample_data";
-import {CompanyHeader} from "../components/company/CompanyHeader.tsx";
-import {PriceChangeChart} from "../components/company/PriceChange.tsx";
-import {CompanyNewsTabs} from "../components/company/CompanyNews.tsx";
-import {StockGradingSummaryCard} from "../components/company/GradingSummary.tsx";
-import {DcfSummaryCard} from "../components/company/DiscountedCashFlow.tsx";
-import {PriceTargetCard} from "../components/company/PriceTarget.tsx";
-import {RatingSummaryCard} from "../components/company/RatingSummary.tsx";
-import LatestGrading from "../components/company/LatestGrading.tsx";
+  sampleCompany,
+  sampleGeneralNews,
+  sampleGrading,
+  sampleGradingNews,
+  sampleLatestGrading,
+  samplePriceChange,
+  samplePriceTarget,
+  samplePriceTargetNews,
+  sampleRatingSummary,
+} from '../data/sample_data';
+import { CompanyHeader } from '../components/company/CompanyHeader.tsx';
+import { PriceChangeChart } from '../components/company/PriceChange.tsx';
+import { CompanyNewsTabs } from '../components/company/CompanyNews.tsx';
+import { StockGradingSummaryCard } from '../components/company/GradingSummary.tsx';
+import { DcfSummaryCard } from '../components/company/DiscountedCashFlow.tsx';
+import { PriceTargetCard, PriceTargetSummaryCard } from '../components/company/PriceTarget.tsx';
+import { RatingSummaryCard } from '../components/company/RatingSummary.tsx';
+import LatestGrading from '../components/company/LatestGrading.tsx';
 
 export const CompanyPage: React.FC = () => {
-    const {symbol} = useParams<{ symbol: string }>();
-    const company = sampleCompany;
-    const priceChange = samplePriceChange;
-    const gradingSummary = sampleGrading;
-    const latestGrading = sampleLatestGrading;
-    const priceTarget = samplePriceTarget;
-    const ratingSummary = sampleRatingSummary;
-    const companyNews = {
-        generalNews: sampleGeneralNews,
-        priceTargetNews: samplePriceTargetNews,
-        gradingNews: sampleGradingNews,
-    }
-    const dcfData = {
-        symbol: "AAPL",
-        date: "2025-02-04",
-        dcf: 147.27,
-        stockPrice: 231.80,
-    };
+  const { symbol } = useParams<{ symbol: string }>();
+  const company = sampleCompany;
+  const priceChange = samplePriceChange;
+  const gradingSummary = sampleGrading;
+  const latestGrading = sampleLatestGrading;
+  const priceTarget = samplePriceTarget;
+  const ratingSummary = sampleRatingSummary;
+  const companyNews = {
+    generalNews: sampleGeneralNews,
+    priceTargetNews: samplePriceTargetNews,
+    gradingNews: sampleGradingNews,
+  };
+  const priceTargetSummary = {
+    symbol: 'AAPL',
+    last_month_count: 5,
+    last_month_avg_price_target: 225.5,
+    last_quarter_count: 12,
+    last_quarter_avg_price_target: 220.8,
+    last_year_count: 48,
+    last_year_avg_price_target: 232.99,
+    all_time_count: 167,
+    all_time_avg_price_target: 201.21,
+    publishers:
+      '["Benzinga", "StreetInsider", "TheFly", "Pulse 2.0", "TipRanks Contributor", "MarketWatch", "Barrons", "Investor\'s Business Daily"]',
+  };
+  const dcfData = {
+    symbol: 'AAPL',
+    date: '2025-02-04',
+    dcf: 147.27,
+    stockPrice: 231.8,
+  };
 
-    return (
-        <div className="container mx-auto p-4 space-y-6">
-            {/* Top Section: Responsive 2-column layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column */}
-                <div className="lg:col-span-2 space-y-4">
-                    <CompanyHeader company={company}/>
-                    <PriceChangeChart data={priceChange}/>
-                    <LatestGrading gradings={latestGrading}/>
-                    <CompanyNewsTabs news={companyNews}/>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
-                    <StockGradingSummaryCard summary={gradingSummary}/>
-                    <DcfSummaryCard dcfData={dcfData}/>
-                    <PriceTargetCard target={priceTarget}/>
-                    <RatingSummaryCard rating={ratingSummary}/>
-                </div>
-            </div>
+  return (
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Top Section: Responsive 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-4">
+          <CompanyHeader company={company} />
+          <PriceChangeChart data={priceChange} />
+          <LatestGrading gradings={latestGrading} />
+          <PriceTargetSummaryCard data={priceTargetSummary} />
+          <CompanyNewsTabs news={companyNews} />
         </div>
-    );
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          <StockGradingSummaryCard summary={gradingSummary} />
+          <DcfSummaryCard dcfData={dcfData} />
+          <PriceTargetCard target={priceTarget} />
+          <RatingSummaryCard rating={ratingSummary} />
+        </div>
+      </div>
+    </div>
+  );
 };
