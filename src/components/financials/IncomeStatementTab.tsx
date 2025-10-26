@@ -1,76 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Card, CardContent, CardTitle } from '../ui/card.tsx';
-import { sampleIncomeStatements } from '../../data/sample_income_statement.tsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion.tsx';
+import type { CompanyIncomeStatementRead } from '../../types/income_statement.ts';
 
-interface IncomeStatement {
-  id: number;
-  symbol: string;
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  date: 'Date',
+  reported_currency: 'Currency',
+  revenue: 'Revenue',
+  cost_of_revenue: 'Cost of Revenue',
+  gross_profit: 'Gross Profit',
+  research_and_development_expenses: 'R&D Expenses',
+  general_and_administrative_expenses: 'General & Administrative Expenses',
+  selling_and_marketing_expenses: 'Selling & Marketing Expenses',
+  selling_general_and_administrative_expenses: 'Selling, General & Administrative Expenses',
+  other_expenses: 'Other Expenses',
+  operating_expenses: 'Operating Expenses',
+  cost_and_expenses: 'Total Cost & Expenses',
+  net_interest_income: 'Net Interest Income',
+  interest_income: 'Interest Income',
+  interest_expense: 'Interest Expense',
+  depreciation_and_amortization: 'Depreciation & Amortization',
+  ebitda: 'EBITDA',
+  ebit: 'EBIT',
+  operating_income: 'Operating Income',
+  total_other_income_expenses_net: 'Other Income/Expenses (Net)',
+  income_before_tax: 'Income Before Tax',
+  income_tax_expense: 'Income Tax Expense',
+  net_income_from_continuing_operations: 'Net Income (Continuing Ops)',
+  net_income_from_discontinued_operations: 'Net Income (Discontinued Ops)',
+  other_adjustments_to_net_income: 'Other Adjustments to Net Income',
+  net_income: 'Net Income',
+  net_income_deductions: 'Net Income Deductions',
+  bottom_line_net_income: 'Bottom Line Net Income',
+  eps: 'Earnings Per Share (EPS)',
+  eps_diluted: 'EPS (Diluted)',
+  weighted_average_shs_out: 'Weighted Avg Shares Out',
+  weighted_average_shs_out_dil: 'Weighted Avg Shares Out (Diluted)',
+};
 
-  // General report info
-  date: string;
-  reported_currency: string;
-  cik: string;
-  filing_date: string;
-  accepted_date: string;
-  fiscal_year: string;
-  period: string;
-
-  // Revenue and cost
-  revenue: number;
-  cost_of_revenue: number;
-  gross_profit: number;
-
-  // Operating expenses
-  research_and_development_expenses: number;
-  general_and_administrative_expenses: number;
-  selling_and_marketing_expenses: number;
-  selling_general_and_administrative_expenses: number;
-  other_expenses: number;
-  operating_expenses: number;
-  cost_and_expenses: number;
-
-  // Interest income/expense
-  net_interest_income: number;
-  interest_income: number;
-  interest_expense: number;
-
-  // Depreciation & amortization
-  depreciation_and_amortization: number;
-
-  // Profit metrics
-  ebitda: number;
-  ebit: number;
-  non_operating_income_excluding_interest: number;
-  operating_income: number;
-
-  // Other income/expenses & taxes
-  total_other_income_expenses_net: number;
-  income_before_tax: number;
-  income_tax_expense: number;
-
-  // Net income details
-  net_income_from_continuing_operations: number;
-  net_income_from_discontinued_operations: number;
-  other_adjustments_to_net_income: number;
-  net_income: number;
-  net_income_deductions: number;
-  bottom_line_net_income: number;
-
-  // Earnings per share
-  eps: number;
-  eps_diluted: number;
-  weighted_average_shs_out: number;
-  weighted_average_shs_out_dil: number;
-}
-
-interface Props {
-  symbol: string;
-}
-
-export const IncomeStatementTab: React.FC<Props> = ({ symbol }) => {
-  const [data] = useState<IncomeStatement[]>(sampleIncomeStatements);
+export const IncomeStatementTab: React.FC<{ income_statements: CompanyIncomeStatementRead[] }> = ({
+  income_statements,
+}) => {
+  const data = income_statements || [];
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No data available</p>;
@@ -84,7 +57,7 @@ export const IncomeStatementTab: React.FC<Props> = ({ symbol }) => {
       acc[stmt.fiscal_year].push(stmt);
       return acc;
     },
-    {} as Record<string, IncomeStatement[]>,
+    {} as Record<string, CompanyIncomeStatementRead[]>,
   );
 
   Object.keys(groupedByYear).forEach((year) => {
@@ -93,7 +66,7 @@ export const IncomeStatementTab: React.FC<Props> = ({ symbol }) => {
     );
   });
 
-  const metricGroups: Record<string, (keyof IncomeStatement)[]> = {
+  const metricGroups: Record<string, (keyof CompanyIncomeStatementRead)[]> = {
     'Revenue and Cost': ['date', 'reported_currency', 'revenue', 'cost_of_revenue', 'gross_profit'],
     'Operating Expenses': [
       'date',
@@ -177,7 +150,8 @@ export const IncomeStatementTab: React.FC<Props> = ({ symbol }) => {
                           {metrics.map((metric) => (
                             <TableRow key={metric}>
                               <TableCell className="font-medium">
-                                {metric.replace(/_/g, ' ')}
+                                {metricLabels[metric as string] ||
+                                  String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
                                 <TableCell key={`${stmt.period}-${metric}`}>

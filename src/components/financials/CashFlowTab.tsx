@@ -2,76 +2,57 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { sampleCashFlow } from '../../data/sample_cashflow_sheet.tsx';
+import type { CompanyCashFlowStatementRead } from '../../types/cashflow.ts';
 
-export interface CompanyCashFlowStatement {
-  id: number;
-  company_id: number;
-  symbol: string;
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  date: 'Date',
+  reported_currency: 'Currency',
+  net_income: 'Net Income',
+  depreciation_and_amortization: 'Depreciation & Amortization',
+  deferred_income_tax: 'Deferred Income Tax',
+  stock_based_compensation: 'Stock-Based Compensation',
+  change_in_working_capital: 'Change in Working Capital',
+  accounts_receivables: 'Accounts Receivables',
+  inventory: 'Inventory',
+  accounts_payables: 'Accounts Payables',
+  other_working_capital: 'Other Working Capital',
+  other_non_cash_items: 'Other Non-Cash Items',
+  net_cash_provided_by_operating_activities: 'Net Cash from Operating Activities',
+  investments_in_property_plant_and_equipment: 'Investments in PP&E',
+  acquisitions_net: 'Net Acquisitions',
+  purchases_of_investments: 'Purchases of Investments',
+  sales_maturities_of_investments: 'Sales/Maturities of Investments',
+  other_investing_activities: 'Other Investing Activities',
+  net_cash_provided_by_investing_activities: 'Net Cash from Investing Activities',
+  net_debt_issuance: 'Net Debt Issuance',
+  long_term_net_debt_issuance: 'Long-Term Net Debt Issuance',
+  short_term_net_debt_issuance: 'Short-Term Net Debt Issuance',
+  net_stock_issuance: 'Net Stock Issuance',
+  net_common_stock_issuance: 'Net Common Stock Issuance',
+  common_stock_issuance: 'Common Stock Issuance',
+  common_stock_repurchased: 'Common Stock Repurchased',
+  net_preferred_stock_issuance: 'Net Preferred Stock Issuance',
+  net_dividends_paid: 'Net Dividends Paid',
+  common_dividends_paid: 'Common Dividends Paid',
+  preferred_dividends_paid: 'Preferred Dividends Paid',
+  other_financing_activities: 'Other Financing Activities',
+  net_cash_provided_by_financing_activities: 'Net Cash from Financing Activities',
+  effect_of_forex_changes_on_cash: 'Effect of Forex Changes on Cash',
+  net_change_in_cash: 'Net Change in Cash',
+  cash_at_end_of_period: 'Cash at End of Period',
+  cash_at_beginning_of_period: 'Cash at Beginning of Period',
+  operating_cash_flow: 'Operating Cash Flow',
+  capital_expenditure: 'Capital Expenditure',
+  free_cash_flow: 'Free Cash Flow',
+  income_taxes_paid: 'Income Taxes Paid',
+  interest_paid: 'Interest Paid',
+};
 
-  // General report info
-  date: string;
-  reported_currency: string;
-  cik: string;
-  filing_date: string;
-  accepted_date: string;
-  fiscal_year: string;
-  period: string;
-
-  // Operating Activities
-  net_income: number;
-  depreciation_and_amortization: number;
-  deferred_income_tax: number;
-  stock_based_compensation: number;
-  change_in_working_capital: number;
-  accounts_receivables: number;
-  inventory: number;
-  accounts_payables: number;
-  other_working_capital: number;
-  other_non_cash_items: number;
-  net_cash_provided_by_operating_activities: number;
-
-  // Investing Activities
-  investments_in_property_plant_and_equipment: number;
-  acquisitions_net: number;
-  purchases_of_investments: number;
-  sales_maturities_of_investments: number;
-  other_investing_activities: number;
-  net_cash_provided_by_investing_activities: number;
-
-  // Financing Activities
-  net_debt_issuance: number;
-  long_term_net_debt_issuance: number;
-  short_term_net_debt_issuance: number;
-  net_stock_issuance: number;
-  net_common_stock_issuance: number;
-  common_stock_issuance: number;
-  common_stock_repurchased: number;
-  net_preferred_stock_issuance: number;
-  net_dividends_paid: number;
-  common_dividends_paid: number;
-  preferred_dividends_paid: number;
-  other_financing_activities: number;
-  net_cash_provided_by_financing_activities: number;
-
-  // Other Adjustments
-  effect_of_forex_changes_on_cash: number;
-  net_change_in_cash: number;
-  cash_at_end_of_period: number;
-  cash_at_beginning_of_period: number;
-  operating_cash_flow: number;
-  capital_expenditure: number;
-  free_cash_flow: number;
-  income_taxes_paid: number;
-  interest_paid: number;
-}
-
-interface Props {
-  symbol: string;
-}
-
-export const CashFlowTab: React.FC<Props> = ({ symbol }) => {
-  const [data] = useState<CompanyCashFlowStatement[]>(sampleCashFlow);
+export const CashFlowTab: React.FC<{ cash_flow_statements: CompanyCashFlowStatementRead[] }> = ({
+  cash_flow_statements,
+}) => {
+  const [data] = useState<CompanyCashFlowStatementRead[]>(cash_flow_statements || []);
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No data available</p>;
@@ -85,7 +66,7 @@ export const CashFlowTab: React.FC<Props> = ({ symbol }) => {
       acc[stmt.fiscal_year].push(stmt);
       return acc;
     },
-    {} as Record<string, CompanyCashFlowStatement[]>,
+    {} as Record<string, CompanyCashFlowStatementRead[]>,
   );
 
   Object.keys(groupedByYear).forEach((year) => {
@@ -94,7 +75,7 @@ export const CashFlowTab: React.FC<Props> = ({ symbol }) => {
     );
   });
 
-  const metricGroups: Record<string, (keyof CompanyCashFlowStatement)[]> = {
+  const metricGroups: Record<string, (keyof CompanyCashFlowStatementRead)[]> = {
     'Operating Activities': [
       'date',
       'reported_currency',
@@ -181,7 +162,8 @@ export const CashFlowTab: React.FC<Props> = ({ symbol }) => {
                           {metrics.map((metric) => (
                             <TableRow key={metric}>
                               <TableCell className="font-medium">
-                                {metric.replace(/_/g, ' ')}
+                                {metricLabels[metric as string] ||
+                                  String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
                                 <TableCell key={`${stmt.period}-${metric}`}>

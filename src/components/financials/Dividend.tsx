@@ -1,45 +1,37 @@
 import React, { useState } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { sampleDividends } from '../../data/sample_dividends.tsx';
+import type { CompanyDividendRead } from '../../types/dividend.ts';
 
-interface CompanyDividend {
-  symbol: string;
-  date: string;
-  record_date?: string;
-  payment_date?: string;
-  declaration_date?: string;
-  dividend?: number;
-  adj_dividend?: number;
-  yield?: number;
-  frequency?: string;
-}
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  dividend: 'Dividend (USD)',
+  adj_dividend: 'Adjusted Dividend (USD)',
+  yield: 'Dividend Yield (%)',
+  frequency: 'Frequency',
+  record_date: 'Record Date',
+  payment_date: 'Payment Date',
+  declaration_date: 'Declaration Date',
+};
 
-export const DividendTab: React.FC<{ symbol: string }> = ({ symbol }) => {
-  const [data] = useState<CompanyDividend[]>(
-    sampleDividends.filter((div) => div.symbol === symbol),
-  );
+export const DividendTab: React.FC<{ dividends: CompanyDividendRead[] }> = ({ dividends }) => {
+  const [data] = useState<CompanyDividendRead[]>(dividends || []);
 
-  console.log('All sample dividends:', sampleDividends);
-  console.log('Filtered data:', data);
-
-  const grouped = data.reduce((acc: Record<string, CompanyDividend[]>, item) => {
+  const grouped = data.reduce((acc: Record<string, CompanyDividendRead[]>, item) => {
     const year = new Date(item.date).getFullYear();
     if (!acc[year]) acc[year] = [];
     acc[year].push(item);
     return acc;
   }, {});
 
-  console.log('Grouped data:', grouped);
-
-  const metrics = [
-    { key: 'dividend', label: 'Dividend (USD)' },
-    { key: 'adj_dividend', label: 'Adjusted Dividend (USD)' },
-    { key: 'yield', label: 'Dividend Yield (%)' },
-    { key: 'frequency', label: 'Frequency' },
-    { key: 'record_date', label: 'Record Date' },
-    { key: 'payment_date', label: 'Payment Date' },
-    { key: 'declaration_date', label: 'Declaration Date' },
+  const metrics: (keyof CompanyDividendRead)[] = [
+    'dividend',
+    'adj_dividend',
+    'yield',
+    'frequency',
+    'record_date',
+    'payment_date',
+    'declaration_date',
   ];
 
   return (
@@ -55,7 +47,7 @@ export const DividendTab: React.FC<{ symbol: string }> = ({ symbol }) => {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     {metrics.map((m) => (
-                      <TableHead key={m.key}>{m.label}</TableHead>
+                      <TableHead key={m}>{metricLabels[m as string] || String(m)}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -66,7 +58,11 @@ export const DividendTab: React.FC<{ symbol: string }> = ({ symbol }) => {
                       <TableRow key={div.date}>
                         <TableCell>{div.date}</TableCell>
                         {metrics.map((m) => (
-                          <TableCell key={m.key}>{(div as any)[m.key] ?? '-'}</TableCell>
+                          <TableCell key={m}>
+                            {(div as any)[m] !== null && (div as any)[m] !== undefined
+                              ? (div as any)[m]
+                              : '-'}
+                          </TableCell>
                         ))}
                       </TableRow>
                     ))}

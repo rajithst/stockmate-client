@@ -2,93 +2,70 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion.tsx';
-import { sampleBalanceSheets } from '../../data/sample_balance_sheet.tsx';
+import type { CompanyBalanceSheetRead } from '../../types/balance_sheet.ts';
 
-interface CompanyBalanceSheet {
-  id: number;
-  company_id: number;
-  symbol: string;
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  date: 'Date',
+  reported_currency: 'Currency',
+  cash_and_cash_equivalents: 'Cash & Cash Equivalents',
+  short_term_investments: 'Short-Term Investments',
+  cash_and_short_term_investments: 'Cash & Short-Term Investments',
+  accounts_receivables: 'Accounts Receivables',
+  net_receivables: 'Net Receivables',
+  other_receivables: 'Other Receivables',
+  inventory: 'Inventory',
+  prepaids: 'Prepaids',
+  other_current_assets: 'Other Current Assets',
+  total_current_assets: 'Total Current Assets',
+  property_plant_equipment_net: 'Property, Plant & Equipment (Net)',
+  goodwill: 'Goodwill',
+  intangible_assets: 'Intangible Assets',
+  goodwill_and_intangible_assets: 'Goodwill & Intangible Assets',
+  long_term_investments: 'Long-Term Investments',
+  tax_assets: 'Tax Assets',
+  other_non_current_assets: 'Other Non-Current Assets',
+  total_non_current_assets: 'Total Non-Current Assets',
+  other_assets: 'Other Assets',
+  total_assets: 'Total Assets',
+  total_payables: 'Total Payables',
+  account_payables: 'Account Payables',
+  other_payables: 'Other Payables',
+  accrued_expenses: 'Accrued Expenses',
+  short_term_debt: 'Short-Term Debt',
+  capital_lease_obligations_current: 'Capital Lease Obligations (Current)',
+  tax_payables: 'Tax Payables',
+  deferred_revenue: 'Deferred Revenue',
+  other_current_liabilities: 'Other Current Liabilities',
+  total_current_liabilities: 'Total Current Liabilities',
+  long_term_debt: 'Long-Term Debt',
+  deferred_revenue_non_current: 'Deferred Revenue (Non-Current)',
+  deferred_tax_liabilities_non_current: 'Deferred Tax Liabilities (Non-Current)',
+  other_non_current_liabilities: 'Other Non-Current Liabilities',
+  total_non_current_liabilities: 'Total Non-Current Liabilities',
+  other_liabilities: 'Other Liabilities',
+  capital_lease_obligations: 'Capital Lease Obligations',
+  total_liabilities: 'Total Liabilities',
+  treasury_stock: 'Treasury Stock',
+  preferred_stock: 'Preferred Stock',
+  common_stock: 'Common Stock',
+  retained_earnings: 'Retained Earnings',
+  additional_paid_in_capital: 'Additional Paid-In Capital',
+  accumulated_other_comprehensive_income_loss: 'Accumulated Other Comprehensive Income/Loss',
+  other_total_stockholders_equity: 'Other Total Stockholders’ Equity',
+  total_stockholders_equity: 'Total Stockholders’ Equity',
+  total_equity: 'Total Equity',
+  minority_interest: 'Minority Interest',
+  total_liabilities_and_total_equity: 'Total Liabilities & Total Equity',
+  total_investments: 'Total Investments',
+  total_debt: 'Total Debt',
+  net_debt: 'Net Debt',
+};
 
-  // General report info
-  date: string;
-  reported_currency: string;
-  cik: string;
-  filing_date: string;
-  accepted_date: string;
-  fiscal_year: string;
-  period: string;
-
-  // Current Assets
-  cash_and_cash_equivalents: number;
-  short_term_investments: number;
-  cash_and_short_term_investments: number;
-  net_receivables: number;
-  accounts_receivables: number;
-  other_receivables: number;
-  inventory: number;
-  prepaids: number;
-  other_current_assets: number;
-  total_current_assets: number;
-
-  // Non-Current Assets
-  property_plant_equipment_net: number;
-  goodwill: number;
-  intangible_assets: number;
-  goodwill_and_intangible_assets: number;
-  long_term_investments: number;
-  tax_assets: number;
-  other_non_current_assets: number;
-  total_non_current_assets: number;
-  other_assets: number;
-  total_assets: number;
-
-  // Current Liabilities
-  total_payables: number;
-  account_payables: number;
-  other_payables: number;
-  accrued_expenses: number;
-  short_term_debt: number;
-  capital_lease_obligations_current: number;
-  tax_payables: number;
-  deferred_revenue: number;
-  other_current_liabilities: number;
-  total_current_liabilities: number;
-
-  // Non-Current Liabilities
-  long_term_debt: number;
-  deferred_revenue_non_current: number;
-  deferred_tax_liabilities_non_current: number;
-  other_non_current_liabilities: number;
-  total_non_current_liabilities: number;
-  other_liabilities: number;
-  capital_lease_obligations: number;
-  total_liabilities: number;
-
-  // Stockholders' Equity
-  treasury_stock: number;
-  preferred_stock: number;
-  common_stock: number;
-  retained_earnings: number;
-  additional_paid_in_capital: number;
-  accumulated_other_comprehensive_income_loss: number;
-  other_total_stockholders_equity: number;
-  total_stockholders_equity: number;
-  total_equity: number;
-  minority_interest: number;
-
-  // Totals & Debt
-  total_liabilities_and_total_equity: number;
-  total_investments: number;
-  total_debt: number;
-  net_debt: number;
-}
-
-interface Props {
-  symbol: string;
-}
-
-export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
-  const [data] = useState<CompanyBalanceSheet[]>(sampleBalanceSheets);
+export const BalanceSheetTab: React.FC<{ balance_sheets: CompanyBalanceSheetRead[] }> = ({
+  balance_sheets,
+}) => {
+  const [data] = useState<CompanyBalanceSheetRead[]>(balance_sheets || []);
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No data available</p>;
@@ -100,7 +77,7 @@ export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
       acc[stmt.fiscal_year].push(stmt);
       return acc;
     },
-    {} as Record<string, CompanyBalanceSheet[]>,
+    {} as Record<string, CompanyBalanceSheetRead[]>,
   );
 
   const quarterOrder = ['FY', 'Q1', 'Q2', 'Q3', 'Q4'];
@@ -112,7 +89,7 @@ export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
     );
   });
 
-  const metricGroups: Record<string, (keyof CompanyBalanceSheet)[]> = {
+  const metricGroups: Record<string, (keyof CompanyBalanceSheetRead)[]> = {
     'Current Assets': [
       'date',
       'reported_currency',
@@ -192,6 +169,7 @@ export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
       'net_debt',
     ],
   };
+
   return (
     <Accordion type="multiple" className="space-y-4">
       {Object.keys(groupedByYear)
@@ -221,7 +199,8 @@ export const BalanceSheetTab: React.FC<Props> = ({ symbol }) => {
                           {metrics.map((metric) => (
                             <TableRow key={metric}>
                               <TableCell className="font-medium">
-                                {metric.replace(/_/g, ' ')}
+                                {metricLabels[metric as string] ||
+                                  String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
                                 <TableCell key={`${stmt.period}-${metric}`}>

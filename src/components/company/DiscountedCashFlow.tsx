@@ -1,34 +1,26 @@
 import React from 'react';
-import { ArrowDownRight, ArrowUpRight, MinusCircle } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, MinusCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import type { DiscountedCashFlowRead } from '../../types';
 
-interface DiscountedCashFlowData {
-  symbol: string;
-  date: string;
-  dcf: number;
-  stockPrice: number;
-}
+export const DcfSummaryCard: React.FC<{ discounted_cash_flow: DiscountedCashFlowRead }> = ({
+  discounted_cash_flow,
+}) => {
+  const { dcf, stock_price, date, updated_at } = discounted_cash_flow;
 
-interface DiscountedCashFlowSummary {
-  dcfData: DiscountedCashFlowData;
-}
-
-export const DcfSummaryCard: React.FC<DiscountedCashFlowSummary> = ({ dcfData }) => {
-  const { dcf, stockPrice, date } = dcfData;
-
-  const diff = stockPrice - dcf;
+  const diff = stock_price - dcf;
   const percentageDiff = ((diff / dcf) * 100).toFixed(1);
 
   let status: 'Undervalued' | 'Fair Value' | 'Overvalued';
   let colorClass = '';
   let Icon = MinusCircle;
 
-  if (stockPrice < dcf * 0.9) {
+  if (stock_price < dcf * 0.9) {
     status = 'Undervalued';
     colorClass = 'text-green-600';
     Icon = ArrowDownRight;
-  } else if (stockPrice > dcf * 1.1) {
+  } else if (stock_price > dcf * 1.1) {
     status = 'Overvalued';
     colorClass = 'text-red-600';
     Icon = ArrowUpRight;
@@ -37,37 +29,69 @@ export const DcfSummaryCard: React.FC<DiscountedCashFlowSummary> = ({ dcfData })
     colorClass = 'text-yellow-600';
   }
 
+  // Format last updated date
+  const formattedLastUpdated = updated_at
+    ? new Date(updated_at).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
   return (
-    <Card className="shadow-sm">
+    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+      {/* Decorative Accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold text-gray-800">
-          Discounted Cash Flow
-        </CardTitle>
-        <Button variant="outline" size="sm" className="text-xs">
+        <div>
+          <CardTitle className="text-base font-semibold text-gray-800">
+            Discounted Cash Flow
+          </CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Fundamental valuation snapshot
+          </span>
+        </div>
+        <Button variant="outline" size="sm" className="text-xs shadow hover:bg-gray-50">
           Custom DCF
         </Button>
       </CardHeader>
-      <CardContent className="text-sm space-y-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-gray-500">DCF Value:</span>
-          <span className="font-medium text-gray-800">${dcf.toFixed(2)}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-500">Stock Price:</span>
-          <span className="font-medium text-gray-800">${stockPrice.toFixed(2)}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-500">As of:</span>
-          <span className="text-gray-700">{date}</span>
+      <CardContent className="space-y-4 pt-1 relative z-10">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">DCF Value:</span>
+            <span className="font-semibold text-gray-800">${dcf.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Stock Price:</span>
+            <span className="font-semibold text-gray-800">${stock_price.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">As of:</span>
+            <span className="text-gray-700">{date}</span>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
           <div className="flex items-center gap-2">
-            <Icon className={`${colorClass} w-4 h-4`} />
-            <span className={`font-medium ${colorClass}`}>{status}</span>
+            <Icon className={`${colorClass} w-5 h-5`} />
+            <span className={`font-semibold ${colorClass} text-base`}>{status}</span>
           </div>
-          <span className={`${colorClass} text-xs font-medium`}>{percentageDiff}% difference</span>
+          <span className={`${colorClass} text-xs font-semibold`}>
+            {percentageDiff}% difference
+          </span>
         </div>
+
+        {/* Last updated */}
+        {formattedLastUpdated && (
+          <div className="flex items-center justify-end pt-3">
+            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
+              <Clock className="w-4 h-4 text-gray-400" />
+              Last updated: {formattedLastUpdated}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

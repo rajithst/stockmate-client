@@ -2,74 +2,58 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { sampleRatio } from '../../data/sample_ratio.tsx';
+import type { CompanyKeyMetricsRead } from '../../types';
 
-export interface CompanyKeyMetrics {
-  id: number;
-  company_id: number;
-  symbol: string;
-  date: string;
-  fiscal_year: string;
-  period: string;
-  reported_currency: string;
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  market_cap: 'Market Cap',
+  enterprise_value: 'Enterprise Value',
+  ev_to_sales: 'EV to Sales',
+  ev_to_operating_cash_flow: 'EV to Operating Cash Flow',
+  ev_to_free_cash_flow: 'EV to Free Cash Flow',
+  ev_to_ebitda: 'EV to EBITDA',
+  net_debt_to_ebitda: 'Net Debt to EBITDA',
+  current_ratio: 'Current Ratio',
+  income_quality: 'Income Quality',
+  graham_number: 'Graham Number',
+  graham_net_net: 'Graham Net-Net',
+  tax_burden: 'Tax Burden',
+  interest_burden: 'Interest Burden',
+  working_capital: 'Working Capital',
+  invested_capital: 'Invested Capital',
+  return_on_assets: 'Return on Assets',
+  operating_return_on_assets: 'Operating Return on Assets',
+  return_on_tangible_assets: 'Return on Tangible Assets',
+  return_on_equity: 'Return on Equity',
+  return_on_invested_capital: 'Return on Invested Capital',
+  return_on_capital_employed: 'Return on Capital Employed',
+  earnings_yield: 'Earnings Yield',
+  free_cash_flow_yield: 'Free Cash Flow Yield',
+  capex_to_operating_cash_flow: 'CapEx to Operating Cash Flow',
+  capex_to_depreciation: 'CapEx to Depreciation',
+  capex_to_revenue: 'CapEx to Revenue',
+  sales_general_and_administrative_to_revenue: 'SG&A to Revenue',
+  research_and_development_to_revenue: 'R&D to Revenue',
+  stock_based_compensation_to_revenue: 'Stock-Based Compensation to Revenue',
+  intangibles_to_total_assets: 'Intangibles to Total Assets',
+  average_receivables: 'Average Receivables',
+  average_payables: 'Average Payables',
+  average_inventory: 'Average Inventory',
+  days_of_sales_outstanding: 'Days of Sales Outstanding',
+  days_of_payables_outstanding: 'Days of Payables Outstanding',
+  days_of_inventory_outstanding: 'Days of Inventory Outstanding',
+  operating_cycle: 'Operating Cycle',
+  cash_conversion_cycle: 'Cash Conversion Cycle',
+  free_cash_flow_to_equity: 'Free Cash Flow to Equity',
+  free_cash_flow_to_firm: 'Free Cash Flow to Firm',
+  tangible_asset_value: 'Tangible Asset Value',
+  net_current_asset_value: 'Net Current Asset Value',
+};
 
-  // Market metrics
-  market_cap: number | null;
-  enterprise_value: number | null;
-  ev_to_sales: number | null;
-  ev_to_operating_cash_flow: number | null;
-  ev_to_free_cash_flow: number | null;
-  ev_to_ebitda: number | null;
-  net_debt_to_ebitda: number | null;
-  current_ratio: number | null;
-  income_quality: number | null;
-  graham_number: number | null;
-  graham_net_net: number | null;
-  tax_burden: number | null;
-  interest_burden: number | null;
-
-  // Capital metrics
-  working_capital: number | null;
-  invested_capital: number | null;
-  return_on_assets: number | null;
-  operating_return_on_assets: number | null;
-  return_on_tangible_assets: number | null;
-  return_on_equity: number | null;
-  return_on_invested_capital: number | null;
-  return_on_capital_employed: number | null;
-
-  // Cash flow metrics
-  earnings_yield: number | null;
-  free_cash_flow_yield: number | null;
-  capex_to_operating_cash_flow: number | null;
-  capex_to_depreciation: number | null;
-  capex_to_revenue: number | null;
-
-  // Operational efficiency
-  sales_general_and_administrative_to_revenue: number | null;
-  research_and_development_to_revenue: number | null;
-  stock_based_compensation_to_revenue: number | null;
-  intangibles_to_total_assets: number | null;
-  average_receivables: number | null;
-  average_payables: number | null;
-  average_inventory: number | null;
-  days_of_sales_outstanding: number | null;
-  days_of_payables_outstanding: number | null;
-  days_of_inventory_outstanding: number | null;
-  operating_cycle: number | null;
-  cash_conversion_cycle: number | null;
-  free_cash_flow_to_equity: number | null;
-  free_cash_flow_to_firm: number | null;
-  tangible_asset_value: number | null;
-  net_current_asset_value: number | null;
-}
-
-interface Props {
-  symbol: string;
-}
-
-export const KeyMetricsTab: React.FC<Props> = ({ symbol }) => {
-  const [data] = useState<CompanyKeyMetrics[]>(sampleRatio);
+export const KeyMetricsTab: React.FC<{ key_metrics: CompanyKeyMetricsRead[] }> = ({
+  key_metrics,
+}) => {
+  const [data] = useState<CompanyKeyMetricsRead[]>(key_metrics);
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No data available</p>;
@@ -83,7 +67,7 @@ export const KeyMetricsTab: React.FC<Props> = ({ symbol }) => {
       acc[stmt.fiscal_year].push(stmt);
       return acc;
     },
-    {} as Record<string, CompanyKeyMetrics[]>,
+    {} as Record<string, CompanyKeyMetricsRead[]>,
   );
 
   Object.keys(groupedByYear).forEach((year) => {
@@ -91,7 +75,7 @@ export const KeyMetricsTab: React.FC<Props> = ({ symbol }) => {
       (a, b) => quarterOrder.indexOf(a.period) - quarterOrder.indexOf(b.period),
     );
   });
-  const metricGroups: Record<string, (keyof CompanyKeyMetrics)[]> = {
+  const metricGroups: Record<string, (keyof CompanyKeyMetricsRead)[]> = {
     'Market Metrics': [
       'market_cap',
       'enterprise_value',
@@ -173,7 +157,8 @@ export const KeyMetricsTab: React.FC<Props> = ({ symbol }) => {
                           {metrics.map((metric) => (
                             <TableRow key={metric}>
                               <TableCell className="font-medium">
-                                {metric.replace(/_/g, ' ')}
+                                {metricLabels[metric as string] ||
+                                  String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
                                 <TableCell key={`${stmt.period}-${metric}`}>

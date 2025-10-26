@@ -1,17 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Badge } from '../ui/badge.tsx';
+import { Clock } from 'lucide-react';
+import type { CompanyGradingSummaryRead } from '../../types';
 
-export interface CompanyGradingSummary {
-  strong_buy: number;
-  buy: number;
-  hold: number;
-  sell: number;
-  strong_sell: number;
-  consensus: string;
-}
-
-export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummary }> = ({
+export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummaryRead }> = ({
   summary,
 }) => {
   const total =
@@ -35,27 +28,52 @@ export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummary 
 
   const consensusColor = consensusColorMap[summary.consensus] || 'bg-gray-500 text-white';
 
+  // Format last updated date from summary.updated_at
+  const formattedLastUpdated = summary.updated_at
+    ? new Date(summary.updated_at).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+      {/* Decorative Accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+
       <CardHeader className="flex flex-row justify-between items-center">
-        <CardTitle>Stock Grading Summary</CardTitle>
+        <div>
+          <CardTitle className="text-base font-semibold text-gray-800">
+            Stock Grading Summary
+          </CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Analyst consensus breakdown
+          </span>
+        </div>
         <Badge className={`${consensusColor} text-sm font-semibold px-3 py-1`}>
           {summary.consensus}
         </Badge>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 relative z-10">
         {/* Horizontal visual bar */}
-        <div className="flex h-4 rounded overflow-hidden">
+        <div className="relative h-3 bg-gray-200 rounded-md overflow-hidden">
+          {/* subtle blue gradient */}
+          <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-blue-100 via-indigo-100 to-blue-200 opacity-60" />
           {items.map(
             (item, idx) =>
               item.count > 0 && (
                 <div
                   key={idx}
-                  className="h-4"
+                  className="h-3 absolute"
                   style={{
+                    left: `${(items.slice(0, idx).reduce((acc, i) => acc + i.count, 0) / total) * 100}%`,
                     width: `${(item.count / total) * 100}%`,
                     backgroundColor: item.color,
+                    opacity: 0.7,
                   }}
                   title={`${item.label}: ${item.count}`}
                 />
@@ -77,6 +95,16 @@ export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummary 
             </div>
           ))}
         </div>
+
+        {/* Last updated */}
+        {formattedLastUpdated && (
+          <div className="flex items-center justify-end pt-3">
+            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
+              <Clock className="w-4 h-4 text-gray-400" />
+              Last updated: {formattedLastUpdated}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

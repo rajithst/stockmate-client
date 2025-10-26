@@ -2,100 +2,74 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { sampleRatio } from '../../data/sample_ratio.tsx';
+import type { CompanyFinancialRatioRead } from '../../types';
 
-interface CompanyFinancialRatios {
-  id: number;
-  company_id: number;
-  symbol: string;
-  date: string;
-  fiscal_year: string;
-  period: string;
-  reported_currency: string;
+// Add a mapping for nice labels
+const metricLabels: Record<string, string> = {
+  gross_profit_margin: 'Gross Profit Margin',
+  ebit_margin: 'EBIT Margin',
+  ebitda_margin: 'EBITDA Margin',
+  operating_profit_margin: 'Operating Profit Margin',
+  pretax_profit_margin: 'Pre-Tax Profit Margin',
+  continuous_operations_profit_margin: 'Continuous Operations Profit Margin',
+  net_profit_margin: 'Net Profit Margin',
+  bottom_line_profit_margin: 'Bottom Line Profit Margin',
+  receivables_turnover: 'Receivables Turnover',
+  payables_turnover: 'Payables Turnover',
+  inventory_turnover: 'Inventory Turnover',
+  fixed_asset_turnover: 'Fixed Asset Turnover',
+  asset_turnover: 'Asset Turnover',
+  current_ratio: 'Current Ratio',
+  quick_ratio: 'Quick Ratio',
+  solvency_ratio: 'Solvency Ratio',
+  cash_ratio: 'Cash Ratio',
+  price_to_earnings_ratio: 'Price to Earnings Ratio',
+  price_to_earnings_growth_ratio: 'PEG Ratio',
+  forward_price_to_earnings_growth_ratio: 'Forward PEG Ratio',
+  price_to_book_ratio: 'Price to Book Ratio',
+  price_to_sales_ratio: 'Price to Sales Ratio',
+  price_to_free_cash_flow_ratio: 'Price to Free Cash Flow Ratio',
+  price_to_operating_cash_flow_ratio: 'Price to Operating Cash Flow Ratio',
+  debt_to_assets_ratio: 'Debt to Assets Ratio',
+  debt_to_equity_ratio: 'Debt to Equity Ratio',
+  debt_to_capital_ratio: 'Debt to Capital Ratio',
+  long_term_debt_to_capital_ratio: 'Long-Term Debt to Capital Ratio',
+  financial_leverage_ratio: 'Financial Leverage Ratio',
+  working_capital_turnover_ratio: 'Working Capital Turnover Ratio',
+  operating_cash_flow_ratio: 'Operating Cash Flow Ratio',
+  operating_cash_flow_sales_ratio: 'Operating Cash Flow/Sales Ratio',
+  free_cash_flow_operating_cash_flow_ratio: 'Free Cash Flow/Operating Cash Flow Ratio',
+  debt_service_coverage_ratio: 'Debt Service Coverage Ratio',
+  interest_coverage_ratio: 'Interest Coverage Ratio',
+  short_term_operating_cash_flow_coverage_ratio: 'Short-Term Operating Cash Flow Coverage Ratio',
+  operating_cash_flow_coverage_ratio: 'Operating Cash Flow Coverage Ratio',
+  capital_expenditure_coverage_ratio: 'Capital Expenditure Coverage Ratio',
+  dividend_paid_and_capex_coverage_ratio: 'Dividend Paid & Capex Coverage Ratio',
+  dividend_payout_ratio: 'Dividend Payout Ratio',
+  dividend_yield: 'Dividend Yield',
+  dividend_yield_percentage: 'Dividend Yield (%)',
+  revenue_per_share: 'Revenue Per Share',
+  net_income_per_share: 'Net Income Per Share',
+  interest_debt_per_share: 'Interest Debt Per Share',
+  cash_per_share: 'Cash Per Share',
+  book_value_per_share: 'Book Value Per Share',
+  tangible_book_value_per_share: 'Tangible Book Value Per Share',
+  shareholders_equity_per_share: 'Shareholders’ Equity Per Share',
+  operating_cash_flow_per_share: 'Operating Cash Flow Per Share',
+  capex_per_share: 'CapEx Per Share',
+  free_cash_flow_per_share: 'Free Cash Flow Per Share',
+  net_income_per_ebt: 'Net Income/EBT',
+  ebt_per_ebit: 'EBT/EBIT',
+  price_to_fair_value: 'Price to Fair Value',
+  debt_to_market_cap: 'Debt to Market Cap',
+  effective_tax_rate: 'Effective Tax Rate',
+  enterprise_value_multiple: 'Enterprise Value Multiple',
+};
 
-  // Profitability margins
-  gross_profit_margin: number;
-  ebit_margin: number;
-  ebitda_margin: number;
-  operating_profit_margin: number;
-  pretax_profit_margin: number;
-  continuous_operations_profit_margin: number;
-  net_profit_margin: number;
-  bottom_line_profit_margin: number;
-
-  // Efficiency ratios
-  receivables_turnover: number;
-  payables_turnover: number;
-  inventory_turnover: number;
-  fixed_asset_turnover: number;
-  asset_turnover: number;
-
-  // Liquidity ratios
-  current_ratio: number;
-  quick_ratio: number;
-  solvency_ratio: number;
-  cash_ratio: number;
-
-  // Valuation ratios
-  price_to_earnings_ratio: number;
-  price_to_earnings_growth_ratio: number;
-  forward_price_to_earnings_growth_ratio: number;
-  price_to_book_ratio: number;
-  price_to_sales_ratio: number;
-  price_to_free_cash_flow_ratio: number;
-  price_to_operating_cash_flow_ratio: number;
-
-  // Leverage ratios
-  debt_to_assets_ratio: number;
-  debt_to_equity_ratio: number;
-  debt_to_capital_ratio: number;
-  long_term_debt_to_capital_ratio: number;
-  financial_leverage_ratio: number;
-
-  // Cash flow coverage ratios
-  working_capital_turnover_ratio: number;
-  operating_cash_flow_ratio: number;
-  operating_cash_flow_sales_ratio: number;
-  free_cash_flow_operating_cash_flow_ratio: number;
-  debt_service_coverage_ratio: number;
-  interest_coverage_ratio: number;
-  short_term_operating_cash_flow_coverage_ratio: number;
-  operating_cash_flow_coverage_ratio: number;
-  capital_expenditure_coverage_ratio: number;
-  dividend_paid_and_capex_coverage_ratio: number;
-
-  // Dividend ratios
-  dividend_payout_ratio: number;
-  dividend_yield: number;
-  dividend_yield_percentage: number;
-
-  // Per share metrics
-  revenue_per_share: number;
-  net_income_per_share: number;
-  interest_debt_per_share: number;
-  cash_per_share: number;
-  book_value_per_share: number;
-  tangible_book_value_per_share: number;
-  shareholders_equity_per_share: number;
-  operating_cash_flow_per_share: number;
-  capex_per_share: number;
-  free_cash_flow_per_share: number;
-
-  // Misc ratios
-  net_income_per_ebt: number;
-  ebt_per_ebit: number;
-  price_to_fair_value: number;
-  debt_to_market_cap: number;
-  effective_tax_rate: number;
-  enterprise_value_multiple: number;
-}
-
-interface Props {
-  symbol: string;
-}
-
-export const RatiosTab: React.FC<Props> = ({ symbol }) => {
-  const [data] = useState<CompanyFinancialRatios[]>(sampleRatio);
+export const RatiosTab: React.FC<{ financial_ratios: CompanyFinancialRatioRead[] }> = ({
+  financial_ratios,
+}) => {
+  const [data] = useState<CompanyFinancialRatioRead[]>(financial_ratios || []);
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No data available</p>;
@@ -109,7 +83,7 @@ export const RatiosTab: React.FC<Props> = ({ symbol }) => {
       acc[stmt.fiscal_year].push(stmt);
       return acc;
     },
-    {} as Record<string, CompanyFinancialRatios[]>,
+    {} as Record<string, CompanyFinancialRatioRead[]>,
   );
 
   Object.keys(groupedByYear).forEach((year) => {
@@ -117,7 +91,7 @@ export const RatiosTab: React.FC<Props> = ({ symbol }) => {
       (a, b) => quarterOrder.indexOf(a.period) - quarterOrder.indexOf(b.period),
     );
   });
-  const metricGroups: Record<string, (keyof CompanyFinancialRatios)[]> = {
+  const metricGroups: Record<string, (keyof CompanyFinancialRatioRead)[]> = {
     'Profitability Margins': [
       'gross_profit_margin',
       'ebit_margin',
@@ -216,7 +190,8 @@ export const RatiosTab: React.FC<Props> = ({ symbol }) => {
                           {metrics.map((metric) => (
                             <TableRow key={metric}>
                               <TableCell className="font-medium">
-                                {metric.replace(/_/g, ' ')}
+                                {metricLabels[metric as string] ||
+                                  String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
                                 <TableCell key={`${stmt.period}-${metric}`}>
