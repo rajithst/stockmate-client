@@ -45,3 +45,6 @@ export * from './rating';
 
 // Stock
 export * from './stock';
+
+// Financial Health
+export * from './financial_health';

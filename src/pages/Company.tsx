@@ -105,7 +105,7 @@ export const CompanyPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-4">
           <CompanyHeader company={data.company} />
           <PriceChangeChart price_change={data.price_change} />
-          <OverallHealthSummaryCard />
+          <OverallHealthSummaryCard symbol={data.company.symbol} />
           <LatestGrading latest_gradings={data.latest_gradings} />
           <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
           <CompanyNewsTabs news={companyNews} />

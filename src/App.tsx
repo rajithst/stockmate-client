@@ -6,6 +6,7 @@ import WatchlistPage from './pages/Watchlist.tsx';
 import Portfolio from './pages/Portfolio.tsx';
 import HoldingsPage from './pages/Holdings.tsx';
 import StockScreener from './pages/Screener.tsx';
+import HealthDetails from './pages/HealthDetails.tsx';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/screener" element={<StockScreener />} />
           <Route path="/company/:symbol" element={<CompanyPage />} />
           <Route path="/financials/:symbol" element={<FinancialsPage />} />
+          <Route path="/health/:symbol" element={<HealthDetails />} />
         </Routes>
       </AppLayout>
     </Router>

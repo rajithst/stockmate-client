@@ -1,6 +1,5 @@
 // TypeScript interfaces for Balance Sheet schemas
 // Generated from app/schemas/balance_sheet.py
-
 export interface CompanyBalanceSheet {
   company_id: number;
   symbol: string;

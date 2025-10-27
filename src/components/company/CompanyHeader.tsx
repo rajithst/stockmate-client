@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  Bell,
-  Eye,
-  PlusCircle,
-  Clock,
-} from 'lucide-react';
+import { BarChart3, Bell, Eye, PlusCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Button } from '../ui/button.tsx';

@@ -3,13 +3,14 @@
 
 // TypeScript interfaces for Company schemas
 // Generated from app/schemas/company.py
-import type { CompanyBalanceSheet, CompanyBalanceSheetRead } from './balance_sheet';
+import type { CompanyBalanceSheetRead } from './balance_sheet';
 import type { CompanyCashFlowStatementRead } from './cashflow';
 import type { DiscountedCashFlowRead } from './dcf';
 import type { CompanyDividendRead } from './dividend';
+import type { FinancialHealthRead } from './financial_health';
 import type { CompanyFinancialRatioRead } from './financial_ratio';
 import type { CompanyGradingRead, CompanyGradingSummaryRead } from './grading';
-import type { CompanyIncomeStatement, CompanyIncomeStatementRead } from './income_statement';
+import type { CompanyIncomeStatementRead } from './income_statement';
 import type { CompanyKeyMetricsRead } from './key_metrics';
 import type {
   CompanyGeneralNewsRead,
@@ -71,4 +72,15 @@ export interface CompanyFinancialsResponse {
   key_metrics: CompanyKeyMetricsRead[];
   financial_ratios: CompanyFinancialRatioRead[];
   dividends: CompanyDividendRead[];
+}
+
+export interface CompanyFinancialHealthResponse {
+  company: CompanyRead;
+  profitability: FinancialHealthRead[];
+  efficiency: FinancialHealthRead[];
+  liquidity_and_solvency: FinancialHealthRead[];
+  cashflow_strength: FinancialHealthRead[];
+  valuation: FinancialHealthRead[];
+  growth_and_investment: FinancialHealthRead[];
+  dividend_and_shareholder_return: FinancialHealthRead[];
 }
