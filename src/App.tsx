@@ -7,6 +7,7 @@ import Portfolio from './pages/Portfolio.tsx';
 import HoldingsPage from './pages/Holdings.tsx';
 import StockScreener from './pages/Screener.tsx';
 import HealthDetails from './pages/HealthDetails.tsx';
+import { HomePage } from './pages/Home.tsx';
 
 function App() {
   return (
@@ -14,10 +15,12 @@ function App() {
       <AppLayout>
         <Routes>
           {/*<Route path="/" element={<Dashboard />} />*/}
-          <Route path="/" element={<Portfolio />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/holdings" element={<HoldingsPage />} />
           <Route path="/screener" element={<StockScreener />} />
+          <Route path="/settings" element={<StockScreener />} />
           <Route path="/company/:symbol" element={<CompanyPage />} />
           <Route path="/financials/:symbol" element={<FinancialsPage />} />
           <Route path="/health/:symbol" element={<HealthDetails />} />

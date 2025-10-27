@@ -161,28 +161,88 @@ export const HealthDetailsPage: React.FC = () => {
       </div>
     );
 
+  // Helper to format market cap in readable format (e.g., 2.3T, 150B, 12.5M)
+  function formatMarketCap(value?: number) {
+    if (!value || isNaN(value)) return '-';
+    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+    return value.toLocaleString();
+  }
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Company Header */}
       {financialHealthData && (
         <Card className="mb-4 border-none shadow-lg bg-gradient-to-br from-blue-100 via-white to-indigo-50 rounded-2xl">
-          <CardContent className="flex items-center gap-4 py-4">
+          <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-6 py-4">
             {financialHealthData.company.image && (
               <img
                 src={financialHealthData.company.image}
                 alt={financialHealthData.company.company_name}
-                className="w-12 h-12 rounded-full border border-gray-200 bg-white object-contain"
+                className="w-20 h-20 rounded-full border border-gray-200 bg-white object-contain"
               />
             )}
-            <div>
-              <div className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                {financialHealthData.company.company_name}
-                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 rounded px-2 py-0.5 ml-2">
-                  {financialHealthData.company.symbol}
-                </span>
+            <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
+              <div>
+                <div className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  {financialHealthData.company.company_name}
+                  <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 rounded px-2 py-0.5 ml-2">
+                    {financialHealthData.company.symbol}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {financialHealthData.company.sector} &middot;{' '}
+                  {financialHealthData.company.industry}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Exchange:{' '}
+                  <span className="font-medium text-gray-700">
+                    {financialHealthData.company.exchange}
+                  </span>
+                  {financialHealthData.company.country && (
+                    <>
+                      {' '}
+                      | Country:{' '}
+                      <span className="font-medium text-gray-700">
+                        {financialHealthData.company.country}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {financialHealthData.company.website && (
+                  <div className="mt-1">
+                    <a
+                      href={financialHealthData.company.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-700 hover:underline"
+                    >
+                      {financialHealthData.company.website}
+                    </a>
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-gray-500">
-                {financialHealthData.company.sector} &middot; {financialHealthData.company.industry}
+              {/* Financial summary section - right side */}
+              <div className="flex flex-wrap gap-6 md:justify-end min-w-[180px]">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-gray-500">Current Price</span>
+                  <span className="font-semibold text-gray-800 text-lg">
+                    {financialHealthData.company.price
+                      ? `$${Number(financialHealthData.company.price).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-gray-500">Market Cap</span>
+                  <span className="font-semibold text-gray-800 text-lg">
+                    {formatMarketCap(financialHealthData.company.market_cap)}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
