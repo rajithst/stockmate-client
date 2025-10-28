@@ -23,31 +23,30 @@ const PortfolioGrowthChart: React.FC<Props> = ({ data }) => {
   }));
   const currency = lineData.length > 0 ? lineData[0].currency : '$';
   return (
-    <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-2xl shadow-md border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-800">📈 Portfolio Growth</h2>
-        <span className="text-xs text-gray-500">All values in {currency}</span>
+    <div className="bg-white rounded-2xl shadow-xl border-none p-6 mb-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800">Portfolio Growth</h2>
+        <span className="text-xs text-gray-500 bg-indigo-50 px-3 py-1 rounded-lg">
+          All values in {currency}
+        </span>
       </div>
 
       <div className="h-[340px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={lineData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-            {/* Gradients */}
             <defs>
               <linearGradient id="portfolioColor" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#16a34a" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="investedColor" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
               </linearGradient>
             </defs>
 
-            {/* Chart Grid */}
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
 
-            {/* X/Y Axis */}
             <XAxis
               dataKey="date"
               stroke="#9ca3af"
@@ -64,21 +63,19 @@ const PortfolioGrowthChart: React.FC<Props> = ({ data }) => {
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
             />
 
-            {/* Tooltip */}
             <Tooltip
               formatter={(v: number) => `${currency}${v.toLocaleString()}`}
               contentStyle={{
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                borderRadius: '10px',
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                borderRadius: '12px',
                 border: '1px solid #e5e7eb',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 fontSize: '12px',
-                padding: '8px 10px',
+                padding: '10px 12px',
               }}
               cursor={{ strokeDasharray: '3 3', stroke: '#d1d5db' }}
             />
 
-            {/* Legend */}
             <Legend
               verticalAlign="top"
               height={30}
@@ -90,14 +87,13 @@ const PortfolioGrowthChart: React.FC<Props> = ({ data }) => {
               }}
             />
 
-            {/* Lines */}
             <Line
               type="monotone"
               dataKey="Portfolio"
-              stroke="#16a34a"
-              strokeWidth={2.5}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              stroke="#6366f1"
+              strokeWidth={3}
+              dot={{ r: 4, fill: '#6366f1' }}
+              activeDot={{ r: 6 }}
               fill="url(#portfolioColor)"
               fillOpacity={1}
               animationDuration={800}
@@ -105,10 +101,10 @@ const PortfolioGrowthChart: React.FC<Props> = ({ data }) => {
             <Line
               type="monotone"
               dataKey="Invested"
-              stroke="#3b82f6"
-              strokeWidth={2.5}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              stroke="#8b5cf6"
+              strokeWidth={3}
+              dot={{ r: 4, fill: '#8b5cf6' }}
+              activeDot={{ r: 6 }}
               fill="url(#investedColor)"
               fillOpacity={1}
               animationDuration={800}

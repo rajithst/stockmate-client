@@ -4,7 +4,8 @@ import { Briefcase, Eye, Settings, Home as HomeIcon } from 'lucide-react';
 
 const navItems = [
   { name: 'Home', icon: HomeIcon, path: '/' },
-  { name: 'Portfolio', icon: Briefcase, path: '/portfolio' },
+  { name: 'Holdings', icon: Eye, path: '/holdings' },
+  { name: 'Dividends', icon: Briefcase, path: '/dividend' },
   { name: 'Watchlist', icon: Eye, path: '/watchlist' },
   { name: 'Screener', icon: Eye, path: '/screener' },
   { name: 'Settings', icon: Settings, path: '/settings' },

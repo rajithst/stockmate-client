@@ -3,20 +3,20 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 const COLORS = [
-  '#f87171',
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#a78bfa',
-  '#f472b6',
-  '#fcd34d',
-  '#4ade80',
-  '#c084fc',
-  '#facc15',
-  '#38bdf8',
-  '#fb7185',
-  '#2dd4bf',
-  '#a3e635',
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#f43f5e',
+  '#f97316',
+  '#eab308',
+  '#84cc16',
+  '#22c55e',
+  '#10b981',
+  '#14b8a6',
+  '#06b6d4',
+  '#0ea5e9',
+  '#3b82f6',
+  '#6366f1',
 ];
 
 interface Props {
@@ -33,7 +33,7 @@ interface BreakdownItem {
   value: number;
   percent: number;
   color: string;
-  gain: number; // e.g. +3.2 or -1.5 (%)
+  gain: number;
 }
 
 interface CategoryBreakdownProps {
@@ -47,11 +47,11 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
     return (
       <div
         key={title}
-        className={`bg-white rounded-xl shadow-md p-6 flex flex-col justify-center ${
+        className={`bg-white rounded-2xl shadow-xl p-6 border-none flex flex-col justify-center ${
           fullWidth ? 'w-full' : 'w-full md:w-[65%]'
         }`}
       >
-        <h3 className="font-semibold mb-4 text-lg text-gray-800">Allocation by {title}</h3>
+        <h3 className="font-bold mb-6 text-lg text-gray-800">Allocation by {title}</h3>
         <div className="flex justify-center items-center flex-1">
           <ResponsiveContainer width="95%" height={fullWidth ? 420 : 340}>
             <PieChart>
@@ -87,7 +87,7 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
       value,
       percent: (value / total) * 100,
       color: COLORS[i % COLORS.length],
-      gain: (Math.random() - 0.5) * 10, // mock +/-5% change
+      gain: (Math.random() - 0.5) * 10,
     }));
   };
 
@@ -109,7 +109,7 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
         </div>
       </div>
 
-      {/* Company — chart only, full width */}
+      {/* Company */}
       <div className="flex">{renderChart('Company', allocation.company, true)}</div>
     </div>
   );
@@ -117,28 +117,26 @@ const PortfolioAllocationCharts: React.FC<Props> = ({ allocation, currency }) =>
 
 export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data }) => {
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 flex flex-col w-full">
-      <h3 className="font-semibold mb-4 text-lg">Breakdown</h3>
+    <div className="bg-white rounded-2xl shadow-xl p-6 border-none flex flex-col w-full">
+      <h3 className="font-bold mb-4 text-lg text-gray-800">Breakdown</h3>
 
-      <div className="space-y-3 overflow-y-auto max-h-[300px]">
+      <div className="space-y-3 overflow-y-auto max-h-[340px]">
         {data.map((item, i) => {
           const isGain = item.gain >= 0;
           return (
             <div
               key={i}
-              className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-none"
+              className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-none"
             >
-              {/* Left section — Color dot + name */}
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-3 min-w-0">
                 <span
-                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  className="w-4 h-4 rounded-full flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-gray-800 font-medium truncate">{item.name}</span>
+                <span className="text-gray-800 font-semibold truncate text-sm">{item.name}</span>
               </div>
 
-              {/* Middle section — Allocation bar */}
-              <div className="flex-1 mx-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="flex-1 mx-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -148,8 +146,7 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ data }) =>
                 ></div>
               </div>
 
-              {/* Right section — Gain/loss */}
-              <div className="flex items-center gap-1 text-sm font-medium w-16 justify-end">
+              <div className="flex items-center gap-1 text-sm font-semibold w-20 justify-end">
                 {isGain ? (
                   <ArrowUpRight className="w-4 h-4 text-green-500" />
                 ) : (
