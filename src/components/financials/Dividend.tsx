@@ -44,10 +44,12 @@ export const DividendTab: React.FC<{ dividends: CompanyDividendRead[] }> = ({ di
             <AccordionContent>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
+                  <TableRow className="h-7">
+                    <TableHead className="px-2 py-1 text-xs">Date</TableHead>
                     {metrics.map((m) => (
-                      <TableHead key={m}>{metricLabels[m as string] || String(m)}</TableHead>
+                      <TableHead key={m} className="px-2 py-1 text-xs text-center">
+                        {metricLabels[m as string] || String(m)}
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -55,10 +57,10 @@ export const DividendTab: React.FC<{ dividends: CompanyDividendRead[] }> = ({ di
                   {dividends
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map((div) => (
-                      <TableRow key={div.date}>
-                        <TableCell>{div.date}</TableCell>
+                      <TableRow key={div.date} className="h-6 hover:bg-indigo-50">
+                        <TableCell className="px-2 py-1 text-xs">{div.date}</TableCell>
                         {metrics.map((m) => (
-                          <TableCell key={m}>
+                          <TableCell key={m} className="px-2 py-1 text-xs text-right">
                             {(div as any)[m] !== null && (div as any)[m] !== undefined
                               ? (div as any)[m]
                               : '-'}

@@ -7,7 +7,7 @@ import type { CompanyBalanceSheetRead } from './balance_sheet';
 import type { CompanyCashFlowStatementRead } from './cashflow';
 import type { DiscountedCashFlowRead } from './dcf';
 import type { CompanyDividendRead } from './dividend';
-import type { FinancialHealthRead } from './financial_health';
+import type { CompanyFinancialHealthRead } from './financial_health';
 import type { CompanyFinancialRatioRead } from './financial_ratio';
 import type { CompanyGradingRead, CompanyGradingSummaryRead } from './grading';
 import type { CompanyIncomeStatementRead } from './income_statement';
@@ -20,6 +20,7 @@ import type {
 import type { CompanyPriceTargetRead, CompanyPriceTargetSummaryRead } from './price_target';
 import type { StockPriceChangeRead } from './quote';
 import type { CompanyRatingSummaryRead } from './rating';
+import type { CompanyTechnicalIndicatorRead } from './technical_indicator';
 
 export interface Company {
   symbol: string;
@@ -63,6 +64,7 @@ export interface CompanyPageResponse {
   price_target_news: CompanyPriceTargetNewsRead[];
   general_news: CompanyGeneralNewsRead[];
   grading_news: CompanyGradingNewsRead[];
+  technical_indicators: CompanyTechnicalIndicatorRead[];
 }
 
 export interface CompanyFinancialsResponse {
@@ -76,11 +78,11 @@ export interface CompanyFinancialsResponse {
 
 export interface CompanyFinancialHealthResponse {
   company: CompanyRead;
-  profitability: FinancialHealthRead[];
-  efficiency: FinancialHealthRead[];
-  liquidity_and_solvency: FinancialHealthRead[];
-  cashflow_strength: FinancialHealthRead[];
-  valuation: FinancialHealthRead[];
-  growth_and_investment: FinancialHealthRead[];
-  dividend_and_shareholder_return: FinancialHealthRead[];
+  profitability: CompanyFinancialHealthRead[];
+  efficiency: CompanyFinancialHealthRead[];
+  liquidity_and_solvency: CompanyFinancialHealthRead[];
+  cashflow_strength: CompanyFinancialHealthRead[];
+  valuation: CompanyFinancialHealthRead[];
+  growth_and_investment: CompanyFinancialHealthRead[];
+  dividend_and_shareholder_return: CompanyFinancialHealthRead[];
 }

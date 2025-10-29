@@ -1,4 +1,4 @@
-export interface FinancialHealth {
+export interface CompanyFinancialHealth {
   company_id: number;
   symbol: string;
   section: string;
@@ -9,9 +9,9 @@ export interface FinancialHealth {
   insight?: string | null;
 }
 
-export interface FinancialHealthWrite extends FinancialHealth {}
+export interface CompanyFinancialHealthWrite extends CompanyFinancialHealth {}
 
-export interface FinancialHealthRead extends FinancialHealth {
+export interface CompanyFinancialHealthRead extends CompanyFinancialHealth {
   id: number;
   created_at?: string;
   updated_at?: string;

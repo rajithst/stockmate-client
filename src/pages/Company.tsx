@@ -9,9 +9,11 @@ import { DcfSummaryCard } from '../components/company/DiscountedCashFlow.tsx';
 import { PriceTargetCard, PriceTargetSummaryCard } from '../components/company/PriceTarget.tsx';
 import { RatingSummaryCard } from '../components/company/RatingSummary.tsx';
 import LatestGrading from '../components/company/LatestGrading.tsx';
+import { TechnicalIndicators } from '../components/company/TechnicalIndicators.tsx';
 import { apiClient } from '../api/client';
 import type { CompanyPageResponse } from '../types';
 import { OverallHealthSummaryCard } from '../components/company/OverallHealth.tsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 export const CompanyPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
@@ -98,27 +100,89 @@ export const CompanyPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Top Section: Responsive 2-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-4">
-          <CompanyHeader company={data.company} />
-          <PriceChangeChart price_change={data.price_change} />
-          <OverallHealthSummaryCard symbol={data.company.symbol} />
-          <LatestGrading latest_gradings={data.latest_gradings} />
-          <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
-          <CompanyNewsTabs news={companyNews} />
-        </div>
+    <div className="container mx-auto p-4 space-y-4">
+      {/* Main Header - Always Visible */}
+      <CompanyHeader company={data.company} />
 
-        {/* Right Column */}
-        <div className="space-y-4">
-          <StockGradingSummaryCard summary={data.grading_summary} />
-          <DcfSummaryCard discounted_cash_flow={data.dcf} />
-          <PriceTargetCard price_target={data.price_target} />
+      {/* Tabs Section */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="fundamentals"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+          >
+            Fundamentals
+          </TabsTrigger>
+          <TabsTrigger
+            value="ratings"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+          >
+            Ratings
+          </TabsTrigger>
+          <TabsTrigger
+            value="technical"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+          >
+            Technical
+          </TabsTrigger>
+          <TabsTrigger
+            value="news"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+          >
+            News
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-4">
+          {/* Price Chart - Full Width */}
+          <PriceChangeChart price_change={data.price_change} />
+
+          {/* Health & Grading Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <OverallHealthSummaryCard symbol={data.company.symbol} />
+            <StockGradingSummaryCard summary={data.grading_summary} />
+          </div>
+
+          {/* Rating Summary - Centered and Reduced Width */}
+          <div className="flex justify-center">
+            <div className="w-full lg:w-1/2">
+              <RatingSummaryCard rating_summary={data.rating_summary} />
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Fundamentals Tab */}
+        <TabsContent value="fundamentals" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <DcfSummaryCard discounted_cash_flow={data.dcf} />
+            <PriceTargetCard price_target={data.price_target} />
+          </div>
+          <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
+        </TabsContent>
+
+        {/* Ratings Tab */}
+        <TabsContent value="ratings" className="space-y-4">
+          <LatestGrading latest_gradings={data.latest_gradings} />
           <RatingSummaryCard rating_summary={data.rating_summary} />
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Technical Indicators Tab */}
+        <TabsContent value="technical">
+          <TechnicalIndicators symbol={data.company.symbol} />
+        </TabsContent>
+
+        {/* News Tab */}
+        <TabsContent value="news">
+          <CompanyNewsTabs news={companyNews} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

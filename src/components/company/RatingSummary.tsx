@@ -22,7 +22,7 @@ export interface RatingSummary {
   priceToBookScore: number;
 }
 
-export const RatingSummaryCard: React.FC<{ rating_summary: CompanyRatingSummaryRead }> = ({
+export const RatingSummaryCard: React.FC<{ rating_summary: CompanyRatingSummaryRead | {} }> = ({
   rating_summary,
 }) => {
   const items = [

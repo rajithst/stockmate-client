@@ -48,3 +48,5 @@ export * from './stock';
 
 // Financial Health
 export * from './financial_health';
+
+export * from './technical_indicator';

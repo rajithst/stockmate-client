@@ -58,7 +58,7 @@ export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummaryR
         </Badge>
       </CardHeader>
 
-      <CardContent className="space-y-4 relative z-10">
+      <CardContent className="space-y-4 relative z-10 flex flex-col h-full">
         {/* Horizontal visual bar */}
         <div className="relative h-3 bg-gray-200 rounded-md overflow-hidden">
           {/* subtle blue gradient */}
@@ -82,7 +82,7 @@ export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummaryR
         </div>
 
         {/* Clean aligned breakdown list */}
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-200 flex-grow">
           {items.map((item) => (
             <div key={item.label} className="flex justify-between items-center py-1.5 text-sm">
               <div className="flex items-center space-x-2">
@@ -96,7 +96,7 @@ export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummaryR
           ))}
         </div>
 
-        {/* Last updated */}
+        {/* Last updated - Bottom */}
         {formattedLastUpdated && (
           <div className="flex items-center justify-end pt-3">
             <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">

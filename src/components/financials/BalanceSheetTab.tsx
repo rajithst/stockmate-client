@@ -183,27 +183,35 @@ export const BalanceSheetTab: React.FC<{ balance_sheets: CompanyBalanceSheetRead
               </AccordionTrigger>
               <AccordionContent>
                 {Object.entries(metricGroups).map(([groupName, metrics]) => (
-                  <Card key={groupName} className="mb-6">
-                    <CardTitle className="p-4 text-lg font-semibold">{groupName}</CardTitle>
-                    <CardContent className="overflow-x-auto">
+                  <Card key={groupName} className="mb-4">
+                    <CardTitle className="p-2 text-sm font-semibold">{groupName}</CardTitle>
+                    <CardContent className="overflow-x-auto p-0">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead>Metric</TableHead>
+                          <TableRow className="h-7">
+                            <TableHead className="px-2 py-1 text-xs">Metric</TableHead>
                             {statements.map((stmt) => (
-                              <TableHead key={stmt.period}>{stmt.period}</TableHead>
+                              <TableHead
+                                key={stmt.period}
+                                className="px-2 py-1 text-xs text-center"
+                              >
+                                {stmt.period}
+                              </TableHead>
                             ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {metrics.map((metric) => (
-                            <TableRow key={metric}>
-                              <TableCell className="font-medium">
+                            <TableRow key={metric} className="h-6 hover:bg-indigo-50">
+                              <TableCell className="px-2 py-1 font-medium text-xs">
                                 {metricLabels[metric as string] ||
                                   String(metric).replace(/_/g, ' ')}
                               </TableCell>
                               {statements.map((stmt) => (
-                                <TableCell key={`${stmt.period}-${metric}`}>
+                                <TableCell
+                                  key={`${stmt.period}-${metric}`}
+                                  className="px-2 py-1 text-xs text-right"
+                                >
                                   {stmt[metric] !== null && stmt[metric] !== undefined
                                     ? stmt[metric].toLocaleString?.()
                                     : '-'}
