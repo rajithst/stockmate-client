@@ -1,8 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Search, TrendingUp, BarChart2, PieChart } from 'lucide-react';
+import { Search, TrendingUp, BarChart2, X } from 'lucide-react';
+
+// Mock company data with logos (matching AppHeader)
+const mockCompanies = [
+  { symbol: 'AAPL', name: 'Apple Inc.', logo: 'https://logo.clearbit.com/apple.com' },
+  {
+    symbol: 'MSFT',
+    name: 'Microsoft Corporation',
+    logo: 'https://logo.clearbit.com/microsoft.com',
+  },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', logo: 'https://logo.clearbit.com/google.com' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', logo: 'https://logo.clearbit.com/amazon.com' },
+  { symbol: 'TSLA', name: 'Tesla Inc.', logo: 'https://logo.clearbit.com/tesla.com' },
+  { symbol: 'META', name: 'Meta Platforms Inc.', logo: 'https://logo.clearbit.com/meta.com' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', logo: 'https://logo.clearbit.com/nvidia.com' },
+  {
+    symbol: 'JPM',
+    name: 'JPMorgan Chase & Co.',
+    logo: 'https://logo.clearbit.com/jpmorganchase.com',
+  },
+  { symbol: 'V', name: 'Visa Inc.', logo: 'https://logo.clearbit.com/visa.com' },
+  { symbol: 'JNJ', name: 'Johnson & Johnson', logo: 'https://logo.clearbit.com/jnj.com' },
+  { symbol: 'WMT', name: 'Walmart Inc.', logo: 'https://logo.clearbit.com/walmart.com' },
+  { symbol: 'DIS', name: 'The Walt Disney Company', logo: 'https://logo.clearbit.com/disney.com' },
+];
 
 const marketIndices = [
   {
@@ -64,15 +87,6 @@ const marketIndices = [
   },
 ];
 
-const dummyCompanies = [
-  { symbol: 'AAPL', company_name: 'Apple Inc.' },
-  { symbol: 'MSFT', company_name: 'Microsoft Corporation' },
-  { symbol: 'GOOGL', company_name: 'Alphabet Inc.' },
-  { symbol: 'AMZN', company_name: 'Amazon.com, Inc.' },
-  { symbol: 'TSLA', company_name: 'Tesla, Inc.' },
-  // ...more
-];
-
 // Example trending stocks (replace with real API)
 const trendingStocks = [
   { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 120.45, change: 2.34, changePct: 1.98 },
@@ -91,24 +105,51 @@ const sectorPerformance = [
 ];
 
 export const HomePage: React.FC = () => {
-  const [search, setSearch] = useState('');
-  const [companies, setCompanies] = useState(dummyCompanies);
-  const [filtered, setFiltered] = useState(dummyCompanies);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof mockCompanies>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const navigate = useNavigate();
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!search) {
-      setFiltered(companies);
-    } else {
-      setFiltered(
-        companies.filter(
-          (c) =>
-            c.company_name.toLowerCase().includes(search.toLowerCase()) ||
-            c.symbol.toLowerCase().includes(search.toLowerCase()),
-        ),
+  // Handle search input
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim()) {
+      const filtered = mockCompanies.filter(
+        (company) =>
+          company.symbol.toLowerCase().includes(query.toLowerCase()) ||
+          company.name.toLowerCase().includes(query.toLowerCase()),
       );
+      setSearchResults(filtered);
+      setShowSearchDropdown(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
     }
-  }, [search, companies]);
+  };
+
+  // Handle company selection
+  const handleSelectCompany = (symbol: string) => {
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+    setSearchResults([]);
+    navigate(`/company/${symbol}`);
+  };
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    }
+    if (showSearchDropdown) {
+      document.addEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showSearchDropdown]);
 
   return (
     <div className="container mx-auto py-10 px-4">
@@ -121,34 +162,64 @@ export const HomePage: React.FC = () => {
           Discover market trends, track your favorite companies, and explore sector performance with
           real-time insights.
         </p>
-        <div className="relative w-full max-w-2xl">
-          <Input
-            className="w-full text-lg px-5 py-4 rounded-2xl border border-gray-200 shadow focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
-            placeholder="Search for a company by name or symbol..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 w-6 h-6 pointer-events-none" />
-        </div>
-        {search && (
-          <div className="w-full max-w-2xl bg-white border border-gray-100 rounded-2xl shadow-lg mt-2 max-h-80 overflow-y-auto animate-fade-in">
-            {filtered.length === 0 && (
-              <div className="p-6 text-gray-500 text-center">No companies found.</div>
-            )}
-            {filtered.map((c) => (
-              <div
-                key={c.symbol}
-                className="px-6 py-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition"
-                onClick={() => navigate(`/company/${c.symbol}`)}
+        {/* Search Bar with Company Logos */}
+        <div ref={searchContainerRef} className="relative w-full max-w-2xl">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search stocks by symbol or company name..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onFocus={() => searchQuery && setShowSearchDropdown(true)}
+              className="w-full h-12 pl-12 pr-10 text-base rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                  setSearchResults([]);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
               >
-                <span className="font-medium text-gray-800">{c.company_name}</span>
-                <span className="text-xs font-mono text-indigo-600 bg-indigo-50 rounded px-2 py-0.5">
-                  {c.symbol}
-                </span>
+                <X className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Search Dropdown with Company Logos */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                {searchResults.map((company) => (
+                  <button
+                    key={company.symbol}
+                    onClick={() => handleSelectCompany(company.symbol)}
+                    className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={company.logo}
+                        alt={company.symbol}
+                        className="w-10 h-10 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-1"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
+                          {company.symbol}
+                        </p>
+                        <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate">
+                          {company.name}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Market Indices */}

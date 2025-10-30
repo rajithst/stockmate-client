@@ -8,10 +8,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import React, { useState } from 'react';
-import { sampleWatchLists } from '../data/sample_watch_list.tsx';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Plus, Edit2, Trash2, Search, TrendingUp, TrendingDown, X } from 'lucide-react';
+import { Star, Plus, Trash2, Search, TrendingUp, TrendingDown, X } from 'lucide-react';
+
+// Mock company data with logos (matching AppHeader)
+const mockCompanies = [
+  { symbol: 'AAPL', name: 'Apple Inc.', logo: 'https://logo.clearbit.com/apple.com' },
+  {
+    symbol: 'MSFT',
+    name: 'Microsoft Corporation',
+    logo: 'https://logo.clearbit.com/microsoft.com',
+  },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', logo: 'https://logo.clearbit.com/google.com' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', logo: 'https://logo.clearbit.com/amazon.com' },
+  { symbol: 'TSLA', name: 'Tesla Inc.', logo: 'https://logo.clearbit.com/tesla.com' },
+  { symbol: 'META', name: 'Meta Platforms Inc.', logo: 'https://logo.clearbit.com/meta.com' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', logo: 'https://logo.clearbit.com/nvidia.com' },
+  {
+    symbol: 'JPM',
+    name: 'JPMorgan Chase & Co.',
+    logo: 'https://logo.clearbit.com/jpmorganchase.com',
+  },
+  { symbol: 'V', name: 'Visa Inc.', logo: 'https://logo.clearbit.com/visa.com' },
+  { symbol: 'JNJ', name: 'Johnson & Johnson', logo: 'https://logo.clearbit.com/jnj.com' },
+  { symbol: 'WMT', name: 'Walmart Inc.', logo: 'https://logo.clearbit.com/walmart.com' },
+  { symbol: 'DIS', name: 'The Walt Disney Company', logo: 'https://logo.clearbit.com/disney.com' },
+];
 
 interface WatchlistItem {
   symbol: string;
@@ -30,16 +53,75 @@ interface Watchlist {
   items: WatchlistItem[];
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+}
+
 const WatchlistPage: React.FC = () => {
-  const [watchlists, setWatchlists] = useState<Watchlist[]>(sampleWatchLists);
+  const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>(watchlists[0]?.id || '');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<WatchlistItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof mockCompanies>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newWatchlistName, setNewWatchlistName] = useState('');
   const [newWatchlistCurrency, setNewWatchlistCurrency] = useState('USD');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const activeWatchlist = watchlists.find((wl) => wl.id === activeWatchlistId);
+
+  // Add notification
+  const addNotification = (type: Notification['type'], message: string, duration = 3000) => {
+    const id = Date.now().toString();
+    setNotifications((prev) => [...prev, { id, type, message, duration }]);
+
+    if (duration > 0) {
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, duration);
+    }
+  };
+
+  // Remove notification
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  // Handle search input
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim()) {
+      const filtered = mockCompanies.filter(
+        (company) =>
+          company.symbol.toLowerCase().includes(query.toLowerCase()) ||
+          company.name.toLowerCase().includes(query.toLowerCase()),
+      );
+      setSearchResults(filtered);
+      setShowSearchDropdown(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    }
+    if (showSearchDropdown) {
+      document.addEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showSearchDropdown]);
 
   // Add new watchlist
   const addWatchlist = () => {
@@ -65,51 +147,62 @@ const WatchlistPage: React.FC = () => {
     }
   };
 
-  const handleSearch = () => {
-    const allStocks: WatchlistItem[] = [
-      {
-        symbol: 'AAPL',
-        companyName: 'Apple Inc.',
-        price: 180,
-        changePercent: 1.2,
-        marketCap: 3000000000000,
-      },
-      {
-        symbol: 'MSFT',
-        companyName: 'Microsoft Corp.',
-        price: 350,
-        changePercent: -0.5,
-        marketCap: 2800000000000,
-      },
-      {
-        symbol: 'GOOGL',
-        companyName: 'Alphabet Inc.',
-        price: 140,
-        changePercent: 0.3,
-        marketCap: 1800000000000,
-      },
-    ];
+  // Add stock to active watchlist
+  const addStockToActive = (company: (typeof mockCompanies)[0]) => {
+    // If no watchlist exists, create one first
+    if (watchlists.length === 0) {
+      const newList: Watchlist = {
+        id: Date.now().toString(),
+        name: 'My Watchlist',
+        currency: 'USD',
+        items: [],
+      };
+      setWatchlists([newList]);
+      setActiveWatchlistId(newList.id);
 
-    setSearchResults(
-      allStocks.filter(
-        (stock) =>
-          stock.symbol.includes(searchTerm.toUpperCase()) ||
-          stock.companyName.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    );
-  };
+      // Add stock to the newly created watchlist
+      const newItem: WatchlistItem = {
+        symbol: company.symbol,
+        companyName: company.name,
+        price: Math.random() * 300 + 50,
+        changePercent: Math.random() * 10 - 5,
+        marketCap: Math.random() * 3000000000000,
+        peRatio: Math.random() * 30 + 10,
+      };
 
-  const addStockToActive = (stock: WatchlistItem) => {
+      setWatchlists((prev) => [{ ...prev[0], items: [newItem] }]);
+      setSearchResults([]);
+      setSearchQuery('');
+      setShowSearchDropdown(false);
+      return;
+    }
+
     if (!activeWatchlist) return;
-    if (activeWatchlist.items.find((item) => item.symbol === stock.symbol)) return;
+
+    // Check if already exists
+    if (activeWatchlist.items.find((item) => item.symbol === company.symbol)) {
+      addNotification('warning', `${company.symbol} is already in this watchlist`);
+      return;
+    }
+
+    // Create watchlist item from company data
+    const newItem: WatchlistItem = {
+      symbol: company.symbol,
+      companyName: company.name,
+      price: Math.random() * 300 + 50, // Mock price
+      changePercent: Math.random() * 10 - 5, // Mock change
+      marketCap: Math.random() * 3000000000000, // Mock market cap
+      peRatio: Math.random() * 30 + 10, // Mock P/E
+    };
 
     setWatchlists((prev) =>
       prev.map((wl) =>
-        wl.id === activeWatchlist.id ? { ...wl, items: [...wl.items, stock] } : wl,
+        wl.id === activeWatchlist.id ? { ...wl, items: [...wl.items, newItem] } : wl,
       ),
     );
     setSearchResults([]);
-    setSearchTerm('');
+    setSearchQuery('');
+    setShowSearchDropdown(false);
   };
 
   const removeStock = (symbol: string) => {
@@ -124,7 +217,7 @@ const WatchlistPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 space-y-4">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-5"></div>
@@ -200,7 +293,7 @@ const WatchlistPage: React.FC = () => {
                       {/* Top 5 Gainers */}
                       <div className="flex-1 flex gap-1.5 overflow-x-auto pb-1">
                         {topGainers.length > 0 ? (
-                          topGainers.map((stock, idx) => (
+                          topGainers.map((stock) => (
                             <div
                               key={`gainer-${stock.symbol}`}
                               className="flex-shrink-0 px-2 py-1.5 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100 border border-green-300 hover:shadow-md transition cursor-default"
@@ -223,7 +316,7 @@ const WatchlistPage: React.FC = () => {
                       {/* Top 5 Losers */}
                       <div className="flex-1 flex gap-1.5 overflow-x-auto pb-1">
                         {topLosers.length > 0 ? (
-                          topLosers.map((stock, idx) => (
+                          topLosers.map((stock) => (
                             <div
                               key={`loser-${stock.symbol}`}
                               className="flex-shrink-0 px-2 py-1.5 rounded-lg bg-gradient-to-br from-red-100 to-rose-100 border border-red-300 hover:shadow-md transition cursor-default"
@@ -279,80 +372,69 @@ const WatchlistPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Search Bar */}
-      <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm">
+      {/* Search Bar with Company Logos */}
+      <Card className="shadow-xl rounded-2xl border-0 overflow-visible bg-white/80 backdrop-blur-sm relative z-40">
         <div className="p-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <Input
-                placeholder="Search by symbol or company name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="h-9 pl-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <Button
-              size="sm"
-              onClick={handleSearch}
-              className="h-9 px-4 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md"
-            >
-              Search
-            </Button>
-          </div>
+          <div ref={searchContainerRef} className="relative z-50">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search stocks by symbol or company name..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onFocus={() => searchQuery && setShowSearchDropdown(true)}
+              className="w-full h-10 pl-12 pr-10 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                  setSearchResults([]);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-gray-700">
-                  Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchResults([]);
-                    setSearchTerm('');
-                  }}
-                  className="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  Clear
-                </button>
-              </div>
-              {searchResults.map((stock) => (
-                <div
-                  key={stock.symbol}
-                  className="flex justify-between items-center p-2.5 rounded-lg bg-gradient-to-r from-gray-50 to-indigo-50/30 hover:from-indigo-50 hover:to-purple-50 transition border border-gray-200 hover:border-indigo-300"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                      <span className="text-white font-bold text-xs">
-                        {stock.symbol.substring(0, 2)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-gray-800">{stock.symbol}</p>
-                      <p className="text-xs text-gray-500">{stock.companyName}</p>
+            {/* Search Dropdown with Company Logos */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-2xl z-[100] max-h-96 overflow-y-auto">
+                {searchResults.map((company) => (
+                  <div
+                    key={company.symbol}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addStockToActive(company);
+                    }}
+                    className="w-full px-3 py-3 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={company.logo}
+                        alt={company.symbol}
+                        className="w-9 h-9 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-1"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
+                          {company.symbol}
+                        </p>
+                        <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate">
+                          {company.name}
+                        </p>
+                      </div>
+                      <Plus className="w-4 h-4 text-green-600 flex-shrink-0" />
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => addStockToActive(stock)}
-                    className="h-7 px-3 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {searchTerm && searchResults.length === 0 && (
-            <div className="mt-3 text-center py-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">No stocks found matching "{searchTerm}"</p>
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -437,7 +519,7 @@ const WatchlistPage: React.FC = () => {
           </div>
         </Card>
       ) : (
-        <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm relative z-0">
           <div className="p-8 text-center">
             <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <h3 className="text-base font-semibold text-gray-700 mb-1">No stocks in watchlist</h3>
@@ -512,6 +594,73 @@ const WatchlistPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Notifications Toast */}
+      <div className="fixed bottom-4 right-4 space-y-2 z-[200]">
+        {notifications.map((notification) => {
+          const bgColor =
+            notification.type === 'success'
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600'
+              : notification.type === 'error'
+                ? 'bg-gradient-to-r from-red-500 to-rose-600'
+                : notification.type === 'warning'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600'
+                  : 'bg-gradient-to-r from-blue-500 to-indigo-600';
+
+          const icon =
+            notification.type === 'success' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : notification.type === 'error' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : notification.type === 'warning' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zm6 0a1 1 0 11-2 0 1 1 0 012 0zm2 1a1 1 0 100-2 1 1 0 000 2z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            );
+
+          return (
+            <div
+              key={notification.id}
+              className={`${bgColor} text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 min-w-[320px] animate-slide-in`}
+            >
+              <div className="flex-shrink-0">{icon}</div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">{notification.message}</p>
+              </div>
+              <button
+                onClick={() => removeNotification(notification.id)}
+                className="flex-shrink-0 text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

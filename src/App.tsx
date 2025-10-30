@@ -3,7 +3,6 @@ import { AppLayout } from './layout/AppLayout.tsx';
 import { CompanyPage } from './pages/Company.tsx';
 import FinancialsPage from './pages/Financials.tsx';
 import WatchlistPage from './pages/Watchlist.tsx';
-import Portfolio from './pages/Portfolio.tsx';
 import HoldingsPage from './pages/Holdings.tsx';
 import StockScreener from './pages/Screener.tsx';
 import HealthDetails from './pages/HealthDetails.tsx';

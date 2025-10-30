@@ -172,7 +172,7 @@ export const HealthDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Company Header */}
       {financialHealthData && (
         <Card className="mb-4 border-none shadow-lg bg-gradient-to-br from-blue-100 via-white to-indigo-50 rounded-2xl">
@@ -261,7 +261,7 @@ export const HealthDetailsPage: React.FC = () => {
             ← Back
           </Button>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-4">
           {sections.map((section) => (
             <div key={section.title} className="">
               <h3 className="text-lg font-semibold text-indigo-700 mb-2">{section.title}</h3>
@@ -277,7 +277,7 @@ export const HealthDetailsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {section.metrics.map((row, idx) => (
+                    {section.metrics.map((row) => (
                       <tr
                         key={row[0]}
                         className="border-b last:border-none hover:bg-white/60 transition"

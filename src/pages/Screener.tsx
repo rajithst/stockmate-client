@@ -2,13 +2,6 @@ import React, { useState } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
 import { ArrowDown, ArrowUp, Filter, RotateCcw, DollarSign, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -101,7 +94,6 @@ const StockScreener: React.FC = () => {
   const [sortKey, setSortKey] = useState<keyof FMPStockScreenResult | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const rowsPerPage = 10;
 
   const handleInputChange = (key: keyof ScreenParams, value: string | number | boolean) => {
@@ -152,7 +144,7 @@ const StockScreener: React.FC = () => {
   const paginated = sorted.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 space-y-4">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-5"></div>
@@ -178,229 +170,202 @@ const StockScreener: React.FC = () => {
 
       {/* Filters Section */}
       <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm">
-        <div
-          className="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 cursor-pointer hover:bg-gradient-to-r hover:from-indigo-100/50 hover:to-purple-100/50 transition-colors flex justify-between items-center"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-indigo-600" />
-            <p className="text-sm font-bold text-gray-800">Filters</p>
+        <div className="p-4 space-y-4">
+          {/* Filters Title */}
+          <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+            <Filter className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-lg font-bold text-gray-800">Filter Stocks</h2>
           </div>
-          <ArrowDown
-            className={`w-4 h-4 text-gray-600 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-          />
-        </div>
 
-        {showFilters && (
-          <div className="p-4 space-y-3 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Market Cap */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Market Cap</label>
-                <div className="flex gap-1.5">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    value={params.market_cap_more_than || ''}
-                    onChange={(e) =>
-                      handleInputChange('market_cap_more_than', Number(e.target.value))
-                    }
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    value={params.market_cap_lower_than || ''}
-                    onChange={(e) =>
-                      handleInputChange('market_cap_lower_than', Number(e.target.value))
-                    }
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Price */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Price</label>
-                <div className="flex gap-1.5">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    value={params.price_more_than || ''}
-                    onChange={(e) => handleInputChange('price_more_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    value={params.price_lower_than || ''}
-                    onChange={(e) => handleInputChange('price_lower_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Dividend */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Dividend</label>
-                <div className="flex gap-1.5">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    step="0.01"
-                    value={params.dividend_more_than || ''}
-                    onChange={(e) =>
-                      handleInputChange('dividend_more_than', Number(e.target.value))
-                    }
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    step="0.01"
-                    value={params.dividend_lower_than || ''}
-                    onChange={(e) =>
-                      handleInputChange('dividend_lower_than', Number(e.target.value))
-                    }
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Volume */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Volume</label>
-                <div className="flex gap-1.5">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    value={params.volume_more_than || ''}
-                    onChange={(e) => handleInputChange('volume_more_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    value={params.volume_lower_than || ''}
-                    onChange={(e) => handleInputChange('volume_lower_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Beta */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Beta</label>
-                <div className="flex gap-1.5">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    step="0.01"
-                    value={params.beta_more_than || ''}
-                    onChange={(e) => handleInputChange('beta_more_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    step="0.01"
-                    value={params.beta_lower_than || ''}
-                    onChange={(e) => handleInputChange('beta_lower_than', Number(e.target.value))}
-                    className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Exchange */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Exchange</label>
+          {/* Filters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Market Cap */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200">
+              <label className="text-xs font-bold text-indigo-700 block mb-2">Market Cap (B)</label>
+              <div className="flex gap-2">
                 <Input
-                  placeholder="e.g., NASDAQ, NYSE"
-                  value={params.exchange || ''}
-                  onChange={(e) => handleInputChange('exchange', e.target.value)}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Sector */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Sector</label>
-                <Input
-                  placeholder="e.g., Technology"
-                  value={params.sector || ''}
-                  onChange={(e) => handleInputChange('sector', e.target.value)}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Industry */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Industry</label>
-                <Input
-                  placeholder="e.g., Software"
-                  value={params.industry || ''}
-                  onChange={(e) => handleInputChange('industry', e.target.value)}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Country */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Country</label>
-                <Input
-                  placeholder="e.g., USA"
-                  value={params.country || ''}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Limit */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">Results Limit</label>
-                <Input
-                  placeholder="20"
+                  placeholder="Min"
                   type="number"
-                  value={params.limit || ''}
-                  onChange={(e) => handleInputChange('limit', Number(e.target.value))}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500"
+                  value={params.market_cap_more_than || ''}
+                  onChange={(e) =>
+                    handleInputChange('market_cap_more_than', Number(e.target.value))
+                  }
+                  className="h-8 text-xs border-indigo-300 focus:ring-indigo-500"
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  value={params.market_cap_lower_than || ''}
+                  onChange={(e) =>
+                    handleInputChange('market_cap_lower_than', Number(e.target.value))
+                  }
+                  className="h-8 text-xs border-indigo-300 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
-            {/* Action Buttons - Below Filters */}
-            <div className="flex gap-2.5 pt-2 border-t border-gray-200 mt-4">
-              <Button
-                onClick={handleScreen}
-                className="flex-1 h-9 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md text-white font-semibold"
-                disabled={loading}
-              >
-                {loading ? 'Screening...' : 'Run Screen'}
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                className="h-9 px-4 text-sm border-gray-300 hover:bg-gray-100"
-              >
-                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                Reset
-              </Button>
+            {/* Price */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200">
+              <label className="text-xs font-bold text-purple-700 block mb-2">Price ($)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  value={params.price_more_than || ''}
+                  onChange={(e) => handleInputChange('price_more_than', Number(e.target.value))}
+                  className="h-8 text-xs border-purple-300 focus:ring-purple-500"
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  value={params.price_lower_than || ''}
+                  onChange={(e) => handleInputChange('price_lower_than', Number(e.target.value))}
+                  className="h-8 text-xs border-purple-300 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Dividend */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200">
+              <label className="text-xs font-bold text-green-700 block mb-2">Dividend (%)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  step="0.01"
+                  value={params.dividend_more_than || ''}
+                  onChange={(e) => handleInputChange('dividend_more_than', Number(e.target.value))}
+                  className="h-8 text-xs border-green-300 focus:ring-green-500"
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  step="0.01"
+                  value={params.dividend_lower_than || ''}
+                  onChange={(e) => handleInputChange('dividend_lower_than', Number(e.target.value))}
+                  className="h-8 text-xs border-green-300 focus:ring-green-500"
+                />
+              </div>
+            </div>
+
+            {/* Volume */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200">
+              <label className="text-xs font-bold text-blue-700 block mb-2">Volume (M)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  value={params.volume_more_than || ''}
+                  onChange={(e) => handleInputChange('volume_more_than', Number(e.target.value))}
+                  className="h-8 text-xs border-blue-300 focus:ring-blue-500"
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  value={params.volume_lower_than || ''}
+                  onChange={(e) => handleInputChange('volume_lower_than', Number(e.target.value))}
+                  className="h-8 text-xs border-blue-300 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Beta */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200">
+              <label className="text-xs font-bold text-orange-700 block mb-2">Beta</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  step="0.01"
+                  value={params.beta_more_than || ''}
+                  onChange={(e) => handleInputChange('beta_more_than', Number(e.target.value))}
+                  className="h-8 text-xs border-orange-300 focus:ring-orange-500"
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  step="0.01"
+                  value={params.beta_lower_than || ''}
+                  onChange={(e) => handleInputChange('beta_lower_than', Number(e.target.value))}
+                  className="h-8 text-xs border-orange-300 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+
+            {/* Exchange */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200">
+              <label className="text-xs font-bold text-red-700 block mb-2">Exchange</label>
+              <Input
+                placeholder="NASDAQ, NYSE"
+                value={params.exchange || ''}
+                onChange={(e) => handleInputChange('exchange', e.target.value)}
+                className="h-8 text-xs border-red-300 focus:ring-red-500"
+              />
+            </div>
+
+            {/* Sector */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200">
+              <label className="text-xs font-bold text-cyan-700 block mb-2">Sector</label>
+              <Input
+                placeholder="Technology"
+                value={params.sector || ''}
+                onChange={(e) => handleInputChange('sector', e.target.value)}
+                className="h-8 text-xs border-cyan-300 focus:ring-cyan-500"
+              />
+            </div>
+
+            {/* Industry */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100/50 border border-pink-200">
+              <label className="text-xs font-bold text-pink-700 block mb-2">Industry</label>
+              <Input
+                placeholder="Software"
+                value={params.industry || ''}
+                onChange={(e) => handleInputChange('industry', e.target.value)}
+                className="h-8 text-xs border-pink-300 focus:ring-pink-500"
+              />
+            </div>
+
+            {/* Country */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200">
+              <label className="text-xs font-bold text-amber-700 block mb-2">Country</label>
+              <Input
+                placeholder="USA"
+                value={params.country || ''}
+                onChange={(e) => handleInputChange('country', e.target.value)}
+                className="h-8 text-xs border-amber-300 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Results Limit */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100/50 border border-violet-200">
+              <label className="text-xs font-bold text-violet-700 block mb-2">Results Limit</label>
+              <Input
+                placeholder="20"
+                type="number"
+                value={params.limit || ''}
+                onChange={(e) => handleInputChange('limit', Number(e.target.value))}
+                className="h-8 text-xs border-violet-300 focus:ring-violet-500"
+              />
             </div>
           </div>
-        )}
-      </Card>
 
-      {/* Search Bar */}
-      <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm">
-        <div className="p-3">
-          <div className="relative">
-            <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <Input
-              placeholder="Search by symbol or company name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 pl-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
-            />
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <Button
+              onClick={handleScreen}
+              className="flex-1 h-10 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md text-white font-semibold rounded-lg"
+              disabled={loading}
+            >
+              {loading ? 'Screening...' : 'Run Screen'}
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="h-10 px-6 text-sm border-gray-300 hover:bg-gray-100 rounded-lg font-semibold"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
           </div>
         </div>
       </Card>
@@ -408,6 +373,19 @@ const StockScreener: React.FC = () => {
       {/* Results Table */}
       {results.length > 0 ? (
         <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+          {/* Search Bar Inside Table Card */}
+          <div className="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+            <div className="relative">
+              <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input
+                placeholder="Search results by symbol or company name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-9 pl-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
           {/* Table Header */}
           <div className="grid grid-cols-9 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-xs font-semibold text-gray-700">
             <div className="flex items-center gap-1.5">

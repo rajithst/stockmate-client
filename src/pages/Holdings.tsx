@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card } from '../components/ui/card';
 import {
   Select,
@@ -23,6 +23,7 @@ import {
   ChevronUp,
   BarChart3,
   X,
+  Search,
 } from 'lucide-react';
 import {
   PieChart as RechartsChart,
@@ -33,32 +34,50 @@ import {
   Tooltip,
 } from 'recharts';
 
-// Mock Data
-const mockPortfolios = ['Main Portfolio', 'Retirement Fund', 'High Growth'];
+// Mock company data for stock search
+const mockCompanies = [
+  { symbol: 'AAPL', name: 'Apple Inc.', industry: 'Consumer Electronics' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation', industry: 'Software' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', industry: 'Internet Services' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', industry: 'E-commerce' },
+  { symbol: 'TSLA', name: 'Tesla Inc.', industry: 'Automotive' },
+  { symbol: 'META', name: 'Meta Platforms Inc.', industry: 'Social Media' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', industry: 'Semiconductors' },
+  { symbol: 'JPM', name: 'JPMorgan Chase & Co.', industry: 'Banking' },
+  { symbol: 'V', name: 'Visa Inc.', industry: 'Financial Services' },
+  { symbol: 'JNJ', name: 'Johnson & Johnson', industry: 'Healthcare' },
+  { symbol: 'WMT', name: 'Walmart Inc.', industry: 'Retail' },
+  { symbol: 'DIS', name: 'The Walt Disney Company', industry: 'Entertainment' },
+];
 
-interface PortfolioDetails {
+// Mock Data
+interface Portfolio {
+  id: string;
   name: string;
   dateCreated: string;
   currency: string;
 }
 
-const portfolioDetailsMap: Record<string, PortfolioDetails> = {
-  'Main Portfolio': {
+const initialPortfolios: Portfolio[] = [
+  {
+    id: '1',
     name: 'Main Portfolio',
     dateCreated: '2023-01-15',
     currency: 'USD',
   },
-  'Retirement Fund': {
+  {
+    id: '2',
     name: 'Retirement Fund',
     dateCreated: '2022-06-20',
     currency: 'USD',
   },
-  'High Growth': {
+  {
+    id: '3',
     name: 'High Growth',
     dateCreated: '2024-03-10',
     currency: 'USD',
   },
-};
+];
 
 interface Purchase {
   date: string;
@@ -110,7 +129,8 @@ const initialHoldings: Holding[] = [
 ];
 
 const HoldingsPage: React.FC = () => {
-  const [selectedPortfolio, setSelectedPortfolio] = useState(mockPortfolios[0]);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>(initialPortfolios);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState(initialPortfolios[0].id);
   const [holdings, setHoldings] = useState<Holding[]>(initialHoldings);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -120,14 +140,50 @@ const HoldingsPage: React.FC = () => {
   const [form, setForm] = useState<Purchase>({ date: '', shares: 0, price: 0 });
   const [showSectorChart, setShowSectorChart] = useState(false);
   const [showIndustryChart, setShowIndustryChart] = useState(false);
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+  const [portfolioEditMode, setPortfolioEditMode] = useState(false);
+  const [portfolioEditId, setPortfolioEditId] = useState<string | null>(null);
+  const [portfolioForm, setPortfolioForm] = useState({ name: '', currency: 'USD' });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ symbol: string; index: number } | null>(
+    null,
+  );
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [newStockForm, setNewStockForm] = useState({
+    symbol: '',
+    currentPrice: 0,
+    purchaseDate: '',
+    shares: 0,
+    purchasePrice: 0,
+  });
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [stockSearchResults, setStockSearchResults] = useState<typeof mockCompanies>([]);
+  const [showStockSearchDropdown, setShowStockSearchDropdown] = useState(false);
+  const stockSearchContainerRef = useRef<HTMLDivElement>(null);
 
-  const portfolioDetails = portfolioDetailsMap[selectedPortfolio];
+  const selectedPortfolio = portfolios.find((p) => p.id === selectedPortfolioId) || portfolios[0];
   const totalStocks = holdings.length;
   const totalValue = holdings.reduce((acc, h) => acc + h.value, 0);
   const totalInvested = holdings.reduce((acc, h) => acc + h.invested, 0);
   const totalGains = totalValue - totalInvested;
   const totalGainsPercent = totalInvested > 0 ? (totalGains / totalInvested) * 100 : 0;
   const totalDividend = 15420; // Mock dividend value
+
+  // Handle click outside for stock search dropdown
+  React.useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        stockSearchContainerRef.current &&
+        !stockSearchContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowStockSearchDropdown(false);
+      }
+    }
+    if (showStockSearchDropdown) {
+      document.addEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showStockSearchDropdown]);
 
   // Calculate sector performance
   const sectorMap = new Map<string, { invested: number; value: number }>();
@@ -244,10 +300,169 @@ const HoldingsPage: React.FC = () => {
         };
       }),
     );
+    setShowDeleteConfirm(false);
+    setPendingDelete(null);
+  };
+
+  const confirmDeletePurchase = (symbol: string, index: number) => {
+    setPendingDelete({ symbol, index });
+    setShowDeleteConfirm(true);
+  };
+
+  const proceedWithDelete = () => {
+    if (pendingDelete) {
+      handleDeletePurchase(pendingDelete.symbol, pendingDelete.index);
+    }
+  };
+
+  const openAddStockModal = () => {
+    setNewStockForm({
+      symbol: '',
+      currentPrice: 0,
+      purchaseDate: '',
+      shares: 0,
+      purchasePrice: 0,
+    });
+    setStockSearchQuery('');
+    setStockSearchResults([]);
+    setShowStockSearchDropdown(false);
+    setShowAddStockModal(true);
+  };
+
+  const handleStockSearch = (query: string) => {
+    setStockSearchQuery(query);
+
+    if (query.trim()) {
+      const filtered = mockCompanies.filter(
+        (company) =>
+          company.symbol.toLowerCase().includes(query.toLowerCase()) ||
+          company.name.toLowerCase().includes(query.toLowerCase()),
+      );
+      setStockSearchResults(filtered);
+      setShowStockSearchDropdown(true);
+    } else {
+      setStockSearchResults([]);
+      setShowStockSearchDropdown(false);
+    }
+  };
+
+  const handleSelectStock = (company: (typeof mockCompanies)[0]) => {
+    setNewStockForm({ ...newStockForm, symbol: company.symbol });
+    setStockSearchQuery('');
+    setShowStockSearchDropdown(false);
+    setStockSearchResults([]);
+  };
+
+  const handleAddNewStock = () => {
+    if (
+      !newStockForm.symbol.trim() ||
+      newStockForm.currentPrice <= 0 ||
+      newStockForm.shares <= 0 ||
+      newStockForm.purchasePrice <= 0 ||
+      !newStockForm.purchaseDate.trim()
+    ) {
+      alert('Please fill in all fields with valid values');
+      return;
+    }
+
+    // Check if stock already exists
+    if (holdings.some((h) => h.symbol === newStockForm.symbol.toUpperCase())) {
+      alert('Stock already exists in portfolio');
+      return;
+    }
+
+    const selectedCompany = mockCompanies.find(
+      (c) => c.symbol === newStockForm.symbol.toUpperCase(),
+    );
+    const industry = selectedCompany?.industry || 'Other';
+
+    const totalInvested = newStockForm.shares * newStockForm.purchasePrice;
+    const totalValue = newStockForm.shares * newStockForm.currentPrice;
+    const gainLoss = ((totalValue - totalInvested) / totalInvested) * 100;
+
+    const newStock: Holding = {
+      symbol: newStockForm.symbol.toUpperCase(),
+      currency: selectedPortfolio.currency,
+      gainLoss,
+      shares: newStockForm.shares,
+      currentPrice: newStockForm.currentPrice,
+      avgPrice: newStockForm.purchasePrice,
+      invested: totalInvested,
+      value: totalValue,
+      industry,
+      history: [
+        {
+          date: newStockForm.purchaseDate,
+          shares: newStockForm.shares,
+          price: newStockForm.purchasePrice,
+        },
+      ],
+    };
+
+    setHoldings((prev) => [...prev, newStock]);
+    setShowAddStockModal(false);
+  };
+
+  const openAddPortfolioModal = () => {
+    setPortfolioEditMode(false);
+    setPortfolioEditId(null);
+    setPortfolioForm({ name: '', currency: 'USD' });
+    setShowPortfolioModal(true);
+  };
+
+  const openEditPortfolioModal = (portfolio: Portfolio) => {
+    setPortfolioEditMode(true);
+    setPortfolioEditId(portfolio.id);
+    setPortfolioForm({ name: portfolio.name, currency: portfolio.currency });
+    setShowPortfolioModal(true);
+  };
+
+  const handleSavePortfolio = () => {
+    if (!portfolioForm.name.trim()) return;
+
+    if (portfolioEditMode && portfolioEditId) {
+      // Edit portfolio
+      setPortfolios((prev) =>
+        prev.map((p) =>
+          p.id === portfolioEditId
+            ? { ...p, name: portfolioForm.name, currency: portfolioForm.currency }
+            : p,
+        ),
+      );
+    } else {
+      // Add new portfolio
+      const newPortfolio: Portfolio = {
+        id: Date.now().toString(),
+        name: portfolioForm.name,
+        dateCreated: new Date().toISOString().split('T')[0],
+        currency: portfolioForm.currency,
+      };
+      setPortfolios((prev) => [...prev, newPortfolio]);
+      setSelectedPortfolioId(newPortfolio.id);
+    }
+
+    setShowPortfolioModal(false);
+  };
+
+  const handleDeletePortfolio = (id: string) => {
+    if (portfolios.length <= 1) {
+      alert('Cannot delete the last portfolio');
+      return;
+    }
+
+    setPortfolios((prev) => prev.filter((p) => p.id !== id));
+
+    // Switch to another portfolio if the current one was deleted
+    if (selectedPortfolioId === id) {
+      const remainingPortfolio = portfolios.find((p) => p.id !== id);
+      if (remainingPortfolio) {
+        setSelectedPortfolioId(remainingPortfolio.id);
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 space-y-4">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-5"></div>
@@ -269,20 +484,21 @@ const HoldingsPage: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-semibold text-gray-600">Portfolio:</label>
-                  <Select value={selectedPortfolio} onValueChange={setSelectedPortfolio}>
+                  <Select value={selectedPortfolioId} onValueChange={setSelectedPortfolioId}>
                     <SelectTrigger className="w-[180px] h-8 text-sm border-indigo-200 focus:ring-indigo-500">
                       <SelectValue placeholder="Select Portfolio" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockPortfolios.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
+                      {portfolios.map((p: Portfolio) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <button
+                  onClick={() => openEditPortfolioModal(selectedPortfolio)}
                   className="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600 transition-colors"
                   title="Edit Portfolio"
                 >
@@ -290,6 +506,7 @@ const HoldingsPage: React.FC = () => {
                 </button>
                 <Button
                   size="sm"
+                  onClick={openAddPortfolioModal}
                   className="h-8 px-3 text-xs bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
@@ -306,7 +523,7 @@ const HoldingsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Portfolio</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.name}</p>
+                  <p className="text-xs font-bold text-gray-800">{selectedPortfolio.name}</p>
                 </div>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
@@ -316,7 +533,7 @@ const HoldingsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Currency</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.currency}</p>
+                  <p className="text-xs font-bold text-gray-800">{selectedPortfolio.currency}</p>
                 </div>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
@@ -336,7 +553,7 @@ const HoldingsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Created</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.dateCreated}</p>
+                  <p className="text-xs font-bold text-gray-800">{selectedPortfolio.dateCreated}</p>
                 </div>
               </div>
             </div>
@@ -552,7 +769,27 @@ const HoldingsPage: React.FC = () => {
 
       {/* Holdings Table */}
       <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-        {/* Table Header */}
+        {/* Table Header with Heading */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-indigo-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                <TrendingUp className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-800">Current Holdings</h2>
+                <p className="text-xs text-gray-500">Track your portfolio positions</p>
+              </div>
+            </div>
+            <Button
+              onClick={openAddStockModal}
+              className="h-8 px-3 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md text-white"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Add Stock
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-7 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-xs font-semibold text-gray-700">
           <div className="flex items-center gap-1.5">
             <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
@@ -715,7 +952,7 @@ const HoldingsPage: React.FC = () => {
                                     className="h-7 text-xs px-3 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleDeletePurchase(h.symbol, i);
+                                      confirmDeletePurchase(h.symbol, i);
                                     }}
                                   >
                                     <Trash2 className="w-3 h-3 mr-1" />
@@ -738,8 +975,8 @@ const HoldingsPage: React.FC = () => {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
               <div className="flex items-center gap-2.5">
@@ -833,8 +1070,8 @@ const HoldingsPage: React.FC = () => {
 
       {/* Sector Pie Chart Modal */}
       {showSectorChart && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -920,8 +1157,8 @@ const HoldingsPage: React.FC = () => {
 
       {/* Industry Pie Chart Modal */}
       {showIndustryChart && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
             <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1000,6 +1237,335 @@ const HoldingsPage: React.FC = () => {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Portfolio Modal */}
+      {showPortfolioModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  {portfolioEditMode ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">
+                    {portfolioEditMode ? 'Edit Portfolio' : 'Create Portfolio'}
+                  </h2>
+                  <p className="text-xs text-indigo-100">
+                    {portfolioEditMode ? 'Update portfolio details' : 'Add a new portfolio'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Portfolio Name
+                </label>
+                <Input
+                  placeholder="e.g., Day Trading, Long Term, etc."
+                  value={portfolioForm.name}
+                  onChange={(e) => setPortfolioForm({ ...portfolioForm, name: e.target.value })}
+                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Currency</label>
+                <Select
+                  value={portfolioForm.currency}
+                  onValueChange={(value) => setPortfolioForm({ ...portfolioForm, currency: value })}
+                >
+                  <SelectTrigger className="h-9 text-sm border-indigo-200 focus:ring-indigo-500">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="JPY">JPY (¥)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowPortfolioModal(false)}
+                className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+              {portfolioEditMode && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (portfolioEditId) {
+                      handleDeletePortfolio(portfolioEditId);
+                      setShowPortfolioModal(false);
+                    }
+                  }}
+                  className="flex-1 h-9 text-sm border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Delete
+                </Button>
+              )}
+              <Button
+                onClick={handleSavePortfolio}
+                className="flex-1 h-9 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md"
+              >
+                {portfolioEditMode ? 'Update' : 'Create'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Purchase Confirmation Modal */}
+      {showDeleteConfirm && pendingDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Trash2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">Confirm Deletion</h2>
+                  <p className="text-xs text-red-100">This action cannot be undone</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to delete this purchase record for{' '}
+                <span className="font-bold text-gray-900">{pendingDelete.symbol}</span>? This will
+                recalculate your average price and total gains/losses.
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setPendingDelete(null);
+                }}
+                className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={proceedWithDelete}
+                className="flex-1 h-9 text-sm bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-md text-white"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Stock Modal */}
+      {showAddStockModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">Add New Stock</h2>
+                  <p className="text-xs text-emerald-100">Add a new stock to your portfolio</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 space-y-3">
+              <div ref={stockSearchContainerRef} className="relative">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Stock Symbol
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 z-10" />
+                  <input
+                    type="text"
+                    placeholder="Search by symbol or company name"
+                    value={stockSearchQuery || newStockForm.symbol}
+                    onChange={(e) => handleStockSearch(e.target.value)}
+                    onFocus={() =>
+                      (stockSearchQuery || newStockForm.symbol) && setShowStockSearchDropdown(true)
+                    }
+                    className="w-full h-9 pl-9 pr-9 text-sm rounded-lg border border-emerald-200 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                  {(stockSearchQuery || newStockForm.symbol) && (
+                    <button
+                      onClick={() => {
+                        setStockSearchQuery('');
+                        setNewStockForm({ ...newStockForm, symbol: '' });
+                        setShowStockSearchDropdown(false);
+                        setStockSearchResults([]);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 z-10"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Stock Search Dropdown */}
+                  {showStockSearchDropdown && stockSearchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-emerald-200 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                      {stockSearchResults.map((company) => (
+                        <button
+                          key={company.symbol}
+                          onClick={() => handleSelectStock(company)}
+                          className="w-full px-3 py-2.5 text-left hover:bg-emerald-50 transition-colors border-b border-gray-100 last:border-b-0 group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                              <span className="text-white font-bold text-xs">
+                                {company.symbol.substring(0, 2)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">
+                                {company.symbol}
+                              </p>
+                              <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate">
+                                {company.name}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Current Price
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                  <Input
+                    placeholder="Enter current price"
+                    type="number"
+                    value={newStockForm.currentPrice || ''}
+                    onChange={(e) =>
+                      setNewStockForm({ ...newStockForm, currentPrice: Number(e.target.value) })
+                    }
+                    className="pl-9 h-9 text-sm border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold text-gray-700 mb-3">First Purchase</p>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Purchase Date
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Input
+                      placeholder="YYYY-MM-DD"
+                      value={newStockForm.purchaseDate}
+                      onChange={(e) =>
+                        setNewStockForm({ ...newStockForm, purchaseDate: e.target.value })
+                      }
+                      className="pl-9 h-9 text-sm border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 mt-2.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Shares
+                    </label>
+                    <Input
+                      placeholder="Number of shares"
+                      type="number"
+                      value={newStockForm.shares || ''}
+                      onChange={(e) =>
+                        setNewStockForm({ ...newStockForm, shares: Number(e.target.value) })
+                      }
+                      className="h-9 text-sm border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Price per Share
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <Input
+                        placeholder="Purchase price"
+                        type="number"
+                        value={newStockForm.purchasePrice || ''}
+                        onChange={(e) =>
+                          setNewStockForm({
+                            ...newStockForm,
+                            purchasePrice: Number(e.target.value),
+                          })
+                        }
+                        className="pl-9 h-9 text-sm border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {newStockForm.shares > 0 && newStockForm.purchasePrice > 0 && (
+                  <div className="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 mt-2.5">
+                    <p className="text-[10px] font-semibold text-gray-600 mb-0.5">
+                      Total Investment
+                    </p>
+                    <p className="text-xl font-bold text-emerald-600">
+                      ¥{(newStockForm.shares * newStockForm.purchasePrice).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowAddStockModal(false)}
+                className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddNewStock}
+                className="flex-1 h-9 text-sm bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md text-white"
+              >
+                Add Stock
+              </Button>
             </div>
           </div>
         </div>

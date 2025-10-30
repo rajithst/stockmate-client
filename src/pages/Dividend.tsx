@@ -351,7 +351,7 @@ const DividendPage: React.FC = () => {
     }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 space-y-4">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Header */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-5"></div>

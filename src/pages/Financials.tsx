@@ -160,7 +160,7 @@ const FinancialsPage: React.FC = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 space-y-4">
+    <div className="container mx-auto p-4 space-y-4">
       {/* Back Button */}
       <div className="flex items-center gap-2">
         <Button
