@@ -87,21 +87,56 @@ const marketIndices = [
   },
 ];
 
-// Example trending stocks (replace with real API)
-const trendingStocks = [
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 120.45, change: 2.34, changePct: 1.98 },
-  { symbol: 'TSLA', name: 'Tesla, Inc.', price: 210.12, change: -3.12, changePct: -1.46 },
-  { symbol: 'AAPL', name: 'Apple Inc.', price: 185.67, change: 1.01, changePct: 0.55 },
-  { symbol: 'AMD', name: 'Advanced Micro Devices', price: 162.88, change: 4.22, changePct: 2.66 },
-];
-
 // Example sector performance (replace with real API)
 const sectorPerformance = [
-  { sector: 'Technology', changePct: 1.23 },
-  { sector: 'Healthcare', changePct: -0.45 },
-  { sector: 'Financials', changePct: 0.87 },
-  { sector: 'Consumer Discretionary', changePct: 0.34 },
-  { sector: 'Energy', changePct: -1.12 },
+  { sector: 'Technology', changePct: 1.23, value: 45.2 },
+  { sector: 'Healthcare', changePct: -0.45, value: 15.8 },
+  { sector: 'Financials', changePct: 0.87, value: 18.5 },
+  { sector: 'Consumer Discretionary', changePct: 0.34, value: 12.3 },
+  { sector: 'Energy', changePct: -1.12, value: 8.2 },
+  { sector: 'Industrials', changePct: 0.56, value: 10.5 },
+];
+
+// Example industry performance (replace with real API)
+const industryPerformance = [
+  { industry: 'Semiconductors', changePct: 2.45, leader: 'NVDA' },
+  { industry: 'Software', changePct: 1.78, leader: 'MSFT' },
+  { industry: 'E-commerce', changePct: -0.89, leader: 'AMZN' },
+  { industry: 'Automotive', changePct: -1.23, leader: 'TSLA' },
+  { industry: 'Banking', changePct: 0.92, leader: 'JPM' },
+  { industry: 'Pharmaceuticals', changePct: -0.34, leader: 'JNJ' },
+];
+
+// Example general news (replace with real API)
+const generalNews = [
+  {
+    id: 1,
+    title: 'Federal Reserve Holds Interest Rates Steady',
+    source: 'Financial Times',
+    time: '2 hours ago',
+    category: 'Markets',
+  },
+  {
+    id: 2,
+    title: 'Tech Sector Rallies on Strong Earnings Reports',
+    source: 'Bloomberg',
+    time: '4 hours ago',
+    category: 'Technology',
+  },
+  {
+    id: 3,
+    title: 'Oil Prices Drop Amid Global Supply Concerns',
+    source: 'Reuters',
+    time: '5 hours ago',
+    category: 'Energy',
+  },
+  {
+    id: 4,
+    title: 'US Jobs Report Exceeds Expectations',
+    source: 'CNBC',
+    time: '6 hours ago',
+    category: 'Economy',
+  },
 ];
 
 export const HomePage: React.FC = () => {
@@ -135,7 +170,7 @@ export const HomePage: React.FC = () => {
     setSearchQuery('');
     setShowSearchDropdown(false);
     setSearchResults([]);
-    navigate(`/company/${symbol}`);
+    navigate(`/app/company/${symbol}`);
   };
 
   // Close dropdown when clicking outside
@@ -155,10 +190,10 @@ export const HomePage: React.FC = () => {
     <div className="container mx-auto py-10 px-4">
       {/* Hero Section */}
       <div className="flex flex-col items-center justify-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 mb-2 tracking-tight text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 tracking-tight text-center">
           Analyze Stocks Like a Pro
         </h1>
-        <p className="text-lg text-gray-500 mb-6 text-center max-w-2xl">
+        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 text-center max-w-2xl">
           Discover market trends, track your favorite companies, and explore sector performance with
           real-time insights.
         </p>
@@ -172,7 +207,7 @@ export const HomePage: React.FC = () => {
               value={searchQuery}
               onChange={handleSearchChange}
               onFocus={() => searchQuery && setShowSearchDropdown(true)}
-              className="w-full h-12 pl-12 pr-10 text-base rounded-xl border border-gray-300 bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full h-12 pl-12 pr-10 text-base rounded-xl border border-indigo-200 bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
             />
             {searchQuery && (
               <button
@@ -189,27 +224,27 @@ export const HomePage: React.FC = () => {
 
             {/* Search Dropdown with Company Logos */}
             {showSearchDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
                 {searchResults.map((company) => (
                   <button
                     key={company.symbol}
                     onClick={() => handleSelectCompany(company.symbol)}
-                    className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group"
+                    className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0 group"
                   >
                     <div className="flex items-center gap-3">
                       <img
                         src={company.logo}
                         alt={company.symbol}
-                        className="w-10 h-10 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-1"
+                        className="w-10 h-10 rounded-lg flex-shrink-0 object-contain bg-gray-100 dark:bg-gray-700 p-1"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
+                        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
                           {company.symbol}
                         </p>
-                        <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 truncate">
                           {company.name}
                         </p>
                       </div>
@@ -227,29 +262,30 @@ export const HomePage: React.FC = () => {
         {marketIndices.map((idx) => (
           <Card
             key={idx.symbol}
-            className="border-none shadow-xl rounded-2xl bg-gradient-to-br from-white via-indigo-50 to-blue-50 hover:shadow-2xl transition-all"
+            className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-all overflow-hidden relative"
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full blur-3xl opacity-30"></div>
+            <CardHeader className="pb-2 relative">
+              <CardTitle className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                 {idx.name}
-                <span className="text-xs font-mono text-indigo-600 bg-indigo-50 rounded px-2 py-0.5">
+                <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded px-2 py-0.5">
                   {idx.symbol}
                 </span>
               </CardTitle>
-              <span className="text-xs text-gray-500">{idx.exchange}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{idx.exchange}</span>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               <div className="flex items-end gap-3 mb-2">
-                <span className="text-3xl font-extrabold text-gray-900">
+                <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
                   ${idx.price.toLocaleString()}
                 </span>
                 <span
                   className={`text-base font-semibold ${
                     idx.change > 0
-                      ? 'text-green-600'
+                      ? 'text-green-600 dark:text-green-400'
                       : idx.change < 0
-                        ? 'text-red-600'
-                        : 'text-gray-500'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {idx.change > 0 ? '+' : ''}
@@ -257,7 +293,7 @@ export const HomePage: React.FC = () => {
                   {(idx.changePercentage * 100).toFixed(2)}%)
                 </span>
               </div>
-              <div className="flex flex-wrap gap-6 mt-2 text-xs text-gray-600">
+              <div className="flex flex-wrap gap-6 mt-2 text-xs text-gray-600 dark:text-gray-400">
                 <span>
                   <strong>Open:</strong> {idx.open}
                 </span>
@@ -271,7 +307,7 @@ export const HomePage: React.FC = () => {
                   <strong>52W Range:</strong> {idx.yearLow} - {idx.yearHigh}
                 </span>
               </div>
-              <div className="mt-4 flex gap-4 text-xs text-gray-400">
+              <div className="mt-4 flex gap-4 text-xs text-gray-400 dark:text-gray-500">
                 <span>Vol: {idx.volume.toLocaleString()}</span>
                 <span>50D Avg: {idx.priceAvg50.toLocaleString()}</span>
                 <span>200D Avg: {idx.priceAvg200.toLocaleString()}</span>
@@ -281,45 +317,102 @@ export const HomePage: React.FC = () => {
         ))}
       </div>
 
-      {/* Trending Stocks */}
-      <div className="mb-12">
-        <Card className="border-none shadow-xl rounded-2xl bg-white">
-          <CardHeader className="flex items-center gap-2 pb-2">
-            <TrendingUp className="w-5 h-5 text-indigo-600" />
-            <CardTitle className="text-lg font-bold text-gray-800">Trending Stocks</CardTitle>
+      {/* Sector & Industry Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* Sector Performance */}
+        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-b border-purple-100 dark:border-purple-800 py-3 px-4">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
+                Sector Performance
+              </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {trendingStocks.map((stock) => (
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              {sectorPerformance.map((sector) => (
                 <div
-                  key={stock.symbol}
-                  className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-gray-50 via-white to-indigo-50 hover:bg-indigo-50 transition cursor-pointer border border-gray-100"
-                  onClick={() => navigate(`/company/${stock.symbol}`)}
+                  key={sector.sector}
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-gray-800">{stock.name}</span>
-                    <span className="text-xs font-mono text-indigo-600 bg-indigo-50 rounded px-2 py-0.5">
-                      {stock.symbol}
+                  <div className="flex-1">
+                    <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+                      {sector.sector}
+                    </span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+                          style={{ width: `${(sector.value / 50) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[3rem]">
+                        {sector.value}%
+                      </span>
+                    </div>
+                  </div>
+                  <span
+                    className={`ml-3 text-sm font-bold px-2 py-1 rounded ${
+                      sector.changePct > 0
+                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+                        : sector.changePct < 0
+                          ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
+                          : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
+                    }`}
+                  >
+                    {sector.changePct > 0 ? '+' : ''}
+                    {sector.changePct.toFixed(2)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Industry Performance */}
+        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-b border-indigo-100 dark:border-indigo-800 py-3 px-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
+                Industry Performance
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              {industryPerformance.map((industry) => (
+                <div
+                  key={industry.industry}
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition cursor-pointer"
+                  onClick={() => navigate(`/app/company/${industry.leader}`)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+                        {industry.industry}
+                      </span>
+                      <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40 rounded px-2 py-0.5">
+                        {industry.leader}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Leader: {industry.leader}
                     </span>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <span className="text-xl font-bold text-gray-900">
-                      ${stock.price.toLocaleString()}
-                    </span>
-                    <span
-                      className={`text-sm font-semibold ${
-                        stock.change > 0
-                          ? 'text-green-600'
-                          : stock.change < 0
-                            ? 'text-red-600'
-                            : 'text-gray-500'
-                      }`}
-                    >
-                      {stock.change > 0 ? '+' : ''}
-                      {stock.change.toLocaleString()} ({stock.changePct > 0 ? '+' : ''}
-                      {stock.changePct.toFixed(2)}%)
-                    </span>
-                  </div>
+                  <span
+                    className={`ml-3 text-sm font-bold px-2 py-1 rounded ${
+                      industry.changePct > 0
+                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+                        : industry.changePct < 0
+                          ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
+                          : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
+                    }`}
+                  >
+                    {industry.changePct > 0 ? '+' : ''}
+                    {industry.changePct.toFixed(2)}%
+                  </span>
                 </div>
               ))}
             </div>
@@ -327,33 +420,68 @@ export const HomePage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Sector Performance */}
+      {/* General News */}
       <div className="mb-12">
-        <Card className="border-none shadow-xl rounded-2xl bg-white">
-          <CardHeader className="flex items-center gap-2 pb-2">
-            <BarChart2 className="w-5 h-5 text-indigo-600" />
-            <CardTitle className="text-lg font-bold text-gray-800">Sector Performance</CardTitle>
+        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-b border-indigo-100 dark:border-indigo-800 py-3 px-4">
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-indigo-600 dark:text-indigo-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                />
+              </svg>
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
+                Market News
+              </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {sectorPerformance.map((sector) => (
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              {generalNews.map((news) => (
                 <div
-                  key={sector.sector}
-                  className="flex flex-col items-start p-3 rounded-lg bg-gradient-to-br from-gray-50 via-white to-indigo-50 border border-gray-100"
+                  key={news.id}
+                  className="p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition cursor-pointer"
                 >
-                  <span className="font-semibold text-gray-700">{sector.sector}</span>
-                  <span
-                    className={`text-sm font-bold ${
-                      sector.changePct > 0
-                        ? 'text-green-600'
-                        : sector.changePct < 0
-                          ? 'text-red-600'
-                          : 'text-gray-500'
-                    }`}
-                  >
-                    {sector.changePct > 0 ? '+' : ''}
-                    {sector.changePct.toFixed(2)}%
-                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                        {news.title}
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3 h-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                            />
+                          </svg>
+                          {news.source}
+                        </span>
+                        <span>•</span>
+                        <span>{news.time}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40 rounded px-2 py-1">
+                      {news.category}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

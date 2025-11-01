@@ -43,8 +43,8 @@ const summaryData = [
 
 export const OverallHealthSummaryCard: React.FC<{ symbol: string }> = ({ symbol }) => {
   const navigate = useNavigate();
-  const handleViewHealthDetails = () => {
-    navigate(`/health/${symbol}`);
+  const handleViewDetails = () => {
+    navigate(`/app/health/${symbol}`);
   };
   return (
     <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
@@ -59,7 +59,7 @@ export const OverallHealthSummaryCard: React.FC<{ symbol: string }> = ({ symbol 
             Key financial and strategic health indicators
           </span>
         </div>
-        <Button size="sm" variant="outline" className="mt-1" onClick={handleViewHealthDetails}>
+        <Button size="sm" variant="outline" className="mt-1" onClick={handleViewDetails}>
           See Details
         </Button>
       </CardHeader>

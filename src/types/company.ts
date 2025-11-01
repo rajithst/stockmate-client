@@ -26,6 +26,8 @@ export interface Company {
   symbol: string;
   company_name: string;
   price: number;
+  price_change: number;
+  percent_change_percent: number;
   market_cap: number;
   currency: string;
   exchange_full_name: string;

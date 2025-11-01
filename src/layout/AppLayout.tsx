@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === '/app' || location.pathname === '/app/';
 
   return (
     <div className="flex">

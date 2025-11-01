@@ -1,14 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Briefcase, Eye, Settings, Home as HomeIcon } from 'lucide-react';
+import { Briefcase, Eye, Settings, Home as HomeIcon, Newspaper } from 'lucide-react';
 
 const navItems = [
-  { name: 'Home', icon: HomeIcon, path: '/' },
-  { name: 'Holdings', icon: Eye, path: '/holdings' },
-  { name: 'Dividends', icon: Briefcase, path: '/dividend' },
-  { name: 'Watchlist', icon: Eye, path: '/watchlist' },
-  { name: 'Screener', icon: Eye, path: '/screener' },
-  { name: 'Settings', icon: Settings, path: '/settings' },
+  { name: 'Home', icon: HomeIcon, path: '/app' },
+  { name: 'Holdings', icon: Eye, path: '/app/holdings' },
+  { name: 'Dividends', icon: Briefcase, path: '/app/dividend' },
+  { name: 'Watchlist', icon: Eye, path: '/app/watchlist' },
+  { name: 'Screener', icon: Eye, path: '/app/screener' },
+  { name: 'News', icon: Newspaper, path: '/app/news' },
+  { name: 'Settings', icon: Settings, path: '/app/settings' },
 ];
 
 export const Sidebar: React.FC = () => {

@@ -34,7 +34,7 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const handleViewFinancials = () => {
-    navigate(`/financials/${company.symbol}`);
+    navigate(`/app/financials/${company.symbol}`);
   };
 
   // Format last updated date

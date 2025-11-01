@@ -166,7 +166,7 @@ const FinancialsPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/company/${symbol}`)}
+          onClick={() => navigate(`/app/company/${symbol}`)}
           className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-100"
         >
           <ArrowLeft className="w-3.5 h-3.5 mr-1" />
