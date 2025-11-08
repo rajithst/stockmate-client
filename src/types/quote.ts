@@ -1,25 +1,148 @@
-// TypeScript interfaces for Quote schemas
-// Generated from app/schemas/quote.py
+/**
+ * Consolidated quote and technical data schemas:
+ * - StockPrice/StockPriceChange: Daily price and change data
+ * - CompanyStockSplit: Stock split records
+ * - CompanyStockPeer: Peer company data
+ * - CompanyDividend: Dividend information
+ * - CompanyTechnicalIndicator: Technical analysis indicators (SMA, RSI, etc.)
+ */
+
+// ========================
+// STOCK PRICE INTERFACES
+// ========================
 
 export interface StockPriceChangeBase {
-  company_id: number;
   symbol: string;
-  one_day?: number;
-  five_day?: number;
-  one_month?: number;
-  three_month?: number;
-  six_month?: number;
-  ytd?: number;
-  one_year?: number;
-  three_year?: number;
-  five_year?: number;
-  ten_year?: number;
+  one_day?: number | null;
+  five_day?: number | null;
+  one_month?: number | null;
+  three_month?: number | null;
+  six_month?: number | null;
+  ytd?: number | null;
+  one_year?: number | null;
+  three_year?: number | null;
+  five_year?: number | null;
+  ten_year?: number | null;
 }
 
-export interface StockPriceChangeWrite extends StockPriceChangeBase {}
+export interface StockPriceChangeWrite extends StockPriceChangeBase {
+  company_id: number;
+}
 
 export interface StockPriceChangeRead extends StockPriceChangeBase {
-  id: number;
-  created_at?: string; // ISO date string
-  updated_at?: string; // ISO date string
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+export interface StockPrice {
+  symbol: string;
+  date: Date | string;
+  open_price: number;
+  close_price: number;
+  high_price: number;
+  low_price: number;
+  volume: number;
+  change?: number | null;
+  change_percent?: number | null;
+}
+
+export interface StockPriceRead extends StockPrice {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+export interface StockPriceWrite extends StockPrice {
+  company_id: number;
+}
+
+// ========================
+// STOCK SPLIT INTERFACES
+// ========================
+
+export interface CompanyStockSplit {
+  symbol: string;
+  date: Date | string;
+  numerator: number;
+  denominator: number;
+}
+
+export interface CompanyStockSplitWrite extends CompanyStockSplit {
+  company_id: number;
+}
+
+export interface CompanyStockSplitRead extends CompanyStockSplit {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+// ========================
+// STOCK PEER INTERFACES
+// ========================
+
+export interface CompanyStockPeer {
+  symbol: string;
+  company_name: string;
+  price: number;
+  market_cap: number;
+}
+
+export interface CompanyStockPeerWrite extends CompanyStockPeer {
+  company_id: number;
+}
+
+export interface CompanyStockPeerRead extends CompanyStockPeer {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+// ========================
+// DIVIDEND INTERFACES
+// ========================
+
+export interface CompanyDividend {
+  symbol: string;
+  date: Date | string;
+  record_date?: Date | string | null;
+  payment_date?: Date | string | null;
+  declaration_date?: Date | string | null;
+  dividend?: number | null;
+  adj_dividend?: number | null;
+  dividend_yield?: number | null;
+  frequency?: string | null;
+}
+
+export interface CompanyDividendWrite extends CompanyDividend {
+  company_id?: number;
+}
+
+export interface CompanyDividendRead extends CompanyDividend {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+// ========================
+// TECHNICAL INDICATOR INTERFACES
+// ========================
+
+export interface CompanyTechnicalIndicator {
+  symbol: string;
+  date: Date | string;
+  simple_moving_average?: number | null;
+  exponential_moving_average?: number | null;
+  weighted_moving_average?: number | null;
+  double_exponential_moving_average?: number | null;
+  triple_exponential_moving_average?: number | null;
+  relative_strength_index?: number | null;
+  standard_deviation?: number | null;
+  williams_percent_r?: number | null;
+  average_directional_index?: number | null;
+}
+
+export interface CompanyTechnicalIndicatorWrite extends CompanyTechnicalIndicator {
+  company_id: number;
+}
+
+export interface CompanyTechnicalIndicatorRead extends CompanyTechnicalIndicator {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
 }

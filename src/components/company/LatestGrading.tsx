@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card } from '../ui/card';
-import { ArrowDown, ArrowRight, ArrowUp, Minus, Clock } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, AlertCircle, Clock } from 'lucide-react';
 import type { CompanyGradingRead } from '../../types';
 
 // --- 🎨 Grading Color Logic ---
-const getGradeStyle = (grade: string) => {
+const getGradeStyle = (grade: string | null | undefined) => {
   const g = grade?.toLowerCase() || '';
   if (g.includes('strong buy')) return 'bg-green-100 text-green-800 border-green-300 font-semibold';
   if (g.includes('buy')) return 'bg-green-50 text-green-700 border-green-200';
@@ -17,7 +17,7 @@ const getGradeStyle = (grade: string) => {
 };
 
 // --- ⚡ Action Badges ---
-const getActionStyle = (action: string) => {
+const getActionStyle = (action: string | null | undefined) => {
   const a = action?.toLowerCase() || '';
   if (a === 'upgrade')
     return {
@@ -38,91 +38,92 @@ const getActionStyle = (action: string) => {
 const LatestGrading: React.FC<{ latest_gradings: CompanyGradingRead[] }> = ({
   latest_gradings,
 }) => {
-  // Find the latest updated_at from the gradings
-  const lastUpdated = latest_gradings?.length
-    ? new Date(
-        Math.max(
-          ...latest_gradings
-            .map((g) => new Date(g.updated_at || g.date).getTime())
-            .filter((v) => !isNaN(v)),
-        ),
-      ).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
-
+  // Handle empty data
+  if (!latest_gradings || latest_gradings.length === 0) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-4">
+        <div className="relative z-10">
+          <h2 className="text-sm font-semibold text-gray-800 mb-2">Latest Analyst Gradings</h2>
+          <div className="flex items-center justify-center py-4">
+            <div className="flex flex-col items-center gap-2 text-gray-500">
+              <AlertCircle className="w-6 h-6 text-gray-400" />
+              <span className="text-xs font-medium">No grading data available</span>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-6">
+    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-4">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <div className="relative z-10">
-        <h2 className="text-base font-semibold text-gray-800 mb-1">Latest Analyst Gradings</h2>
-        <span className="text-xs text-gray-400 font-medium block mb-4">
-          Recent analyst actions and grade changes
-        </span>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {latest_gradings.map((g, i) => {
+      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full blur-3xl opacity-20 pointer-events-none" />
+      <div className="relative z-10 flex flex-col h-full">
+        <h2 className="text-base font-semibold text-gray-800 mb-2">Analyst Gradings</h2>
+        <span className="text-xs text-gray-400 font-medium block mb-2">Recent actions</span>
+        <div className="space-y-1.5 flex-1">
+          {latest_gradings.slice(0, 6).map((g, i) => {
             const { icon, color } = getActionStyle(g.action);
-            const prevGradeStyle = getGradeStyle(g.previous_grade);
             const newGradeStyle = getGradeStyle(g.new_grade);
 
             return (
               <div
                 key={`${g.symbol}-${i}`}
-                className="p-3 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-150 rounded-xl text-sm leading-tight flex flex-col gap-2 bg-white/60"
+                className="p-2 border border-gray-100 rounded-lg text-xs bg-white/60 flex items-center justify-between gap-2"
               >
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-800 truncate">{g.grading_company}</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="font-medium text-gray-700 truncate max-w-[100px]">
+                    {g.grading_company}
+                  </span>
+                  <span className="text-gray-400 text-xs">•</span>
+                  <span className="text-gray-500 flex-shrink-0">
+                    {typeof g.date === 'string'
+                      ? new Date(g.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : g.date?.toString().split('T')[0]}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <div
-                    className={`flex items-center gap-1 text-xs px-2 py-[2px] rounded-full border ${color}`}
+                    className={`flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full border ${color}`}
                   >
                     {icon}
-                    <span className="capitalize">{g.action}</span>
+                    <span className="capitalize text-xs">{g.action}</span>
                   </div>
-                </div>
-
-                <div className="text-xs text-gray-500">{g.date}</div>
-
-                {/* Grade comparison */}
-                <div className="flex justify-between items-center mt-1 border-t border-gray-100 pt-2">
-                  <div className="flex flex-col">
-                    <span className="text-[11px] text-gray-500">Previous</span>
-                    <span
-                      className={`font-medium text-xs px-2 py-[2px] rounded-full border ${prevGradeStyle}`}
-                    >
-                      {g.previous_grade || '-'}
-                    </span>
-                  </div>
-
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
-
-                  <div className="flex flex-col items-end">
-                    <span className="text-[11px] text-gray-500">New</span>
-                    <span
-                      className={`font-medium text-xs px-2 py-[2px] rounded-full border ${newGradeStyle}`}
-                    >
-                      {g.new_grade || '-'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Symbol: {g.symbol}</span>
+                  <span
+                    className={`font-semibold text-xs px-2 py-0.5 rounded-full border ${newGradeStyle}`}
+                  >
+                    {g.new_grade || '-'}
+                  </span>
                 </div>
               </div>
             );
           })}
         </div>
-        {/* Last Updated */}
-        {lastUpdated && (
-          <div className="flex items-center justify-end pt-4">
+        {latest_gradings.length > 6 && (
+          <div className="text-xs text-gray-500 mt-2 text-center">
+            +{latest_gradings.length - 6} more gradings
+          </div>
+        )}
+
+        {/* Last updated - Bottom */}
+        {latest_gradings.length > 0 && (
+          <div className="flex items-center justify-end pt-2 mt-2 border-t border-gray-100">
             <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-4 h-4 text-gray-400" />
-              Last updated: {lastUpdated}
+              <Clock className="w-3 h-3 text-gray-400" />
+              Last updated:{' '}
+              {typeof latest_gradings[0].date === 'string'
+                ? new Date(latest_gradings[0].date).toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : latest_gradings[0].date?.toString().split('T')[0]}
             </span>
           </div>
         )}

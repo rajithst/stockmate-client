@@ -1,15 +1,40 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
-import { BarChart3, Clock } from 'lucide-react';
-import { LineChart } from 'recharts';
+import { AlertCircle, Clock } from 'lucide-react';
 import type { CompanyPriceTargetRead, CompanyPriceTargetSummaryRead } from '../../types';
 
-export const PriceTargetCard: React.FC<{ price_target: CompanyPriceTargetRead }> = ({
-  price_target,
-}) => {
-  const range = price_target.target_high - price_target.target_low;
-  const consensusPos = ((price_target.target_consensus - price_target.target_low) / range) * 100;
-  const medianPos = ((price_target.target_median - price_target.target_low) / range) * 100;
+export const PriceTargetCard: React.FC<{
+  price_target: CompanyPriceTargetRead | null | undefined;
+}> = ({ price_target }) => {
+  // Handle null or missing data
+  if (
+    !price_target ||
+    price_target.target_high === null ||
+    price_target.target_low === null ||
+    price_target.target_consensus === null ||
+    price_target.target_median === null
+  ) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-gray-800">Price Target</CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Analyst price target distribution
+          </span>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center gap-2 text-gray-500">
+            <AlertCircle className="w-8 h-8 text-gray-400" />
+            <span className="text-sm font-medium">Price target data not available</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const range = price_target.target_high! - price_target.target_low!;
+  const consensusPos = ((price_target.target_consensus! - price_target.target_low!) / range) * 100;
+  const medianPos = ((price_target.target_median! - price_target.target_low!) / range) * 100;
 
   // Format last updated date
   const formattedLastUpdated = price_target.updated_at
@@ -23,7 +48,7 @@ export const PriceTargetCard: React.FC<{ price_target: CompanyPriceTargetRead }>
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full flex flex-col">
       {/* Decorative Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
       <CardHeader>
@@ -35,7 +60,7 @@ export const PriceTargetCard: React.FC<{ price_target: CompanyPriceTargetRead }>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 relative z-10">
+      <CardContent className="space-y-4 relative z-10 flex flex-col flex-1">
         {/* Range bar with original red-yellow-green gradient */}
         <div className="relative h-3 bg-gray-200 rounded-md overflow-hidden">
           <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 opacity-70" />
@@ -43,47 +68,47 @@ export const PriceTargetCard: React.FC<{ price_target: CompanyPriceTargetRead }>
           <div
             className="absolute top-0 h-full w-[2px] bg-blue-600"
             style={{ left: `${consensusPos}%` }}
-            title={`Consensus: ${price_target.target_consensus}`}
+            title={`Consensus: ${price_target.target_consensus!}`}
           />
           {/* median marker */}
           <div
             className="absolute top-0 h-full w-[2px] bg-purple-600"
             style={{ left: `${medianPos}%` }}
-            title={`Median: ${price_target.target_median}`}
+            title={`Median: ${price_target.target_median!}`}
           />
         </div>
 
         {/* Range endpoints */}
         <div className="flex justify-between text-xs text-gray-500">
-          <span>Low: ${price_target.target_low}</span>
-          <span>High: ${price_target.target_high}</span>
+          <span>Low: ${price_target.target_low!}</span>
+          <span>High: ${price_target.target_high!}</span>
         </div>
 
         {/* Key stats */}
-        <div className="flex justify-around text-sm font-medium mt-2">
+        <div className="flex justify-around text-sm font-medium mt-2 flex-1">
           <div className="text-center">
             <div className="text-gray-500 text-xs">Low</div>
-            <div className="font-semibold">${price_target.target_low}</div>
+            <div className="font-semibold">${price_target.target_low!}</div>
           </div>
           <div className="text-center">
             <div className="text-gray-500 text-xs">Median</div>
-            <div className="font-semibold text-purple-600">${price_target.target_median}</div>
+            <div className="font-semibold text-purple-600">${price_target.target_median!}</div>
           </div>
           <div className="text-center">
             <div className="text-gray-500 text-xs">Consensus</div>
-            <div className="font-semibold text-blue-600">${price_target.target_consensus}</div>
+            <div className="font-semibold text-blue-600">${price_target.target_consensus!}</div>
           </div>
           <div className="text-center">
             <div className="text-gray-500 text-xs">High</div>
-            <div className="font-semibold text-green-600">${price_target.target_high}</div>
+            <div className="font-semibold text-green-600">${price_target.target_high!}</div>
           </div>
         </div>
 
         {/* Last updated */}
         {formattedLastUpdated && (
-          <div className="flex items-center justify-end pt-3">
+          <div className="flex items-center justify-end pt-2 mt-auto border-t border-gray-100">
             <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-4 h-4 text-gray-400" />
+              <Clock className="w-3 h-3 text-gray-400" />
               Last updated: {formattedLastUpdated}
             </span>
           </div>
@@ -94,9 +119,51 @@ export const PriceTargetCard: React.FC<{ price_target: CompanyPriceTargetRead }>
 };
 
 export const PriceTargetSummaryCard: React.FC<{
-  price_target_summary: CompanyPriceTargetSummaryRead;
+  price_target_summary: CompanyPriceTargetSummaryRead | null | undefined;
 }> = ({ price_target_summary }) => {
-  const publishers = price_target_summary.publishers?.split(', ') || [];
+  // Handle null or missing data
+  if (!price_target_summary) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-4">
+        <div className="relative z-10">
+          <CardHeader className="p-0 mb-2">
+            <CardTitle className="text-sm font-semibold text-gray-800">
+              Price Target Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center py-4">
+            <div className="flex flex-col items-center gap-2 text-gray-500">
+              <AlertCircle className="w-6 h-6 text-gray-400" />
+              <span className="text-xs font-medium">No data available</span>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    );
+  }
+
+  const metrics = [
+    {
+      label: '1M',
+      avg: price_target_summary.last_month_average_price_target,
+      count: price_target_summary.last_month_count,
+    },
+    {
+      label: '1Q',
+      avg: price_target_summary.last_quarter_average_price_target,
+      count: price_target_summary.last_quarter_count,
+    },
+    {
+      label: '1Y',
+      avg: price_target_summary.last_year_average_price_target,
+      count: price_target_summary.last_year_count,
+    },
+    {
+      label: 'All',
+      avg: price_target_summary.all_time_average_price_target,
+      count: price_target_summary.all_time_count,
+    },
+  ];
 
   // Format last updated date
   const formattedLastUpdated = price_target_summary.updated_at
@@ -109,102 +176,44 @@ export const PriceTargetSummaryCard: React.FC<{
       })
     : null;
 
-  const metrics = [
-    {
-      label: 'Last Month',
-      avg: price_target_summary.last_month_average_price_target,
-      count: price_target_summary.last_month_count,
-      icon: <BarChart3 className="w-4 h-4 text-indigo-500" />,
-    },
-    {
-      label: 'Last Quarter',
-      avg: price_target_summary.last_quarter_average_price_target,
-      count: price_target_summary.last_quarter_count,
-      icon: <BarChart3 className="w-4 h-4 text-blue-500" />,
-    },
-    {
-      label: 'Last Year',
-      avg: price_target_summary.last_year_average_price_target,
-      count: price_target_summary.last_year_count,
-      icon: <BarChart3 className="w-4 h-4 text-cyan-500" />,
-    },
-    {
-      label: 'All Time',
-      avg: price_target_summary.all_time_average_price_target,
-      count: price_target_summary.all_time_count,
-      icon: <LineChart className="w-4 h-4 text-teal-500" />,
-    },
-  ];
-
-  // Find min/max for bar width scaling
-  const maxCount = Math.max(...metrics.map((m) => m.count), 1);
-
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-6">
+    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full flex flex-col">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full blur-2xl opacity-20 pointer-events-none" />
-      <div className="relative z-10">
-        <CardHeader className="p-0 mb-2">
-          <CardTitle className="text-base font-semibold text-gray-800">
-            Price Target Summary
-          </CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Analyst price target trends and sources
-          </span>
-        </CardHeader>
-        {/* Metrics: compact horizontal layout */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+      <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200 rounded-full blur-2xl opacity-15 pointer-events-none" />
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold text-gray-800">
+          Price Target Summary
+        </CardTitle>
+        <span className="text-xs text-gray-400 font-medium block mt-1">
+          Average price targets by period
+        </span>
+      </CardHeader>
+      <CardContent className="pb-0 flex flex-col flex-1">
+        <div className="space-y-1.5 flex-1">
           {metrics.map((m, idx) => (
             <div
               key={idx}
-              className="rounded-xl bg-white/70 p-3 flex flex-col items-center border border-gray-100 shadow-sm"
+              className="p-2 border border-gray-100 rounded-lg text-sm bg-white/60 flex items-center justify-between gap-3"
             >
-              <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                {m.icon}
-                {m.label}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-medium text-gray-700 min-w-[35px]">{m.label}:</span>
+                <span className="text-gray-600">${m.avg.toFixed(2)}</span>
               </div>
-              <div className="font-semibold text-lg text-gray-800">${m.avg.toFixed(2)}</div>
-              <div className="w-full h-2 bg-gray-200 rounded mt-2 mb-1">
-                <div
-                  className="h-2 rounded bg-gradient-to-r from-indigo-400 via-blue-400 to-teal-400"
-                  style={{
-                    width: `${Math.max(10, (m.count / maxCount) * 100)}%`,
-                    opacity: 0.7,
-                  }}
-                />
-              </div>
-              <div className="text-xs text-gray-500">{m.count} ratings</div>
+              <span className="text-gray-500 text-sm flex-shrink-0">({m.count})</span>
             </div>
           ))}
         </div>
-        {/* Publishers */}
-        {publishers.length > 0 && (
-          <div className="mt-2">
-            <div className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">
-              Top Analyst Sources
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {publishers.slice(0, 10).map((p: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-2 py-1 bg-white/70 text-blue-700 text-xs font-medium rounded-full border border-blue-100 shadow-sm"
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {/* Last Updated */}
+
+        {/* Last updated - Bottom */}
         {formattedLastUpdated && (
-          <div className="flex items-center justify-end pt-4">
+          <div className="flex items-center justify-end pt-3 mt-auto">
             <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-4 h-4 text-gray-400" />
+              <Clock className="w-3 h-3 text-gray-400" />
               Last updated: {formattedLastUpdated}
             </span>
           </div>
         )}
-      </div>
+      </CardContent>
     </Card>
   );
 };

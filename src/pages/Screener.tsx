@@ -446,7 +446,7 @@ const StockScreener: React.FC = () => {
                     </span>
                   </div>
                   <Link
-                    to={`/company/${item.symbol}`}
+                    to={`/app/company/${item.symbol}`}
                     className="font-semibold text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
                   >
                     {item.symbol}

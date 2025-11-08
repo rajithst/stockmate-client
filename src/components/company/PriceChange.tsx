@@ -11,7 +11,7 @@ import {
   YAxis,
   LabelList,
 } from 'recharts';
-import { Clock } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 import type { StockPriceChangeRead } from '../../types';
 
 const ignore_fields = ['symbol', 'created_at', 'updated_at', 'id', 'company_id'];
@@ -28,9 +28,28 @@ const periodLabels: Record<string, string> = {
   ytd: 'YTD',
 };
 
-export const PriceChangeChart: React.FC<{ price_change: StockPriceChangeRead }> = ({
-  price_change,
-}) => {
+export const PriceChangeChart: React.FC<{
+  price_change: StockPriceChangeRead | null | undefined;
+}> = ({ price_change }) => {
+  // Handle null or missing data
+  if (!price_change) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-gray-800">Price Change (%)</CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Performance over different periods
+          </span>
+        </CardHeader>
+        <CardContent className="h-72 pb-8 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-gray-500">
+            <AlertCircle className="w-8 h-8 text-gray-400" />
+            <span className="text-sm font-medium">Price change data not available</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const chartData = Object.entries(price_change)
     .filter(([period]) => !ignore_fields.includes(period)) // skip ignored fields
     .map(([period, value]) => ({
@@ -70,12 +89,20 @@ export const PriceChangeChart: React.FC<{ price_change: StockPriceChangeRead }> 
               tickLine={false}
               tickFormatter={(v) => `${v}%`}
             />
-            <Tooltip formatter={(value: number) => `${value}%`} />
+            <Tooltip
+              formatter={(value) => {
+                if (typeof value === 'number') return `${value}%`;
+                return value;
+              }}
+            />
             <Bar dataKey="value">
               <LabelList
                 dataKey="value"
                 position="top"
-                formatter={(value: number) => (value > 0 ? `+${value}%` : `${value}%`)}
+                formatter={(value) => {
+                  if (typeof value === 'number') return value > 0 ? `+${value}%` : `${value}%`;
+                  return value;
+                }}
                 style={{ fontSize: 13, fontWeight: 500, fill: '#374151' }}
               />
               {chartData.map((entry, index) => (

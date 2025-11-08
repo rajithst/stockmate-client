@@ -1,90 +1,117 @@
-// TypeScript interfaces for Company schemas
-// Generated from app/schemas/company.py
+/**
+ * Core company schema and composite response types
+ */
 
-// TypeScript interfaces for Company schemas
-// Generated from app/schemas/company.py
-import type { CompanyBalanceSheetRead } from './balance_sheet';
-import type { CompanyCashFlowStatementRead } from './cashflow';
-import type { DiscountedCashFlowRead } from './dcf';
-import type { CompanyDividendRead } from './dividend';
-import type { CompanyFinancialHealthRead } from './financial_health';
-import type { CompanyFinancialRatioRead } from './financial_ratio';
-import type { CompanyGradingRead, CompanyGradingSummaryRead } from './grading';
-import type { CompanyIncomeStatementRead } from './income_statement';
-import type { CompanyKeyMetricsRead } from './key_metrics';
 import type {
+  CompanyBalanceSheetRead,
+  CompanyCashFlowStatementRead,
+  CompanyIncomeStatementRead,
+  CompanyFinancialRatioRead,
+} from './financial-statements';
+import type { CompanyDiscountedCashFlowRead, CompanyKeyMetricsRead } from './company-metrics';
+import type {
+  CompanyGradingRead,
+  CompanyGradingSummaryRead,
   CompanyGeneralNewsRead,
   CompanyGradingNewsRead,
   CompanyPriceTargetNewsRead,
-} from './news';
-import type { CompanyPriceTargetRead, CompanyPriceTargetSummaryRead } from './price_target';
-import type { StockPriceChangeRead } from './quote';
-import type { CompanyRatingSummaryRead } from './rating';
-import type { CompanyTechnicalIndicatorRead } from './technical_indicator';
+  CompanyPriceTargetRead,
+  CompanyPriceTargetSummaryRead,
+  CompanyRatingSummaryRead,
+} from './market-data';
+import type { StockPriceChangeRead, CompanyDividendRead, StockPriceRead } from './quote';
+
+// ========================
+// COMPANY INTERFACES
+// ========================
 
 export interface Company {
   symbol: string;
   company_name: string;
-  price: number;
-  price_change: number;
-  percent_change_percent: number;
   market_cap: number;
   currency: string;
   exchange_full_name: string;
   exchange: string;
-  industry: string;
-  website: string;
-  description: string;
-  sector: string;
-  country: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  image: string;
-  ipo_date: string;
+  industry?: string | null;
+  website?: string | null;
+  description?: string | null;
+  sector?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  image?: string | null;
+  ipo_date?: Date | string | null;
 }
 
 export interface CompanyRead extends Company {
-  id: number;
-  created_at: string; // ISO date string
-  updated_at: string; // ISO date string
+  price?: number | null;
+  daily_price_change?: number | null;
+  daily_price_change_percent?: number | null;
+  open_price?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
 
 export interface CompanyWrite extends Company {}
 
+// ========================
+// COMPANY COMPOSITE RESPONSE INTERFACES
+// ========================
+
+export interface CompanyFundamentalsRead {
+  // Valuation Metrics
+  market_cap?: number | null;
+  price_to_earnings_ratio?: number | null;
+  price_to_sales_ratio?: number | null;
+  price_to_book_ratio?: number | null;
+
+  // Cashflow Metrics
+  free_cash_flow_yield?: number | null;
+  earnings_yield?: number | null;
+
+  // Profitability Margins
+  gross_profit_margin?: number | null;
+  operating_profit_margin?: number | null;
+  net_profit_margin?: number | null;
+
+  // Balance Sheet Metrics
+  current_ratio?: number | null;
+  debt_to_equity_ratio?: number | null;
+  return_on_equity?: number | null;
+  return_on_assets?: number | null;
+
+  // Dividend Metrics
+  dividend_yield?: number | null;
+  dividend?: number | null;
+  dividend_frequency?: string | null;
+}
+
 export interface CompanyPageResponse {
   company: CompanyRead;
-  grading_summary: CompanyGradingSummaryRead;
-  rating_summary: CompanyRatingSummaryRead;
-  dcf: DiscountedCashFlowRead;
-  price_target: CompanyPriceTargetRead;
-  price_change: StockPriceChangeRead;
-  price_target_summary: CompanyPriceTargetSummaryRead;
+  grading_summary?: CompanyGradingSummaryRead | null;
+  rating_summary?: CompanyRatingSummaryRead | null;
+  dcf?: CompanyDiscountedCashFlowRead | null;
+  price_target?: CompanyPriceTargetRead | null;
+  price_change?: StockPriceChangeRead | null;
+  price_target_summary?: CompanyPriceTargetSummaryRead | null;
+  stock_prices?: StockPriceRead[] | null;
+  fundamentals?: CompanyFundamentalsRead | null;
   latest_gradings: CompanyGradingRead[];
   price_target_news: CompanyPriceTargetNewsRead[];
   general_news: CompanyGeneralNewsRead[];
   grading_news: CompanyGradingNewsRead[];
-  technical_indicators: CompanyTechnicalIndicatorRead[];
 }
 
-export interface CompanyFinancialsResponse {
+export interface CompanyFinancialResponse {
   balance_sheets: CompanyBalanceSheetRead[];
   income_statements: CompanyIncomeStatementRead[];
   cash_flow_statements: CompanyCashFlowStatementRead[];
   key_metrics: CompanyKeyMetricsRead[];
   financial_ratios: CompanyFinancialRatioRead[];
   dividends: CompanyDividendRead[];
-}
-
-export interface CompanyFinancialHealthResponse {
-  company: CompanyRead;
-  profitability: CompanyFinancialHealthRead[];
-  efficiency: CompanyFinancialHealthRead[];
-  liquidity_and_solvency: CompanyFinancialHealthRead[];
-  cashflow_strength: CompanyFinancialHealthRead[];
-  valuation: CompanyFinancialHealthRead[];
-  growth_and_investment: CompanyFinancialHealthRead[];
-  dividend_and_shareholder_return: CompanyFinancialHealthRead[];
 }

@@ -1,52 +1,164 @@
-// Main TypeScript interfaces export file
-// Generated from app/schemas/
+/**
+ * Index file for all TypeScript schema interfaces
+ * Import all interfaces from this single file for convenient access
+ *
+ * Usage example:
+ * ```typescript
+ * import type {
+ *   CompanyRead,
+ *   CompanyIncomeStatementRead,
+ *   UserRead,
+ *   PortfolioRead,
+ * } from '@/schemas/types';
+ * ```
+ */
 
-// Balance Sheet
-export * from './balance_sheet';
+// Financial Statements
+export type {
+  CompanyIncomeStatement,
+  CompanyIncomeStatementWrite,
+  CompanyIncomeStatementRead,
+  CompanyBalanceSheet,
+  CompanyBalanceSheetWrite,
+  CompanyBalanceSheetRead,
+  CompanyCashFlowStatement,
+  CompanyCashFlowStatementWrite,
+  CompanyCashFlowStatementRead,
+  CompanyFinancialRatio,
+  CompanyFinancialRatioWrite,
+  CompanyFinancialRatioRead,
+} from './financial-statements';
 
-// Cash Flow Statement
-export * from './cashflow';
+// Company Metrics
+export type {
+  CompanyAnalystEstimate,
+  CompanyAnalystEstimateWrite,
+  CompanyAnalystEstimateRead,
+  CompanyKeyMetrics,
+  CompanyKeyMetricsWrite,
+  CompanyKeyMetricsRead,
+  CompanyDiscountedCashFlow,
+  CompanyDiscountedCashFlowRead,
+  CompanyDiscountedCashFlowWrite,
+  CompanyRevenueProductSegmentation,
+  CompanyRevenueProductSegmentationWrite,
+  CompanyRevenueProductSegmentationRead,
+} from './company-metrics';
 
-// Company
-export * from './company';
+// Market Data
+export type {
+  CompanyGrading,
+  CompanyGradingWrite,
+  CompanyGradingRead,
+  CompanyGradingSummary,
+  CompanyGradingSummaryRead,
+  CompanyGradingSummaryWrite,
+  CompanyRatingSummary,
+  CompanyRatingSummaryRead,
+  CompanyRatingSummaryWrite,
+  CompanyPriceTarget,
+  CompanyPriceTargetRead,
+  CompanyPriceTargetWrite,
+  CompanyPriceTargetSummary,
+  CompanyPriceTargetSummaryRead,
+  CompanyPriceTargetSummaryWrite,
+  CompanyStockNews,
+  CompanyStockNewsRead,
+  CompanyStockNewsWrite,
+  CompanyGeneralNews,
+  CompanyGeneralNewsRead,
+  CompanyGeneralNewsWrite,
+  CompanyPriceTargetNews,
+  CompanyPriceTargetNewsWrite,
+  CompanyPriceTargetNewsRead,
+  CompanyGradingNews,
+  CompanyGradingNewsWrite,
+  CompanyGradingNewsRead,
+} from './market-data';
 
-// DCF (Discounted Cash Flow)
-export * from './dcf';
-
-// Dividend
-export * from './dividend';
-
-// Financial Ratio
-export * from './financial_ratio';
-
-// Financial Score
-export * from './financial_score';
-
-// Grading
-export * from './grading';
-
-// Income Statement
-export * from './income_statement';
-
-// Key Metrics
-export * from './key_metrics';
-
-// News
-export * from './news';
-
-// Price Target
-export * from './price_target';
-
-// Quote (Stock Price Change)
-export * from './quote';
-
-// Rating
-export * from './rating';
-
-// Stock
-export * from './stock';
+// Quote & Technical Data
+export type {
+  StockPriceChangeBase,
+  StockPriceChangeWrite,
+  StockPriceChangeRead,
+  StockPrice,
+  StockPriceRead,
+  StockPriceWrite,
+  CompanyStockSplit,
+  CompanyStockSplitWrite,
+  CompanyStockSplitRead,
+  CompanyStockPeer,
+  CompanyStockPeerWrite,
+  CompanyStockPeerRead,
+  CompanyDividend,
+  CompanyDividendWrite,
+  CompanyDividendRead,
+  CompanyTechnicalIndicator,
+  CompanyTechnicalIndicatorWrite,
+  CompanyTechnicalIndicatorRead,
+} from './quote';
 
 // Financial Health
-export * from './financial_health';
+export type {
+  CompanyFinancialHealth,
+  CompanyFinancialHealthWrite,
+  CompanyFinancialHealthRead,
+  CompanyFinancialScore,
+  CompanyFinancialScoresWrite,
+  CompanyFinancialScoresRead,
+  CompanyFinancialHealthResponse,
+} from './financial-health';
 
-export * from './technical_indicator';
+// User & Portfolio
+export type {
+  User,
+  UserCreate,
+  UserWrite,
+  UserRead,
+  Token,
+  TokenData,
+  NotificationPreference,
+  NotificationPreferenceWrite,
+  NotificationPreferenceRead,
+  Portfolio,
+  PortfolioUpsertRequest,
+  PortfolioCreate,
+  PortfolioRead,
+  PortfolioUpdate,
+  PortfolioSectorPerformance,
+  PortfolioSectorPerformanceRead,
+  PortfolioIndustryPerformance,
+  PortfolioIndustryPerformanceRead,
+  PortfolioHoldingPerformance,
+  PortfolioHoldingPerformanceWrite,
+  PortfolioHoldingPerformanceRead,
+  PortfolioTradingHistory,
+  PortfolioTradingHistoryUpsertRequest,
+  PortfolioTradingHistoryWrite,
+  PortfolioTradingHistoryRead,
+  PortfolioDividendHistory,
+  PortfolioDividendHistoryRead,
+  PortfolioDividendHistoryWrite,
+  PortfolioDetail,
+  DividendSyncResult,
+  DividendSyncBatchResult,
+  Watchlist,
+  WatchlistUpsertRequest,
+  WatchlistCreate,
+  WatchlistUpdate,
+  WatchlistRead,
+  WatchlistItem,
+  WatchlistItemWrite,
+  WatchlistItemCreate,
+  WatchlistCompanyItem,
+  WatchlistResponse,
+} from './user';
+
+// Company
+export type {
+  Company,
+  CompanyRead,
+  CompanyWrite,
+  CompanyPageResponse,
+  CompanyFinancialResponse,
+} from './company';

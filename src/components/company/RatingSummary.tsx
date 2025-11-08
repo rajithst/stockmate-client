@@ -7,8 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip.tsx';
-import { Info, Clock } from 'lucide-react';
-import type { CompanyRatingSummaryRead } from '../../types/rating.ts';
+import { Info, Clock, AlertCircle } from 'lucide-react';
+import type { CompanyRatingSummaryRead } from '../../types';
 
 export interface RatingSummary {
   symbol: string;
@@ -22,9 +22,28 @@ export interface RatingSummary {
   priceToBookScore: number;
 }
 
-export const RatingSummaryCard: React.FC<{ rating_summary: CompanyRatingSummaryRead | {} }> = ({
-  rating_summary,
-}) => {
+export const RatingSummaryCard: React.FC<{
+  rating_summary: CompanyRatingSummaryRead | null | undefined;
+}> = ({ rating_summary }) => {
+  if (!rating_summary) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-gray-800">Rating Summary</CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Fundamental & performance metrics
+          </span>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center gap-2 text-gray-500">
+            <AlertCircle className="w-8 h-8 text-gray-400" />
+            <span className="text-sm font-medium">Rating data not available</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const items = [
     {
       label: 'Overall',
@@ -63,7 +82,8 @@ export const RatingSummaryCard: React.FC<{ rating_summary: CompanyRatingSummaryR
     },
   ];
 
-  const getBarColor = (score: number) => {
+  const getBarColor = (score: number | null | undefined) => {
+    if (!score) return '#d1d5db'; // gray for no data
     if (score >= 5) return '#16a34a'; // strong green
     if (score >= 4) return '#22c55e';
     if (score >= 3) return '#eab308'; // yellow
@@ -117,19 +137,23 @@ export const RatingSummaryCard: React.FC<{ rating_summary: CompanyRatingSummaryR
                     </TooltipContent>
                   </ShadTooltip>
                 </div>
-                <span className="font-semibold">{item.value}/5</span>
+                <span className="font-semibold">{item.value ?? '-'}/5</span>
               </div>
               <div className="h-3 w-full bg-gray-200 rounded-md overflow-hidden relative">
                 {/* Gradient bar background */}
                 <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 opacity-70" />
-                <div
-                  className="h-3 rounded relative"
-                  style={{
-                    width: `${(item.value / 5) * 100}%`,
-                    backgroundColor: getBarColor(item.value),
-                    opacity: 0.85,
-                  }}
-                />
+                {item.value ? (
+                  <div
+                    className="h-3 rounded relative"
+                    style={{
+                      width: `${(item.value / 5) * 100}%`,
+                      backgroundColor: getBarColor(item.value),
+                      opacity: 0.85,
+                    }}
+                  />
+                ) : (
+                  <div className="h-3 w-0" />
+                )}
               </div>
             </div>
           ))}

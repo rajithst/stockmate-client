@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -10,7 +10,7 @@ import { Button } from '../components/ui/button.tsx';
 import { ArrowLeft, TrendingUp, BarChart3 } from 'lucide-react';
 import { KeyMetricsTab } from '../components/financials/KeyMetrics.tsx';
 import { DividendTab } from '../components/financials/Dividend.tsx';
-import type { CompanyFinancialsResponse } from '../types/index.ts';
+import type { CompanyFinancialResponse } from '../types/index.ts';
 import { apiClient } from '../api/client.ts';
 import {
   LineChart,
@@ -28,7 +28,7 @@ import {
 const FinancialsPage: React.FC = () => {
   const navigate = useNavigate();
   const { symbol } = useParams<{ symbol: string }>();
-  const [financialData, setFinancialData] = React.useState<CompanyFinancialsResponse | null>(null);
+  const [financialData, setFinancialData] = React.useState<CompanyFinancialResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [selectedTab, setSelectedTab] = React.useState<

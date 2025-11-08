@@ -1,26 +1,51 @@
 import React from 'react';
-import { ArrowDownRight, ArrowUpRight, MinusCircle, Clock } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, MinusCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import type { DiscountedCashFlowRead } from '../../types';
+import type { CompanyDiscountedCashFlowRead } from '../../types';
 
-export const DcfSummaryCard: React.FC<{ discounted_cash_flow: DiscountedCashFlowRead }> = ({
-  discounted_cash_flow,
-}) => {
+export const DcfSummaryCard: React.FC<{
+  discounted_cash_flow: CompanyDiscountedCashFlowRead | null | undefined;
+}> = ({ discounted_cash_flow }) => {
+  // Handle null or missing data
+  if (
+    !discounted_cash_flow ||
+    discounted_cash_flow.dcf === null ||
+    discounted_cash_flow.stock_price === null
+  ) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-gray-800">
+            Discounted Cash Flow
+          </CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Fundamental valuation snapshot
+          </span>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center gap-2 text-gray-500">
+            <AlertCircle className="w-8 h-8 text-gray-400" />
+            <span className="text-sm font-medium">DCF data not available</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const { dcf, stock_price, date, updated_at } = discounted_cash_flow;
 
-  const diff = stock_price - dcf;
-  const percentageDiff = ((diff / dcf) * 100).toFixed(1);
+  const diff = stock_price! - dcf!;
+  const percentageDiff = ((diff / dcf!) * 100).toFixed(1);
 
   let status: 'Undervalued' | 'Fair Value' | 'Overvalued';
   let colorClass = '';
   let Icon = MinusCircle;
 
-  if (stock_price < dcf * 0.9) {
+  if (stock_price! < dcf! * 0.9) {
     status = 'Undervalued';
     colorClass = 'text-green-600';
     Icon = ArrowDownRight;
-  } else if (stock_price > dcf * 1.1) {
+  } else if (stock_price! > dcf! * 1.1) {
     status = 'Overvalued';
     colorClass = 'text-red-600';
     Icon = ArrowUpRight;
@@ -61,15 +86,17 @@ export const DcfSummaryCard: React.FC<{ discounted_cash_flow: DiscountedCashFlow
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-gray-500">DCF Value:</span>
-            <span className="font-semibold text-gray-800">${dcf.toFixed(2)}</span>
+            <span className="font-semibold text-gray-800">${dcf!.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Stock Price:</span>
-            <span className="font-semibold text-gray-800">${stock_price.toFixed(2)}</span>
+            <span className="font-semibold text-gray-800">${stock_price!.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-500">As of:</span>
-            <span className="text-gray-700">{date}</span>
+            <span className="text-gray-700">
+              {typeof date === 'string' ? date : date?.toString()}
+            </span>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/card';
 import {
   Select,
@@ -18,337 +18,168 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-
-// Mock Data
-const mockPortfolios = ['Main Portfolio', 'Retirement Fund', 'High Growth'];
-
-interface PortfolioDetails {
-  name: string;
-  dateCreated: string;
-  currency: string;
-}
-
-const portfolioDetailsMap: Record<string, PortfolioDetails> = {
-  'Main Portfolio': {
-    name: 'Main Portfolio',
-    dateCreated: '2023-01-15',
-    currency: 'USD',
-  },
-  'Retirement Fund': {
-    name: 'Retirement Fund',
-    dateCreated: '2022-06-20',
-    currency: 'USD',
-  },
-  'High Growth': {
-    name: 'High Growth',
-    dateCreated: '2024-03-10',
-    currency: 'USD',
-  },
-};
-
-interface DividendPayment {
-  symbol: string;
-  shares: number;
-  dividendPerShare: number;
-  totalAmount: number;
-  paymentDate: string;
-  exDividendDate: string;
-}
+import { apiClient } from '../api/client';
+import type { PortfolioRead, PortfolioDividendHistoryRead } from '../types/user';
+import { LoadingIndicator } from '../components/ui/loading-indicator';
 
 interface MonthlyDividend {
   year: number;
   month: number;
   monthName: string;
   totalAmount: number;
-  payments: DividendPayment[];
+  payments: PortfolioDividendHistoryRead[];
 }
 
-// Mock dividend data
-const mockDividendData: MonthlyDividend[] = [
-  {
-    year: 2024,
-    month: 11,
-    monthName: 'November',
-    totalAmount: 2850,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-10-15',
-        exDividendDate: '2024-10-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-10-20',
-        exDividendDate: '2024-10-15',
-      },
-      {
-        symbol: 'JNJ',
-        shares: 15,
-        dividendPerShare: 100,
-        totalAmount: 1500,
-        paymentDate: '2024-10-25',
-        exDividendDate: '2024-10-18',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 10,
-    monthName: 'October',
-    totalAmount: 2850,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-10-15',
-        exDividendDate: '2024-10-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-10-20',
-        exDividendDate: '2024-10-15',
-      },
-      {
-        symbol: 'JNJ',
-        shares: 15,
-        dividendPerShare: 100,
-        totalAmount: 1500,
-        paymentDate: '2024-10-25',
-        exDividendDate: '2024-10-18',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 9,
-    monthName: 'September',
-    totalAmount: 3200,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-09-15',
-        exDividendDate: '2024-09-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-09-20',
-        exDividendDate: '2024-09-15',
-      },
-      {
-        symbol: 'KO',
-        shares: 20,
-        dividendPerShare: 42.5,
-        totalAmount: 850,
-        paymentDate: '2024-09-25',
-        exDividendDate: '2024-09-18',
-      },
-      {
-        symbol: 'PEP',
-        shares: 10,
-        dividendPerShare: 100,
-        totalAmount: 1000,
-        paymentDate: '2024-09-28',
-        exDividendDate: '2024-09-20',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 8,
-    monthName: 'August',
-    totalAmount: 2450,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-08-15',
-        exDividendDate: '2024-08-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-08-20',
-        exDividendDate: '2024-08-15',
-      },
-      {
-        symbol: 'JNJ',
-        shares: 15,
-        dividendPerShare: 73.33,
-        totalAmount: 1100,
-        paymentDate: '2024-08-25',
-        exDividendDate: '2024-08-18',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 7,
-    monthName: 'July',
-    totalAmount: 2850,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-07-15',
-        exDividendDate: '2024-07-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-07-20',
-        exDividendDate: '2024-07-15',
-      },
-      {
-        symbol: 'JNJ',
-        shares: 15,
-        dividendPerShare: 100,
-        totalAmount: 1500,
-        paymentDate: '2024-07-25',
-        exDividendDate: '2024-07-18',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 6,
-    monthName: 'June',
-    totalAmount: 1900,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-06-15',
-        exDividendDate: '2024-06-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-06-20',
-        exDividendDate: '2024-06-15',
-      },
-      {
-        symbol: 'KO',
-        shares: 13,
-        dividendPerShare: 42.3,
-        totalAmount: 550,
-        paymentDate: '2024-06-25',
-        exDividendDate: '2024-06-18',
-      },
-    ],
-  },
-  {
-    year: 2024,
-    month: 5,
-    monthName: 'May',
-    totalAmount: 3100,
-    payments: [
-      {
-        symbol: 'AAPL',
-        shares: 25,
-        dividendPerShare: 24,
-        totalAmount: 600,
-        paymentDate: '2024-05-15',
-        exDividendDate: '2024-05-10',
-      },
-      {
-        symbol: 'MSFT',
-        shares: 10,
-        dividendPerShare: 75,
-        totalAmount: 750,
-        paymentDate: '2024-05-20',
-        exDividendDate: '2024-05-15',
-      },
-      {
-        symbol: 'JNJ',
-        shares: 15,
-        dividendPerShare: 113.33,
-        totalAmount: 1700,
-        paymentDate: '2024-05-25',
-        exDividendDate: '2024-05-18',
-      },
-      {
-        symbol: 'PEP',
-        shares: 5,
-        dividendPerShare: 10,
-        totalAmount: 50,
-        paymentDate: '2024-05-28',
-        exDividendDate: '2024-05-20',
-      },
-    ],
-  },
-];
-
 const DividendPage: React.FC = () => {
-  const [selectedPortfolio, setSelectedPortfolio] = useState(mockPortfolios[0]);
+  const [portfolios, setPortfolios] = useState<PortfolioRead[]>([]);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>('');
+  const [dividendHistories, setDividendHistories] = useState<PortfolioDividendHistoryRead[]>([]);
+  const [loading, setLoading] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const hasInitializedRef = useRef(false);
 
-  const portfolioDetails = portfolioDetailsMap[selectedPortfolio];
+  // Fetch portfolios on mount
+  useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
-  // Group dividends by year
-  const dividendsByYear = mockDividendData.reduce(
-    (acc, dividend) => {
-      if (!acc[dividend.year]) {
-        acc[dividend.year] = [];
+    const fetchPortfolios = async () => {
+      try {
+        setLoading(true);
+        const portfoliosData = await apiClient.getPortfolios();
+        setPortfolios(portfoliosData);
+
+        if (portfoliosData.length > 0) {
+          const firstPortfolioId = portfoliosData[0].id;
+          setSelectedPortfolioId(firstPortfolioId.toString());
+        }
+      } catch (err) {
+        console.error('Failed to fetch portfolios:', err);
+      } finally {
+        setLoading(false);
       }
-      acc[dividend.year].push(dividend);
-      return acc;
-    },
-    {} as Record<number, MonthlyDividend[]>,
-  );
+    };
 
+    fetchPortfolios();
+  }, []);
+
+  // Fetch portfolio detail when portfolio selection changes
+  useEffect(() => {
+    const fetchPortfolioDividends = async () => {
+      if (!selectedPortfolioId) return;
+
+      try {
+        setLoading(true);
+        const portfolioId = parseInt(selectedPortfolioId, 10);
+        const dividends = await apiClient.getPortfolioDividends(portfolioId);
+        setDividendHistories(dividends);
+      } catch (err) {
+        console.error('Failed to fetch portfolio dividends:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioDividends();
+  }, [selectedPortfolioId]);
+
+  const selectedPortfolio = portfolios.find((p) => p.id.toString() === selectedPortfolioId);
+
+  // Get currency from dividend histories or use portfolio currency as fallback
+  const portfolioCurrency = selectedPortfolio?.currency || 'USD';
+  const dividendCurrency =
+    dividendHistories.length > 0 ? dividendHistories[0].currency : portfolioCurrency;
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number, currency: string = dividendCurrency) => {
+    const currencySymbols: Record<string, string> = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      JPY: '¥',
+      INR: '₹',
+    };
+    const symbol = currencySymbols[currency] || currency;
+    return `${symbol}${amount.toLocaleString()}`;
+  };
+
+  // Transform dividend data into monthly structure
+  const transformDividendData = (): Record<number, MonthlyDividend[]> => {
+    const byYear: Record<number, MonthlyDividend[]> = {};
+
+    dividendHistories.forEach((dividend) => {
+      const paymentDate = new Date(dividend.payment_date);
+      const year = paymentDate.getFullYear();
+      const month = paymentDate.getMonth() + 1;
+      const monthName = paymentDate.toLocaleString('en-US', { month: 'long' });
+
+      if (!byYear[year]) {
+        byYear[year] = [];
+      }
+
+      // Check if month already exists
+      let monthData = byYear[year].find((m) => m.year === year && m.month === month);
+      if (!monthData) {
+        monthData = {
+          year,
+          month,
+          monthName,
+          totalAmount: 0,
+          payments: [],
+        };
+        byYear[year].push(monthData);
+      }
+
+      monthData.payments.push(dividend);
+      monthData.totalAmount += dividend.dividend_amount;
+    });
+
+    // Sort months in descending order
+    Object.keys(byYear).forEach((year) => {
+      byYear[parseInt(year, 10)].sort((a, b) => b.month - a.month);
+    });
+
+    return byYear;
+  };
+
+  const dividendsByYear = transformDividendData();
   const availableYears = Object.keys(dividendsByYear)
     .map(Number)
     .sort((a, b) => b - a);
   const currentYearDividends = dividendsByYear[selectedYear] || [];
 
   // Calculate statistics
-  const totalDividendIncome = mockDividendData.reduce((sum, month) => sum + month.totalAmount, 0);
-  const currentYearTotal = currentYearDividends.reduce((sum, month) => sum + month.totalAmount, 0);
-  const avgMonthlyDividend = currentYearTotal / currentYearDividends.length;
-  const highestMonth = currentYearDividends.reduce(
-    (max, month) => (month.totalAmount > max.totalAmount ? month : max),
-    currentYearDividends[0] || { monthName: '-', totalAmount: 0 },
+  const totalDividendIncome = dividendHistories.reduce(
+    (sum, dividend) => sum + dividend.dividend_amount,
+    0,
   );
+  const currentYearTotal = currentYearDividends.reduce((sum, month) => sum + month.totalAmount, 0);
+  const avgMonthlyDividend =
+    currentYearDividends.length > 0 ? currentYearTotal / currentYearDividends.length : 0;
+  const highestMonth =
+    currentYearDividends.length > 0
+      ? currentYearDividends.reduce((max, month) =>
+          month.totalAmount > max.totalAmount ? month : max,
+        )
+      : { monthName: '-', totalAmount: 0 };
 
   // Prepare chart data (last 12 months)
-  const chartData = mockDividendData
+  const allMonths = Object.values(dividendsByYear)
+    .flat()
+    .sort((a, b) => new Date(b.year, b.month).getTime() - new Date(a.year, a.month).getTime())
     .slice(0, 12)
-    .reverse()
-    .map((m) => ({
-      month: m.monthName.substring(0, 3),
-      amount: m.totalAmount,
-      year: m.year,
-    }));
+    .reverse();
+
+  const chartData = allMonths.map((m) => ({
+    month: m.monthName.substring(0, 3),
+    amount: m.totalAmount,
+    year: m.year,
+  }));
+
+  if (loading) {
+    return <LoadingIndicator message="Loading dividend data..." minHeight="min-h-[60vh]" />;
+  }
 
   return (
     <div className="container mx-auto p-4 space-y-4">
@@ -372,14 +203,14 @@ const DividendPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2.5">
                 <label className="text-xs font-semibold text-gray-600">Portfolio:</label>
-                <Select value={selectedPortfolio} onValueChange={setSelectedPortfolio}>
+                <Select value={selectedPortfolioId} onValueChange={setSelectedPortfolioId}>
                   <SelectTrigger className="w-[180px] h-8 text-sm border-indigo-200 focus:ring-indigo-500">
                     <SelectValue placeholder="Select Portfolio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockPortfolios.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
+                    {portfolios.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -395,7 +226,9 @@ const DividendPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Portfolio</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.name}</p>
+                  <p className="text-xs font-bold text-gray-800">
+                    {selectedPortfolio?.name || 'N/A'}
+                  </p>
                 </div>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
@@ -405,7 +238,9 @@ const DividendPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Currency</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.currency}</p>
+                  <p className="text-xs font-bold text-gray-800">
+                    {selectedPortfolio?.currency || 'USD'}
+                  </p>
                 </div>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
@@ -415,7 +250,11 @@ const DividendPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-500 font-medium">Created</p>
-                  <p className="text-xs font-bold text-gray-800">{portfolioDetails.dateCreated}</p>
+                  <p className="text-xs font-bold text-gray-800">
+                    {selectedPortfolio?.created_at
+                      ? new Date(selectedPortfolio.created_at).toLocaleDateString()
+                      : 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -430,7 +269,7 @@ const DividendPage: React.FC = () => {
                   <p className="text-[10px] font-semibold text-gray-600">Total Income</p>
                 </div>
                 <p className="text-lg font-bold text-indigo-600">
-                  ¥{totalDividendIncome.toLocaleString()}
+                  {formatCurrency(totalDividendIncome)}
                 </p>
               </div>
 
@@ -442,7 +281,7 @@ const DividendPage: React.FC = () => {
                   <p className="text-[10px] font-semibold text-gray-600">This Year</p>
                 </div>
                 <p className="text-lg font-bold text-green-600">
-                  ¥{currentYearTotal.toLocaleString()}
+                  {formatCurrency(currentYearTotal)}
                 </p>
               </div>
 
@@ -454,7 +293,7 @@ const DividendPage: React.FC = () => {
                   <p className="text-[10px] font-semibold text-gray-600">Avg Monthly</p>
                 </div>
                 <p className="text-lg font-bold text-blue-600">
-                  ¥{avgMonthlyDividend.toLocaleString()}
+                  {formatCurrency(avgMonthlyDividend)}
                 </p>
               </div>
 
@@ -467,7 +306,7 @@ const DividendPage: React.FC = () => {
                 </div>
                 <p className="text-xs font-bold text-amber-600">{highestMonth.monthName}</p>
                 <p className="text-[10px] text-gray-600">
-                  ¥{highestMonth.totalAmount.toLocaleString()}
+                  {formatCurrency(highestMonth.totalAmount)}
                 </p>
               </div>
             </div>
@@ -498,10 +337,10 @@ const DividendPage: React.FC = () => {
               <YAxis
                 tick={{ fill: '#6b7280', fontSize: 11 }}
                 axisLine={{ stroke: '#d1d5db' }}
-                tickFormatter={(value) => `¥${value}`}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip
-                formatter={(value: number) => [`¥${value.toLocaleString()}`, 'Amount']}
+                formatter={(value: number) => [formatCurrency(value), 'Amount']}
                 contentStyle={{
                   backgroundColor: 'white',
                   border: '1px solid #e5e7eb',
@@ -585,7 +424,7 @@ const DividendPage: React.FC = () => {
                       <div className="flex items-center gap-2.5">
                         <div className="text-right">
                           <p className="text-lg font-bold text-indigo-600">
-                            ¥{monthData.totalAmount.toLocaleString()}
+                            {formatCurrency(monthData.totalAmount)}
                           </p>
                         </div>
                         {isExpanded ? (
@@ -618,13 +457,13 @@ const DividendPage: React.FC = () => {
                                     {payment.symbol}
                                   </h4>
                                   <p className="text-[10px] text-gray-500">
-                                    Payment: {payment.paymentDate}
+                                    Payment: {new Date(payment.payment_date).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <p className="text-base font-bold text-green-600">
-                                  ¥{payment.totalAmount.toLocaleString()}
+                                  {formatCurrency(payment.dividend_amount, payment.currency)}
                                 </p>
                               </div>
                             </div>
@@ -638,13 +477,13 @@ const DividendPage: React.FC = () => {
                               <div>
                                 <p className="text-[10px] text-gray-500 mb-0.5">Per Share</p>
                                 <p className="font-semibold text-sm text-gray-800">
-                                  ¥{payment.dividendPerShare.toFixed(2)}
+                                  {formatCurrency(payment.dividend_per_share, payment.currency)}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-gray-500 mb-0.5">Ex-Dividend Date</p>
+                                <p className="text-[10px] text-gray-500 mb-0.5">Declaration Date</p>
                                 <p className="font-semibold text-sm text-gray-800">
-                                  {payment.exDividendDate}
+                                  {new Date(payment.declaration_date).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>

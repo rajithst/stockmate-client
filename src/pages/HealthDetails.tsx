@@ -33,78 +33,65 @@ export const HealthDetailsPage: React.FC = () => {
     fetchData();
   }, [symbol]);
 
+  // Helper function to format benchmark with status emoji
+  const formatBenchmark = (benchmark?: string | null, status?: string): string => {
+    if (!benchmark || benchmark.trim() === '') return '-';
+    const emoji = status === 'healthy' ? '✅' : '⚠️';
+    return `${benchmark} ${emoji}`;
+  };
+
+  // Helper function to format insight
+  const formatInsight = (insight?: string | null): string => {
+    return insight && insight.trim() !== '' ? insight : '-';
+  };
+
+  // Helper function to create section data
+  const createSection = (
+    title: string,
+    data: Array<{
+      metric: string;
+      value: string;
+      status?: string;
+      benchmark?: string | null;
+      insight?: string | null;
+    }>,
+  ) => ({
+    title,
+    columns: ['Metric', 'Value', 'Benchmark', 'Insight'],
+    metrics: data.map((item) => [
+      item.metric,
+      item.value,
+      formatBenchmark(item.benchmark, item.status),
+      formatInsight(item.insight),
+    ]),
+  });
+
   const sections = financialHealthData
     ? [
-        {
-          title: 'Profitability',
-          columns: ['Metric', 'Value', 'Healthy Range', 'Insight'],
-          metrics: financialHealthData.profitability.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Efficiency',
-          columns: ['Metric', 'Value', 'Benchmark', 'Insight'],
-          metrics: financialHealthData.efficiency.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Liquidity and Solvency',
-          columns: ['Metric', 'Value', 'Healthy Range', 'Insight'],
-          metrics: financialHealthData.liquidity_and_solvency.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Cash Flow Strength',
-          columns: ['Metric', 'Value', 'Benchmark', 'Insight'],
-          metrics: financialHealthData.cashflow_strength.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Valuation',
-          columns: ['Metric', 'Value', 'Typical Range', 'Insight'],
-          metrics: financialHealthData.valuation.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Growth & Investment',
-          columns: ['Metric', 'Value', 'Benchmark', 'Insight'],
-          metrics: financialHealthData.growth_and_investment.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
-        {
-          title: 'Dividend & Shareholder Returns',
-          columns: ['Metric', 'Value', 'Benchmark', 'Insight'],
-          metrics: financialHealthData.cashflow_strength.map((item) => [
-            item.metric,
-            item.value,
-            item.status === 'healthy' ? `${item.benchmark} ✅ ` : `${item.benchmark} ⚠️`,
-            item.insight,
-          ]),
-        },
+        createSection('Profitability Analysis', financialHealthData.profitability_analysis),
+        createSection('Efficiency Analysis', financialHealthData.efficiency_analysis),
+        createSection(
+          'Valuation and Market Multiples',
+          financialHealthData.valuation_and_market_multiples,
+        ),
+        createSection('Cash Flow Strength', financialHealthData.cashflow_strength),
+        createSection('Per Share Performance', financialHealthData.per_share_performance),
+        createSection(
+          'Dividend and Shareholder Returns',
+          financialHealthData.dividend_and_shareholder_returns,
+        ),
+        createSection(
+          'Asset Quality and Capital Efficiency',
+          financialHealthData.asset_quality_and_capital_efficiency,
+        ),
+        createSection(
+          'Liquidity and Short-Term Solvency',
+          financialHealthData.liquidity_and_short_term_solvency,
+        ),
+        createSection(
+          'Tax and Cost Structure Analysis',
+          financialHealthData.tax_and_cost_structure,
+        ),
       ]
     : [];
 

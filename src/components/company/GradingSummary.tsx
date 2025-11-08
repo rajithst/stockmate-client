@@ -1,12 +1,33 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Badge } from '../ui/badge.tsx';
-import { Clock } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 import type { CompanyGradingSummaryRead } from '../../types';
 
-export const StockGradingSummaryCard: React.FC<{ summary: CompanyGradingSummaryRead }> = ({
-  summary,
-}) => {
+export const StockGradingSummaryCard: React.FC<{
+  summary: CompanyGradingSummaryRead | null | undefined;
+}> = ({ summary }) => {
+  // Handle null or missing data
+  if (!summary) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-gray-800">
+            Stock Grading Summary
+          </CardTitle>
+          <span className="text-xs text-gray-400 font-medium block mt-1">
+            Analyst consensus breakdown
+          </span>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center gap-2 text-gray-500">
+            <AlertCircle className="w-8 h-8 text-gray-400" />
+            <span className="text-sm font-medium">Grading data not available</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const total =
     summary.strong_buy + summary.buy + summary.hold + summary.sell + summary.strong_sell;
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, AlertCircle } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -12,76 +12,58 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { CompanyTechnicalIndicatorRead } from '../../types/technical_indicator';
-import { data } from 'react-router-dom';
+import type { CompanyTechnicalIndicatorRead } from '../../types';
 
 export const TechnicalIndicators: React.FC<{ symbol: string }> = ({ symbol }) => {
   const [technical_indicators, setTechnicalIndicators] = React.useState<
     CompanyTechnicalIndicatorRead[]
-  >(
-    //add sample data
-    [
-      {
-        date: '2023-01-01',
-        simple_moving_average: 150.25,
-        exponential_moving_average: 149.75,
-        weighted_moving_average: 150.0,
-        double_exponential_moving_average: 149.5,
-        triple_exponential_moving_average: 149.25,
-        relative_strength_index: 55.3,
-        standard_deviation: 2.5,
-        williams_percent_r: -30.0,
-        average_directional_index: 25.0,
-        company_id: 1,
-        symbol: 'AAPL',
-        id: 1,
-      },
-      {
-        date: '2023-01-02',
-        simple_moving_average: 151.0,
-        exponential_moving_average: 150.5,
-        weighted_moving_average: 150.75,
-        double_exponential_moving_average: 150.25,
-        triple_exponential_moving_average: 150.0,
-        relative_strength_index: 57.8,
-        standard_deviation: 2.8,
-        williams_percent_r: -28.5,
-        average_directional_index: 27.0,
-        company_id: 1,
-        symbol: 'AAPL',
-        id: 2,
-      },
-      {
-        date: '2023-01-03',
-        simple_moving_average: 152.5,
-        exponential_moving_average: 151.75,
-        weighted_moving_average: 152.0,
-        double_exponential_moving_average: 151.5,
-        triple_exponential_moving_average: 151.25,
-        relative_strength_index: 60.1,
-        standard_deviation: 3.0,
-        williams_percent_r: -25.0,
-        average_directional_index: 30.0,
-        company_id: 1,
-        symbol: 'AAPL',
-        id: 3,
-      },
-    ],
-  );
+  >([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  //   React.useEffect(() => {
-  //     const fetchTechnicalIndicators = async () => {
-  //       try {
-  //         const response = await fetch(`/api/companies/${symbol}/technical-indicators`);
-  //         const data = await response.json();
-  //         setTechnicalIndicators(data.technical_indicators);
-  //       } catch (error) {
-  //         console.error('Error fetching technical indicators:', error);
-  //       }
-  //     };
+  React.useEffect(() => {
+    const fetchTechnicalIndicators = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // TODO: Replace with actual API call
+        // const response = await apiClient.getTechnicalIndicators(symbol);
+        // setTechnicalIndicators(response);
+        setTechnicalIndicators([]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load technical indicators');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //     fetchTechnicalIndicators();
-  //   }, [symbol]);
+    fetchTechnicalIndicators();
+  }, [symbol]);
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mr-3" />
+        <span className="text-gray-600 font-medium">Loading technical indicators...</span>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50 rounded-2xl overflow-hidden">
+        <div className="p-6 flex items-center gap-3">
+          <AlertCircle className="w-6 h-6 text-red-600" />
+          <div>
+            <p className="font-semibold text-red-800">Error loading technical indicators</p>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (!technical_indicators || technical_indicators.length === 0) {
     return (
@@ -413,7 +395,7 @@ export const TechnicalIndicators: React.FC<{ symbol: string }> = ({ symbol }) =>
                         if (value === null || value === undefined) return 'N/A';
                         return typeof value === 'number' ? value.toFixed(2) : value;
                       }}
-                      labelFormatter={(label) => `Date: ${label}`}
+                      labelFormatter={(label: any) => `Date: ${label}`}
                     />
                     <Legend />
                     <Line
@@ -435,11 +417,11 @@ export const TechnicalIndicators: React.FC<{ symbol: string }> = ({ symbol }) =>
                     {(() => {
                       const latestItem = chartData[chartData.length - 1];
                       const value = latestItem?.[indicator.key as keyof typeof latestItem];
-                      return value !== null && value !== undefined
-                        ? typeof value === 'number'
-                          ? value.toFixed(2)
-                          : value
-                        : 'N/A';
+                      if (value === null || value === undefined) return 'N/A';
+                      if (typeof value === 'number') return value.toFixed(2);
+                      if (typeof value === 'string') return value;
+                      if (value instanceof Date) return value.toLocaleDateString();
+                      return String(value);
                     })()}
                   </div>
                 </div>

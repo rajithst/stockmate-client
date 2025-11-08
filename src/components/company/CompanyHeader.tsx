@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Bell, Eye, PlusCircle, Clock } from 'lucide-react';
+import { BarChart3, Heart, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Button } from '../ui/button.tsx';
@@ -7,10 +7,6 @@ import type { CompanyRead } from '../../types/company';
 
 interface CompanyHeaderProps {
   company: CompanyRead;
-  onAddToWatchlist?: () => void;
-  onAddToPortfolio?: () => void;
-  onSetReminder?: () => void;
-  onViewFinancials?: () => void;
 }
 
 function formatMarketCap(value: number): string {
@@ -26,121 +22,115 @@ function formatMarketCap(value: number): string {
   return value.toString();
 }
 
-export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
-  company,
-  onAddToWatchlist,
-  onAddToPortfolio,
-  onSetReminder,
-}) => {
+export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company }) => {
   const navigate = useNavigate();
   const handleViewFinancials = () => {
     navigate(`/app/financials/${company.symbol}`);
   };
-
-  // Format last updated date
-  const lastUpdated = company.updated_at
-    ? new Date(company.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
+  const handleViewHealth = () => {
+    navigate(`/app/health/${company.symbol}`);
+  };
+  const handleViewInsights = () => {
+    navigate(`/app/insights/${company.symbol}`);
+  };
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+    <Card className="relative overflow-hidden border-none shadow-lg bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0 pb-2">
-        {/* Left section - Company info */}
-        <div className="flex items-center space-x-4">
-          {company.image && (
-            <img
-              src={company.image}
-              alt={company.company_name}
-              className="w-14 h-14 rounded-lg object-contain border bg-gray-50"
-            />
-          )}
-          <div>
-            <CardTitle className="text-2xl font-semibold text-gray-800">
-              {company.company_name}
-            </CardTitle>
-            <CardDescription className="text-sm text-gray-500">
-              {company.symbol} • {company.exchange_full_name} ({company.exchange})
-            </CardDescription>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full blur-2xl opacity-20 pointer-events-none" />
+
+      <CardHeader className="flex flex-col gap-2 py-2 px-4 pb-0">
+        {/* Top row - Company info and Price */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {company.image && (
+              <img
+                src={company.image}
+                alt={company.company_name}
+                className="w-9 h-9 rounded-lg object-contain border bg-gray-50 flex-shrink-0"
+              />
+            )}
+            <div className="min-w-0">
+              <CardTitle className="text-base font-semibold text-gray-800 leading-tight">
+                {company.company_name}
+              </CardTitle>
+              <CardDescription className="text-xs text-gray-500 leading-tight">
+                {company.symbol} • {company.exchange_full_name}
+              </CardDescription>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="text-base font-bold text-indigo-700 leading-tight">
+              {company.currency} {company.price?.toFixed(2) || 'N/A'}
+            </div>
+            {company.daily_price_change !== null && company.daily_price_change !== undefined && (
+              <div
+                className={`flex items-center gap-0.5 text-xs font-semibold ${
+                  company.daily_price_change >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {company.daily_price_change >= 0 ? (
+                  <TrendingUp className="w-3 h-3" />
+                ) : (
+                  <TrendingDown className="w-3 h-3" />
+                )}
+                {company.daily_price_change >= 0 ? '+' : ''}
+                {company.daily_price_change.toFixed(2)}%
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right section - Price */}
-        <div className="flex flex-col items-end space-y-1">
-          <div className="text-2xl font-bold text-indigo-700">
-            {company.currency} {company.price.toFixed(2)}
+        {/* Bottom row - Info on left, Buttons on far right */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+            <span className="whitespace-nowrap">
+              <strong>Cap:</strong> {formatMarketCap(company.market_cap)}
+            </span>
+            {company.sector && (
+              <span className="whitespace-nowrap">
+                <strong>Sector:</strong> {company.sector}
+              </span>
+            )}
+            {company.industry && (
+              <span className="whitespace-nowrap hidden sm:inline">
+                <strong>Industry:</strong> {company.industry}
+              </span>
+            )}
+          </div>
+
+          <div className="flex gap-1.5 flex-shrink-0">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1 h-7"
+              onClick={handleViewFinancials}
+            >
+              <BarChart3 className="w-3 h-3 mr-1" />
+              See Financials
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 h-7"
+              onClick={handleViewHealth}
+            >
+              <Heart className="w-3 h-3 mr-1" />
+              Check Health
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs px-2 py-1 h-7"
+              onClick={handleViewInsights}
+            >
+              <Lightbulb className="w-3 h-3 mr-1" />
+              See Insights
+            </Button>
           </div>
         </div>
       </CardHeader>
-
-      {/* Actions */}
-      <div className="flex flex-wrap justify-between items-center px-6 pb-1 gap-3 border-t pt-3">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onAddToWatchlist}
-            className="bg-blue-50 hover:bg-blue-100 border-blue-100 text-blue-700"
-          >
-            <Eye className="w-4 h-4 mr-1" /> Add to Watchlist
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onAddToPortfolio}
-            className="bg-blue-50 hover:bg-blue-100 border-blue-100 text-blue-700"
-          >
-            <PlusCircle className="w-4 h-4 mr-1" /> Add to Portfolio
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSetReminder}
-            className="bg-blue-50 hover:bg-blue-100 border-blue-100 text-blue-700"
-          >
-            <Bell className="w-4 h-4 mr-1" /> Set Reminder
-          </Button>
-        </div>
-
-        <Button
-          variant="default"
-          size="sm"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center"
-          onClick={handleViewFinancials}
-        >
-          <BarChart3 className="w-4 h-4 mr-1" />
-          See All Financials
-        </Button>
-      </div>
-      {/* Extra info and Last Updated */}
-      <div className="flex flex-wrap items-center justify-between px-6 pb-2 pt-2">
-        {/* Important company fields */}
-        <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-          <span>
-            <strong>Market Cap:</strong> {company.currency} {formatMarketCap(company.market_cap)}
-          </span>
-          <span>
-            <strong>Sector:</strong> {company.sector}
-          </span>
-          <span>
-            <strong>Industry:</strong> {company.industry}
-          </span>
-        </div>
-        {/* Last Updated */}
-        {lastUpdated && (
-          <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-            <Clock className="w-4 h-4 text-gray-400" />
-            Last updated: {lastUpdated}
-          </span>
-        )}
-      </div>
     </Card>
   );
 };

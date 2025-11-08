@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { useParams } from 'react-router-dom';
 import { CompanyHeader } from '../components/company/CompanyHeader.tsx';
-import { PriceChangeChart } from '../components/company/PriceChange.tsx';
+import { StockPriceChart } from '../components/company/StockPriceChart.tsx';
+import { FundamentalsSnapshot } from '../components/company/FundamentalsSnapshot.tsx';
 import { CompanyNewsTabs } from '../components/company/CompanyNews.tsx';
 import { StockGradingSummaryCard } from '../components/company/GradingSummary.tsx';
 import { DcfSummaryCard } from '../components/company/DiscountedCashFlow.tsx';
@@ -12,7 +13,6 @@ import LatestGrading from '../components/company/LatestGrading.tsx';
 import { TechnicalIndicators } from '../components/company/TechnicalIndicators.tsx';
 import { apiClient } from '../api/client';
 import type { CompanyPageResponse } from '../types';
-import { OverallHealthSummaryCard } from '../components/company/OverallHealth.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 export const CompanyPage: React.FC = () => {
@@ -20,8 +20,12 @@ export const CompanyPage: React.FC = () => {
   const [data, setData] = React.useState<CompanyPageResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const hasInitializedRef = useRef<string | undefined>(undefined);
 
   React.useEffect(() => {
+    // Skip if we've already fetched this exact symbol
+    if (hasInitializedRef.current === symbol) return;
+
     const fetchData = async () => {
       if (!symbol) return;
 
@@ -38,6 +42,7 @@ export const CompanyPage: React.FC = () => {
     };
 
     fetchData();
+    hasInitializedRef.current = symbol;
   }, [symbol]);
 
   if (loading)
@@ -106,24 +111,12 @@ export const CompanyPage: React.FC = () => {
 
       {/* Tabs Section */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
+        <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
           >
             Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="fundamentals"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
-          >
-            Fundamentals
-          </TabsTrigger>
-          <TabsTrigger
-            value="ratings"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
-          >
-            Ratings
           </TabsTrigger>
           <TabsTrigger
             value="technical"
@@ -141,36 +134,29 @@ export const CompanyPage: React.FC = () => {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          {/* Price Chart - Full Width */}
-          <PriceChangeChart price_change={data.price_change} />
-
-          {/* Health & Grading Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <OverallHealthSummaryCard symbol={data.company.symbol} />
-            <StockGradingSummaryCard summary={data.grading_summary} />
-          </div>
-
-          {/* Rating Summary - Centered and Reduced Width */}
-          <div className="flex justify-center">
-            <div className="w-full lg:w-1/2">
-              <RatingSummaryCard rating_summary={data.rating_summary} />
+          {/* Top Row: Stock Price Chart (Left) + Fundamentals Snapshot (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <StockPriceChart stock_prices={data.stock_prices} />
+            </div>
+            <div>
+              <FundamentalsSnapshot company={data.company} fundamentals={data.fundamentals} />
             </div>
           </div>
-        </TabsContent>
 
-        {/* Fundamentals Tab */}
-        <TabsContent value="fundamentals" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Row 1: Grading, Rating, Analyst Gradings (3 cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StockGradingSummaryCard summary={data.grading_summary} />
+            <RatingSummaryCard rating_summary={data.rating_summary} />
+            <LatestGrading latest_gradings={data.latest_gradings} />
+          </div>
+
+          {/* Row 2: DCF, Price Target, Price Target Summary (3 cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <DcfSummaryCard discounted_cash_flow={data.dcf} />
             <PriceTargetCard price_target={data.price_target} />
+            <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
           </div>
-          <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
-        </TabsContent>
-
-        {/* Ratings Tab */}
-        <TabsContent value="ratings" className="space-y-4">
-          <LatestGrading latest_gradings={data.latest_gradings} />
-          <RatingSummaryCard rating_summary={data.rating_summary} />
         </TabsContent>
 
         {/* Technical Indicators Tab */}
