@@ -42,7 +42,7 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, logoutLoading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,7 +53,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logout();
     setProfileOpen(false);
     navigate('/login');
@@ -272,10 +272,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                      {user?.name || 'User'}
+                      {user?.username || 'User'}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                      {user?.email || 'user@example.com'}
+                      {user?.username || 'user'}
                     </p>
                   </div>
                 </div>
@@ -315,13 +315,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
                   <span className="font-medium">Settings</span>
                 </button>
                 <button
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-3"
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleLogout}
+                  disabled={logoutLoading}
                 >
                   <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    {logoutLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-600" />
+                    ) : (
+                      <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    )}
                   </div>
-                  <span className="font-medium">Logout</span>
+                  <span className="font-medium">{logoutLoading ? 'Logging out...' : 'Logout'}</span>
                 </button>
               </div>
             </div>

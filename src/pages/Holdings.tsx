@@ -26,6 +26,7 @@ import {
   ChevronUp,
   BarChart3,
   X,
+  LineChart,
 } from 'lucide-react';
 import {
   PieChart as RechartsChart,
@@ -34,6 +35,11 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from 'recharts';
 import type { PortfolioRead, PortfolioDetail } from '../types/user';
 import { apiClient } from '../api/client';
@@ -56,6 +62,12 @@ const HoldingsPage: React.FC = () => {
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showTradingHistoryModal, setShowTradingHistoryModal] = useState(false);
   const [selectedSymbolForHistory, setSelectedSymbolForHistory] = useState<string | null>(null);
+  const [showTradeDeleteConfirm, setShowTradeDeleteConfirm] = useState(false);
+  const [tradeToDelete, setTradeToDelete] = useState<{
+    index: number;
+    symbol: string;
+    shares: number;
+  } | null>(null);
   const [tradeForm, setTradeForm] = useState({
     symbol: '',
     shares: '',
@@ -355,27 +367,6 @@ const HoldingsPage: React.FC = () => {
       {/* Loading State */}
       {loading ? (
         <LoadingIndicator message="Loading portfolios..." minHeight="min-h-[60vh]" />
-      ) : portfolios.length === 0 ? (
-        <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-3xl opacity-30 -mr-32 -mt-32"></div>
-          <div className="relative p-12 flex flex-col items-center justify-center text-center min-h-[500px]">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
-              <DollarSign className="w-10 h-10 text-indigo-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">No Portfolios Yet</h2>
-            <p className="text-gray-600 mb-6 max-w-md">
-              Create your first portfolio to start tracking your investments and monitor your
-              holdings.
-            </p>
-            <Button
-              onClick={openAddPortfolioModal}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-md"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Portfolio
-            </Button>
-          </div>
-        </Card>
       ) : (
         <>
           {/* Header */}
@@ -387,11 +378,11 @@ const HoldingsPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <PieChart className="w-4.5 h-4.5 text-white" />
+                      <DollarSign className="w-4.5 h-4.5 text-white" />
                     </div>
                     <div>
                       <h1 className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                        Portfolio & Holdings
+                        Holdings
                       </h1>
                       <p className="text-[10px] text-gray-500">Manage your portfolio holdings</p>
                     </div>
@@ -401,12 +392,14 @@ const HoldingsPage: React.FC = () => {
                       <label className="text-xs font-semibold text-gray-600">Portfolio:</label>
                       <Select value={selectedPortfolioId} onValueChange={setSelectedPortfolioId}>
                         <SelectTrigger className="w-[180px] h-8 text-sm border-indigo-200 focus:ring-indigo-500">
-                          <SelectValue placeholder="Select Portfolio" />
+                          <SelectValue placeholder="Select Portfolio">
+                            {selectedPortfolio ? selectedPortfolio.name : 'Select Portfolio'}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {portfolios.map((p) => (
                             <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.name}
+                              {p.name} ({p.currency})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -440,7 +433,7 @@ const HoldingsPage: React.FC = () => {
                     <div>
                       <p className="text-[9px] text-gray-500 font-medium">Portfolio</p>
                       <p className="text-xs font-bold text-gray-800">
-                        {getCurrencySymbol(selectedPortfolio?.currency || 'N/A')}
+                        {getCurrencySymbol(selectedPortfolio?.name || 'N/A')}
                       </p>
                     </div>
                   </div>
@@ -561,761 +554,919 @@ const HoldingsPage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Performance by Sector and Industry */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Sector Performance */}
-            <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-indigo-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <PieChart className="w-4 h-4 text-indigo-600" />
-                    <h2 className="text-base font-bold text-gray-800">Performance by Sector</h2>
-                  </div>
-                  <button
-                    onClick={() => setShowSectorChart(true)}
-                    className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
-                    title="View pie chart"
-                  >
-                    <BarChart3 className="w-4 h-4 text-indigo-600" />
-                  </button>
+          {portfolios.length === 0 ? (
+            <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm relative z-0">
+              <div className="p-8 text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6 mx-auto">
+                  <DollarSign className="w-10 h-10 text-indigo-600" />
                 </div>
-              </div>
-              <div className="p-3">
-                {sectorPerformance.length === 0 ? (
-                  <div className="text-center py-8">
-                    <PieChart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <h3 className="text-sm font-semibold text-gray-700 mb-1">No Holdings Yet</h3>
-                    <p className="text-xs text-gray-500">
-                      Add stocks to your portfolio to see sector breakdown
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {sectorPerformance.map((sector) => (
-                      <div
-                        key={sector.name}
-                        className="p-3 rounded-xl bg-gradient-to-r from-gray-50 to-indigo-50/30 border border-gray-100 hover:shadow-md transition"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold text-gray-800">{sector.name}</h3>
-                            <p className="text-xs text-gray-500">
-                              {sector.portfolioPercent.toFixed(1)}% of portfolio
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-1">
-                              {sector.gain >= 0 ? (
-                                <TrendingUp className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <TrendingDown className="w-4 h-4 text-red-600" />
-                              )}
-                              <span
-                                className={`font-bold ${
-                                  sector.gain >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}
-                              >
-                                {sector.gainPercent >= 0 ? '+' : ''}
-                                {sector.gainPercent.toFixed(2)}%
-                              </span>
-                            </div>
-                            <p
-                              className={`text-sm font-medium mt-1 ${
-                                sector.gain >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}
-                            >
-                              {sector.gain >= 0 ? '+' : ''}
-                              {formatCurrency(sector.gain, selectedPortfolio?.currency || 'USD')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-600 mt-3 pt-3 border-t border-gray-200">
-                          <span>
-                            Invested:{' '}
-                            {formatCurrency(sector.invested, selectedPortfolio?.currency || 'USD')}
-                          </span>
-                          <span className="font-semibold">
-                            Value:{' '}
-                            {formatCurrency(sector.value, selectedPortfolio?.currency || 'USD')}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Industry Performance */}
-            <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 border-b border-purple-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-purple-600" />
-                    <h2 className="text-base font-bold text-gray-800">Performance by Industry</h2>
-                  </div>
-                  <button
-                    onClick={() => setShowIndustryChart(true)}
-                    className="p-1.5 rounded-lg hover:bg-purple-100 transition-colors"
-                    title="View pie chart"
-                  >
-                    <BarChart3 className="w-4 h-4 text-purple-600" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-3">
-                {industryPerformance.length === 0 ? (
-                  <div className="text-center py-8">
-                    <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <h3 className="text-sm font-semibold text-gray-700 mb-1">No Holdings Yet</h3>
-                    <p className="text-xs text-gray-500">
-                      Add stocks to your portfolio to see industry breakdown
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {industryPerformance.map((industry) => (
-                      <div
-                        key={industry.name}
-                        className="p-3 rounded-xl bg-gradient-to-r from-gray-50 to-purple-50/30 border border-gray-100 hover:shadow-md transition"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold text-gray-800">{industry.name}</h3>
-                            <p className="text-xs text-gray-500">
-                              {industry.portfolioPercent.toFixed(1)}% of portfolio
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-1">
-                              {industry.gain >= 0 ? (
-                                <TrendingUp className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <TrendingDown className="w-4 h-4 text-red-600" />
-                              )}
-                              <span
-                                className={`font-bold ${
-                                  industry.gain >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}
-                              >
-                                {industry.gainPercent >= 0 ? '+' : ''}
-                                {industry.gainPercent.toFixed(2)}%
-                              </span>
-                            </div>
-                            <p
-                              className={`text-sm font-medium mt-1 ${
-                                industry.gain >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}
-                            >
-                              {industry.gain >= 0 ? '+' : ''}
-                              {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
-                              {industry.gain.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-600 mt-3 pt-3 border-t border-gray-200">
-                          <span>
-                            Invested: {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
-                            {industry.invested.toLocaleString()}
-                          </span>
-                          <span className="font-semibold">
-                            Value: {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
-                            {industry.value.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {/* Holdings Table */}
-          <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-            {/* Table Header with Heading */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-indigo-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                    <TrendingUp className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-gray-800">Current Holdings</h2>
-                    <p className="text-xs text-gray-500">Track your portfolio positions</p>
-                  </div>
-                </div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Portfolios Yet</h3>
+                <p className="text-sm text-gray-600 mb-6 max-w-md mx-auto">
+                  Create your first portfolio to start tracking your investments and monitor your
+                  holdings.
+                </p>
                 <Button
-                  onClick={openTradeModal}
-                  className="h-8 px-3 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
-                  title="Add a new stock to this portfolio"
+                  onClick={openAddPortfolioModal}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-md"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Add Stock
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Portfolio
                 </Button>
               </div>
-            </div>
-            <div className="grid grid-cols-7 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-xs font-semibold text-gray-700">
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
-                Symbol
-              </div>
-              <div className="text-right">Current Value</div>
-              <div className="text-right">Total Invested</div>
-              <div className="text-right flex items-center justify-end gap-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                Gain/Loss
-              </div>
-              <div className="text-right">Portfolio %</div>
-              <div className="text-right">Avg Price</div>
-              <div className="text-right">Actions</div>
-            </div>
-
-            {/* Table Rows */}
-            <div>
-              {holdings.length === 0 ? (
-                <div className="px-4 py-12 text-center">
-                  <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">No Stocks Yet</h3>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Add your first stock to start tracking your portfolio performance
-                  </p>
-                  <Button
-                    onClick={openTradeModal}
-                    className="h-8 px-4 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                    Add Stock
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {holdings.map((h) => {
-                    const isExpanded = expanded === h.symbol;
-                    const portfolioPct =
-                      totalValue > 0 ? ((h.current_value / totalValue) * 100).toFixed(2) : '0';
-
-                    return (
-                      <div
-                        key={h.symbol}
-                        className="border-b last:border-b-0 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all cursor-pointer"
-                        onClick={() => setExpanded(isExpanded ? null : h.symbol)}
+            </Card>
+          ) : (
+            <>
+              {/* Portfolio Performance Chart */}
+              {selectedPortfolioId && (
+                <Card className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border-0 overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-indigo-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <LineChart className="w-5 h-5 text-indigo-600" />
+                        <h2 className="text-lg font-bold text-gray-800">Portfolio Performance</h2>
+                      </div>
+                      <p className="text-xs text-gray-500">Last 12 months (projected)</p>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RechartsLineChart
+                        data={[
+                          { month: 'Jan', value: 100000 },
+                          { month: 'Feb', value: 102500 },
+                          { month: 'Mar', value: 101800 },
+                          { month: 'Apr', value: 105200 },
+                          { month: 'May', value: 108900 },
+                          { month: 'Jun', value: 112400 },
+                          { month: 'Jul', value: 110800 },
+                          { month: 'Aug', value: 115300 },
+                          { month: 'Sep', value: 118700 },
+                          { month: 'Oct', value: 122100 },
+                          { month: 'Nov', value: 125600 },
+                          { month: 'Dec', value: 128900 },
+                        ]}
                       >
-                        <div className="grid grid-cols-7 items-center px-4 py-3 text-xs">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                              <span className="text-white font-bold text-xs">
-                                {h.symbol.substring(0, 2)}
-                              </span>
-                            </div>
-                            <div>
-                              <Link
-                                to={`/app/company/${h.symbol}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="font-semibold text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
-                              >
-                                {h.symbol}
-                              </Link>
-                              <p className="text-[10px] text-gray-500">{h.total_shares} shares</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-sm text-gray-900">
-                              {getCurrencySymbol(h.currency)} {h.current_value.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="text-right text-gray-600 text-sm">
-                            {getCurrencySymbol(h.currency)} {h.total_invested.toLocaleString()}
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              {h.gain_loss_percentage >= 0 ? (
-                                <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                              ) : (
-                                <TrendingDown className="w-3.5 h-3.5 text-red-600" />
-                              )}
-                              <span
-                                className={`font-semibold text-sm ${
-                                  h.gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}
-                              >
-                                {h.gain_loss_percentage.toFixed(2)}%
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-gray-500 mt-0.5">
-                              {h.total_gain_loss >= 0 ? '+' : ''}
-                              {getCurrencySymbol(h.currency)} {h.total_gain_loss.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              <div className="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
-                                  style={{ width: `${Math.min(parseFloat(portfolioPct), 100)}%` }}
-                                ></div>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                        <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                        <Tooltip
+                          formatter={(value: number) =>
+                            formatCurrency(value, selectedPortfolio?.currency || 'USD')
+                          }
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '0.5rem',
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="url(#colorGradient)"
+                          dot={{ fill: '#6366f1', r: 5 }}
+                          activeDot={{ r: 7 }}
+                          strokeWidth={3}
+                        />
+                        <defs>
+                          <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6} />
+                          </linearGradient>
+                        </defs>
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              )}
+
+              {/* Performance by Sector and Industry */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Sector Performance */}
+                <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-indigo-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <PieChart className="w-4 h-4 text-indigo-600" />
+                        <h2 className="text-base font-bold text-gray-800">Performance by Sector</h2>
+                      </div>
+                      <button
+                        onClick={() => setShowSectorChart(true)}
+                        className="p-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                        title="View pie chart"
+                      >
+                        <BarChart3 className="w-4 h-4 text-indigo-600" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    {sectorPerformance.length === 0 ? (
+                      <div className="text-center py-8">
+                        <PieChart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                          No Holdings Yet
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Add stocks to your portfolio to see sector breakdown
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {sectorPerformance.map((sector) => (
+                          <div
+                            key={sector.name}
+                            className="p-3 rounded-xl bg-gradient-to-r from-gray-50 to-indigo-50/30 border border-gray-100 hover:shadow-md transition"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-semibold text-gray-800">{sector.name}</h3>
+                                <p className="text-xs text-gray-500">
+                                  {sector.portfolioPercent.toFixed(1)}% of portfolio
+                                </p>
                               </div>
-                              <span className="font-medium text-xs text-gray-700">
-                                {portfolioPct}%
+                              <div className="text-right">
+                                <div className="flex items-center gap-1">
+                                  {sector.gain >= 0 ? (
+                                    <TrendingUp className="w-4 h-4 text-green-600" />
+                                  ) : (
+                                    <TrendingDown className="w-4 h-4 text-red-600" />
+                                  )}
+                                  <span
+                                    className={`font-bold ${
+                                      sector.gain >= 0 ? 'text-green-600' : 'text-red-600'
+                                    }`}
+                                  >
+                                    {sector.gainPercent >= 0 ? '+' : ''}
+                                    {sector.gainPercent.toFixed(2)}%
+                                  </span>
+                                </div>
+                                <p
+                                  className={`text-sm font-medium mt-1 ${
+                                    sector.gain >= 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}
+                                >
+                                  {sector.gain >= 0 ? '+' : ''}
+                                  {formatCurrency(
+                                    sector.gain,
+                                    selectedPortfolio?.currency || 'USD',
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-600 mt-3 pt-3 border-t border-gray-200">
+                              <span>
+                                Invested:{' '}
+                                {formatCurrency(
+                                  sector.invested,
+                                  selectedPortfolio?.currency || 'USD',
+                                )}
+                              </span>
+                              <span className="font-semibold">
+                                Value:{' '}
+                                {formatCurrency(sector.value, selectedPortfolio?.currency || 'USD')}
                               </span>
                             </div>
                           </div>
-                          <div className="text-right text-gray-600 font-medium text-sm">
-                            {getCurrencySymbol(h.currency)}{' '}
-                            {h.average_cost_per_share.toLocaleString()}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Industry Performance */}
+                <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 border-b border-purple-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-purple-600" />
+                        <h2 className="text-base font-bold text-gray-800">
+                          Performance by Industry
+                        </h2>
+                      </div>
+                      <button
+                        onClick={() => setShowIndustryChart(true)}
+                        className="p-1.5 rounded-lg hover:bg-purple-100 transition-colors"
+                        title="View pie chart"
+                      >
+                        <BarChart3 className="w-4 h-4 text-purple-600" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    {industryPerformance.length === 0 ? (
+                      <div className="text-center py-8">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                          No Holdings Yet
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Add stocks to your portfolio to see industry breakdown
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {industryPerformance.map((industry) => (
+                          <div
+                            key={industry.name}
+                            className="p-3 rounded-xl bg-gradient-to-r from-gray-50 to-purple-50/30 border border-gray-100 hover:shadow-md transition"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-semibold text-gray-800">{industry.name}</h3>
+                                <p className="text-xs text-gray-500">
+                                  {industry.portfolioPercent.toFixed(1)}% of portfolio
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="flex items-center gap-1">
+                                  {industry.gain >= 0 ? (
+                                    <TrendingUp className="w-4 h-4 text-green-600" />
+                                  ) : (
+                                    <TrendingDown className="w-4 h-4 text-red-600" />
+                                  )}
+                                  <span
+                                    className={`font-bold ${
+                                      industry.gain >= 0 ? 'text-green-600' : 'text-red-600'
+                                    }`}
+                                  >
+                                    {industry.gainPercent >= 0 ? '+' : ''}
+                                    {industry.gainPercent.toFixed(2)}%
+                                  </span>
+                                </div>
+                                <p
+                                  className={`text-sm font-medium mt-1 ${
+                                    industry.gain >= 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}
+                                >
+                                  {industry.gain >= 0 ? '+' : ''}
+                                  {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
+                                  {industry.gain.toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-600 mt-3 pt-3 border-t border-gray-200">
+                              <span>
+                                Invested: {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
+                                {industry.invested.toLocaleString()}
+                              </span>
+                              <span className="font-semibold">
+                                Value: {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}
+                                {industry.value.toLocaleString()}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-right flex items-center justify-end gap-1.5">
-                            <Link
-                              to={`/app/company/${h.symbol}`}
-                              className="h-7 px-2.5 text-[10px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md rounded text-white flex items-center gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <TrendingUp className="w-3 h-3" />
-                              View
-                            </Link>
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 text-gray-400" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-gray-400" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Holdings Table */}
+              <Card className="shadow-xl rounded-2xl border-0 overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
+                {/* Table Header with Heading */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-indigo-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                        <TrendingUp className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-gray-800">Current Holdings</h2>
+                        <p className="text-xs text-gray-500">Track your portfolio positions</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={openTradeModal}
+                      className="h-8 px-3 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                      title="Add a new stock to this portfolio"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      Add Stock
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-xs font-semibold text-gray-700">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
+                    Symbol
+                  </div>
+                  <div className="text-right">Current Value</div>
+                  <div className="text-right">Total Invested</div>
+                  <div className="text-right flex items-center justify-end gap-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Gain/Loss
+                  </div>
+                  <div className="text-right">Portfolio %</div>
+                  <div className="text-right">Avg Price</div>
+                  <div className="text-right">Actions</div>
+                </div>
+
+                {/* Table Rows */}
+                <div>
+                  {holdings.length === 0 ? (
+                    <div className="px-4 py-12 text-center">
+                      <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">No Stocks Yet</h3>
+                      <p className="text-xs text-gray-500 mb-4">
+                        Add your first stock to start tracking your portfolio performance
+                      </p>
+                      <Button
+                        onClick={openTradeModal}
+                        className="h-8 px-4 text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        Add Stock
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {holdings.map((h) => {
+                        const isExpanded = expanded === h.symbol;
+                        const portfolioPct =
+                          totalValue > 0 ? ((h.current_value / totalValue) * 100).toFixed(2) : '0';
+
+                        return (
+                          <div
+                            key={h.symbol}
+                            className="border-b last:border-b-0 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all cursor-pointer"
+                            onClick={() => setExpanded(isExpanded ? null : h.symbol)}
+                          >
+                            <div className="grid grid-cols-7 items-center px-4 py-3 text-xs">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                                  <span className="text-white font-bold text-xs">
+                                    {h.symbol.substring(0, 2)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <Link
+                                    to={`/app/company/${h.symbol}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="font-semibold text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                                  >
+                                    {h.symbol}
+                                  </Link>
+                                  <p className="text-[10px] text-gray-500">
+                                    {h.total_shares} shares
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-sm text-gray-900">
+                                  {getCurrencySymbol(h.currency)} {h.current_value.toLocaleString()}
+                                </p>
+                              </div>
+                              <div className="text-right text-gray-600 text-sm">
+                                {getCurrencySymbol(h.currency)} {h.total_invested.toLocaleString()}
+                              </div>
+                              <div className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {h.gain_loss_percentage >= 0 ? (
+                                    <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                                  ) : (
+                                    <TrendingDown className="w-3.5 h-3.5 text-red-600" />
+                                  )}
+                                  <span
+                                    className={`font-semibold text-sm ${
+                                      h.gain_loss_percentage >= 0
+                                        ? 'text-green-600'
+                                        : 'text-red-600'
+                                    }`}
+                                  >
+                                    {h.gain_loss_percentage.toFixed(2)}%
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-0.5">
+                                  {h.total_gain_loss >= 0 ? '+' : ''}
+                                  {getCurrencySymbol(h.currency)}{' '}
+                                  {h.total_gain_loss.toLocaleString()}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="inline-flex items-center gap-1.5">
+                                  <div className="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+                                      style={{
+                                        width: `${Math.min(parseFloat(portfolioPct), 100)}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <span className="font-medium text-xs text-gray-700">
+                                    {portfolioPct}%
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right text-gray-600 font-medium text-sm">
+                                {getCurrencySymbol(h.currency)}{' '}
+                                {h.average_cost_per_share.toLocaleString()}
+                              </div>
+                              <div className="text-right flex items-center justify-end gap-1.5">
+                                <Link
+                                  to={`/app/company/${h.symbol}`}
+                                  className="h-7 px-2.5 text-[10px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md rounded text-white flex items-center gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <TrendingUp className="w-3 h-3" />
+                                  View
+                                </Link>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Expanded Holding Details */}
+                            {isExpanded && (
+                              <div className="bg-gradient-to-r from-indigo-50/30 to-purple-50/30 px-4 py-3 border-t border-indigo-100 space-y-3">
+                                {/* Gain/Loss Summary */}
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-[10px] font-semibold text-gray-600 mb-1">
+                                      UNREALIZED GAIN/LOSS
+                                    </p>
+                                    <p
+                                      className={`text-sm font-bold ${h.unrealized_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                    >
+                                      {h.unrealized_gain_loss >= 0 ? '+' : ''}
+                                      {getCurrencySymbol(h.currency)}{' '}
+                                      {h.unrealized_gain_loss.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-semibold text-gray-600 mb-1">
+                                      REALIZED GAIN/LOSS
+                                    </p>
+                                    <p
+                                      className={`text-sm font-bold ${h.realized_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                    >
+                                      {h.realized_gain_loss >= 0 ? '+' : ''}
+                                      {getCurrencySymbol(h.currency)}{' '}
+                                      {h.realized_gain_loss.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Trading History */}
+                                <div className="border-t border-indigo-100 pt-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[10px] font-semibold text-gray-600">
+                                      TRADING HISTORY
+                                    </p>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedSymbolForHistory(h.symbol);
+                                        setShowTradingHistoryModal(true);
+                                      }}
+                                      className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800"
+                                    >
+                                      View All
+                                    </button>
+                                  </div>
+                                  {portfolioDetail?.trading_histories.filter(
+                                    (t) => t.symbol === h.symbol,
+                                  ).length === 0 ? (
+                                    <p className="text-[10px] text-gray-500">No trades recorded</p>
+                                  ) : (
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                      {portfolioDetail?.trading_histories
+                                        .filter((t) => t.symbol === h.symbol)
+                                        .slice(-3)
+                                        .map((trade, idx) => (
+                                          <div
+                                            key={idx}
+                                            className="flex items-start justify-between text-[10px] bg-gradient-to-r from-gray-50 to-white rounded-lg px-2.5 py-2 border border-gray-150"
+                                          >
+                                            <div className="flex items-start gap-2 flex-1">
+                                              <div
+                                                className={`w-6 h-6 rounded-md flex items-center justify-center text-white font-bold text-xs mt-0.5 flex-shrink-0 ${
+                                                  trade.trade_type === 'BUY'
+                                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                                                    : 'bg-gradient-to-br from-red-500 to-rose-600'
+                                                }`}
+                                              >
+                                                {trade.trade_type === 'BUY' ? 'B' : 'S'}
+                                              </div>
+                                              <div className="flex-1">
+                                                <p className="font-semibold text-gray-900 leading-tight">
+                                                  {trade.trade_type === 'BUY' ? 'Bought' : 'Sold'}{' '}
+                                                  {trade.shares.toLocaleString('en-US', {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
+                                                  })}{' '}
+                                                  {trade.trade_type === 'BUY' ? 'shares' : 'shares'}
+                                                </p>
+                                                <p className="text-gray-600 leading-tight">
+                                                  {getCurrencySymbol(h.currency)}{' '}
+                                                  {trade.price_per_share.toLocaleString('en-US', {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  })}
+                                                  /share
+                                                </p>
+                                                <p className="text-gray-500 text-[9px] leading-tight">
+                                                  {new Date(trade.trade_date).toLocaleDateString(
+                                                    'en-US',
+                                                    {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                    },
+                                                  )}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                                              <div className="text-right">
+                                                <p className="font-bold text-gray-900 leading-tight">
+                                                  {getCurrencySymbol(h.currency)}{' '}
+                                                  {trade.total_value.toLocaleString('en-US', {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  })}
+                                                </p>
+                                                {(trade.commission > 0 ||
+                                                  trade.fees > 0 ||
+                                                  trade.tax > 0) && (
+                                                  <p className="text-gray-500 text-[9px] leading-tight">
+                                                    +{h.currency}{' '}
+                                                    {(
+                                                      trade.commission +
+                                                      trade.fees +
+                                                      trade.tax
+                                                    ).toLocaleString('en-US', {
+                                                      minimumFractionDigits: 2,
+                                                      maximumFractionDigits: 2,
+                                                    })}
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <div className="flex gap-0.5">
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    addNotification(
+                                                      'info',
+                                                      'Edit functionality coming soon',
+                                                    );
+                                                  }}
+                                                  className="p-1 rounded hover:bg-indigo-100 text-indigo-600 transition-colors"
+                                                  title="Edit trade"
+                                                >
+                                                  <Edit2 className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setTradeToDelete({
+                                                      index: idx,
+                                                      symbol: trade.symbol,
+                                                      shares: trade.shares,
+                                                    });
+                                                    setShowTradeDeleteConfirm(true);
+                                                  }}
+                                                  className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
+                                                  title="Delete trade"
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </div>
+              </Card>
 
-                        {/* Expanded Holding Details */}
-                        {isExpanded && (
-                          <div className="bg-gradient-to-r from-indigo-50/30 to-purple-50/30 px-4 py-3 border-t border-indigo-100 space-y-3">
-                            {/* Gain/Loss Summary */}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-[10px] font-semibold text-gray-600 mb-1">
-                                  UNREALIZED GAIN/LOSS
-                                </p>
-                                <p
-                                  className={`text-sm font-bold ${h.unrealized_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                                >
-                                  {h.unrealized_gain_loss >= 0 ? '+' : ''}
-                                  {getCurrencySymbol(h.currency)}{' '}
-                                  {h.unrealized_gain_loss.toLocaleString()}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-semibold text-gray-600 mb-1">
-                                  REALIZED GAIN/LOSS
-                                </p>
-                                <p
-                                  className={`text-sm font-bold ${h.realized_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                                >
-                                  {h.realized_gain_loss >= 0 ? '+' : ''}
-                                  {getCurrencySymbol(h.currency)}{' '}
-                                  {h.realized_gain_loss.toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
+              {/* Add/Edit Modal - Disabled (using API data) */}
 
-                            {/* Trading History */}
-                            <div className="border-t border-indigo-100 pt-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-[10px] font-semibold text-gray-600">
-                                  TRADING HISTORY
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    setSelectedSymbolForHistory(h.symbol);
-                                    setShowTradingHistoryModal(true);
-                                  }}
-                                  className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800"
-                                >
-                                  View All
-                                </button>
-                              </div>
-                              {portfolioDetail?.trading_histories.filter(
-                                (t) => t.symbol === h.symbol,
-                              ).length === 0 ? (
-                                <p className="text-[10px] text-gray-500">No trades recorded</p>
-                              ) : (
-                                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                  {portfolioDetail?.trading_histories
-                                    .filter((t) => t.symbol === h.symbol)
-                                    .slice(-3)
-                                    .map((trade, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="flex items-start justify-between text-[10px] bg-gradient-to-r from-gray-50 to-white rounded-lg px-2.5 py-2 border border-gray-150"
-                                      >
-                                        <div className="flex items-start gap-2 flex-1">
-                                          <div
-                                            className={`w-6 h-6 rounded-md flex items-center justify-center text-white font-bold text-xs mt-0.5 flex-shrink-0 ${
-                                              trade.trade_type === 'BUY'
-                                                ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-                                                : 'bg-gradient-to-br from-red-500 to-rose-600'
-                                            }`}
-                                          >
-                                            {trade.trade_type === 'BUY' ? 'B' : 'S'}
-                                          </div>
-                                          <div className="flex-1">
-                                            <p className="font-semibold text-gray-900 leading-tight">
-                                              {trade.trade_type === 'BUY' ? 'Bought' : 'Sold'}{' '}
-                                              {trade.shares.toLocaleString('en-US', {
-                                                minimumFractionDigits: 0,
-                                                maximumFractionDigits: 2,
-                                              })}{' '}
-                                              {trade.trade_type === 'BUY' ? 'shares' : 'shares'}
-                                            </p>
-                                            <p className="text-gray-600 leading-tight">
-                                              {getCurrencySymbol(h.currency)}{' '}
-                                              {trade.price_per_share.toLocaleString('en-US', {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                              })}
-                                              /share
-                                            </p>
-                                            <p className="text-gray-500 text-[9px] leading-tight">
-                                              {new Date(trade.trade_date).toLocaleDateString(
-                                                'en-US',
-                                                {
-                                                  month: 'short',
-                                                  day: 'numeric',
-                                                  year: 'numeric',
-                                                },
-                                              )}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <div className="text-right flex-shrink-0 ml-2">
-                                          <p className="font-bold text-gray-900 leading-tight">
-                                            {getCurrencySymbol(h.currency)}{' '}
-                                            {trade.total_value.toLocaleString('en-US', {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                            })}
-                                          </p>
-                                          {(trade.commission > 0 ||
-                                            trade.fees > 0 ||
-                                            trade.tax > 0) && (
-                                            <p className="text-gray-500 text-[9px] leading-tight">
-                                              +{h.currency}{' '}
-                                              {(
-                                                trade.commission +
-                                                trade.fees +
-                                                trade.tax
-                                              ).toLocaleString('en-US', {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                              })}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))}
-                                </div>
-                              )}
-                            </div>
+              {/* Sector Pie Chart Modal */}
+              {showSectorChart && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <PieChart className="w-4 h-4" />
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-          </Card>
-
-          {/* Add/Edit Modal - Disabled (using API data) */}
-
-          {/* Sector Pie Chart Modal */}
-          {showSectorChart && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <PieChart className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold">Sector Distribution</h2>
-                        <p className="text-xs text-indigo-100">Portfolio allocation by sector</p>
+                          <div>
+                            <h2 className="text-lg font-bold">Sector Distribution</h2>
+                            <p className="text-xs text-indigo-100">
+                              Portfolio allocation by sector
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowSectorChart(false)}
+                          className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowSectorChart(false)}
-                      className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <ResponsiveContainer width="100%" height={350}>
-                    <RechartsChart>
-                      <Pie
-                        data={sectorPerformance.map((s) => ({
-                          name: s.name,
-                          value: s.value,
-                          percent: s.portfolioPercent,
-                        }))}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={(entry: any) => `${entry.name}: ${entry.percent.toFixed(1)}%`}
-                        outerRadius={110}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {sectorPerformance.map((_, index) => {
+                    <div className="p-4">
+                      <ResponsiveContainer width="100%" height={350}>
+                        <RechartsChart>
+                          <Pie
+                            data={sectorPerformance.map((s) => ({
+                              name: s.name,
+                              value: s.value,
+                              percent: s.portfolioPercent,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry: any) => `${entry.name}: ${entry.percent.toFixed(1)}%`}
+                            outerRadius={110}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {sectorPerformance.map((_, index) => {
+                              const colors = [
+                                '#6366f1',
+                                '#8b5cf6',
+                                '#06b6d4',
+                                '#10b981',
+                                '#f59e0b',
+                              ];
+                              return (
+                                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                              );
+                            })}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number) => formatCurrency(value)}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '0.5rem',
+                            }}
+                          />
+                          <Legend />
+                        </RechartsChart>
+                      </ResponsiveContainer>
+                      <div className="mt-3 grid grid-cols-2 gap-2.5">
+                        {sectorPerformance.map((sector, index) => {
                           const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
                           return (
-                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                            <div
+                              key={sector.name}
+                              className="p-2.5 rounded-lg bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: colors[index % colors.length] }}
+                                ></div>
+                                <span className="font-semibold text-sm text-gray-800">
+                                  {sector.name}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                <span className="font-medium">
+                                  {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}{' '}
+                                  {sector.value.toLocaleString()}
+                                </span>{' '}
+                                •{' '}
+                                <span
+                                  className={sector.gain >= 0 ? 'text-green-600' : 'text-red-600'}
+                                >
+                                  {sector.gainPercent >= 0 ? '+' : ''}
+                                  {sector.gainPercent.toFixed(2)}%
+                                </span>
+                              </div>
+                            </div>
                           );
                         })}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '0.5rem',
-                        }}
-                      />
-                      <Legend />
-                    </RechartsChart>
-                  </ResponsiveContainer>
-                  <div className="mt-3 grid grid-cols-2 gap-2.5">
-                    {sectorPerformance.map((sector, index) => {
-                      const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
-                      return (
-                        <div
-                          key={sector.name}
-                          className="p-2.5 rounded-lg bg-gray-50 border border-gray-200"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: colors[index % colors.length] }}
-                            ></div>
-                            <span className="font-semibold text-sm text-gray-800">
-                              {sector.name}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            <span className="font-medium">
-                              {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}{' '}
-                              {sector.value.toLocaleString()}
-                            </span>{' '}
-                            •{' '}
-                            <span className={sector.gain >= 0 ? 'text-green-600' : 'text-red-600'}>
-                              {sector.gainPercent >= 0 ? '+' : ''}
-                              {sector.gainPercent.toFixed(2)}%
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Industry Pie Chart Modal */}
-          {showIndustryChart && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <TrendingUp className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold">Industry Distribution</h2>
-                        <p className="text-xs text-purple-100">Portfolio allocation by industry</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowIndustryChart(false)}
-                      className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
-                <div className="p-4">
-                  <ResponsiveContainer width="100%" height={350}>
-                    <RechartsChart>
-                      <Pie
-                        data={industryPerformance.map((i) => ({
-                          name: i.name,
-                          value: i.value,
-                          percent: i.portfolioPercent,
-                        }))}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={(entry: any) => `${entry.name}: ${entry.percent.toFixed(1)}%`}
-                        outerRadius={110}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {industryPerformance.map((_, index) => {
+              )}
+
+              {/* Industry Pie Chart Modal */}
+              {showIndustryChart && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <TrendingUp className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-bold">Industry Distribution</h2>
+                            <p className="text-xs text-purple-100">
+                              Portfolio allocation by industry
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowIndustryChart(false)}
+                          className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <ResponsiveContainer width="100%" height={350}>
+                        <RechartsChart>
+                          <Pie
+                            data={industryPerformance.map((i) => ({
+                              name: i.name,
+                              value: i.value,
+                              percent: i.portfolioPercent,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry: any) => `${entry.name}: ${entry.percent.toFixed(1)}%`}
+                            outerRadius={110}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {industryPerformance.map((_, index) => {
+                              const colors = [
+                                '#a855f7',
+                                '#6366f1',
+                                '#ec4899',
+                                '#06b6d4',
+                                '#14b8a6',
+                              ];
+                              return (
+                                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                              );
+                            })}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number) => formatCurrency(value)}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '0.5rem',
+                            }}
+                          />
+                          <Legend />
+                        </RechartsChart>
+                      </ResponsiveContainer>
+                      <div className="mt-3 grid grid-cols-2 gap-2.5">
+                        {industryPerformance.map((industry, index) => {
                           const colors = ['#a855f7', '#6366f1', '#ec4899', '#06b6d4', '#14b8a6'];
                           return (
-                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                            <div
+                              key={industry.name}
+                              className="p-2.5 rounded-lg bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: colors[index % colors.length] }}
+                                ></div>
+                                <span className="font-semibold text-xs text-gray-800">
+                                  {industry.name}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-gray-600">
+                                <span className="font-medium">
+                                  {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}{' '}
+                                  {industry.value.toLocaleString()}
+                                </span>{' '}
+                                •{' '}
+                                <span
+                                  className={industry.gain >= 0 ? 'text-green-600' : 'text-red-600'}
+                                >
+                                  {industry.gainPercent >= 0 ? '+' : ''}
+                                  {industry.gainPercent.toFixed(2)}%
+                                </span>
+                              </div>
+                            </div>
                           );
                         })}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
-                        contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '0.5rem',
-                        }}
-                      />
-                      <Legend />
-                    </RechartsChart>
-                  </ResponsiveContainer>
-                  <div className="mt-3 grid grid-cols-2 gap-2.5">
-                    {industryPerformance.map((industry, index) => {
-                      const colors = ['#a855f7', '#6366f1', '#ec4899', '#06b6d4', '#14b8a6'];
-                      return (
-                        <div
-                          key={industry.name}
-                          className="p-2.5 rounded-lg bg-gray-50 border border-gray-200"
-                        >
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: colors[index % colors.length] }}
-                            ></div>
-                            <span className="font-semibold text-xs text-gray-800">
-                              {industry.name}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-gray-600">
-                            <span className="font-medium">
-                              {getCurrencySymbol(selectedPortfolio?.currency || 'USD')}{' '}
-                              {industry.value.toLocaleString()}
-                            </span>{' '}
-                            •{' '}
-                            <span
-                              className={industry.gain >= 0 ? 'text-green-600' : 'text-red-600'}
-                            >
-                              {industry.gainPercent >= 0 ? '+' : ''}
-                              {industry.gainPercent.toFixed(2)}%
-                            </span>
-                          </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Add/Edit Portfolio Modal */}
+              {showPortfolioModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+                    {/* Modal Header */}
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          {portfolioEditMode ? (
+                            <Edit2 className="w-4 h-4" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                        <div>
+                          <h2 className="text-lg font-bold">
+                            {portfolioEditMode ? 'Edit Portfolio' : 'Create Portfolio'}
+                          </h2>
+                          <p className="text-xs text-indigo-100">
+                            {portfolioEditMode ? 'Update portfolio details' : 'Add a new portfolio'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-          {/* Add/Edit Portfolio Modal */}
-          {showPortfolioModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
-                {/* Modal Header */}
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      {portfolioEditMode ? (
-                        <Edit2 className="w-4 h-4" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
+                    {/* Modal Body */}
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                          Portfolio Name
+                        </label>
+                        <Input
+                          placeholder="e.g., Day Trading, Long Term, etc."
+                          value={portfolioForm.name}
+                          onChange={(e) =>
+                            setPortfolioForm({ ...portfolioForm, name: e.target.value })
+                          }
+                          className="h-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                          Currency
+                        </label>
+                        <Select
+                          value={portfolioForm.currency}
+                          onValueChange={(value) =>
+                            setPortfolioForm({ ...portfolioForm, currency: value })
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm border-indigo-200 focus:ring-indigo-500">
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">USD ($)</SelectItem>
+                            <SelectItem value="EUR">EUR (€)</SelectItem>
+                            <SelectItem value="GBP">GBP (£)</SelectItem>
+                            <SelectItem value="JPY">JPY (¥)</SelectItem>
+                            <SelectItem value="INR">INR (₹)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowPortfolioModal(false)}
+                        className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
+                      >
+                        Cancel
+                      </Button>
+                      {portfolioEditMode && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (portfolioEditId) {
+                              handleDeletePortfolio(portfolioEditId);
+                            }
+                          }}
+                          className="flex-1 h-9 text-sm border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Delete
+                        </Button>
                       )}
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold">
-                        {portfolioEditMode ? 'Edit Portfolio' : 'Create Portfolio'}
-                      </h2>
-                      <p className="text-xs text-indigo-100">
-                        {portfolioEditMode ? 'Update portfolio details' : 'Add a new portfolio'}
-                      </p>
+                      <Button
+                        onClick={handleSavePortfolio}
+                        className="flex-1 h-9 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md"
+                      >
+                        {portfolioEditMode ? 'Update' : 'Create'}
+                      </Button>
                     </div>
                   </div>
                 </div>
+              )}
 
-                {/* Modal Body */}
-                <div className="p-4 space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      Portfolio Name
-                    </label>
-                    <Input
-                      placeholder="e.g., Day Trading, Long Term, etc."
-                      value={portfolioForm.name}
-                      onChange={(e) => setPortfolioForm({ ...portfolioForm, name: e.target.value })}
-                      className="h-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
+              {/* Delete Purchase Confirmation Modal - Disabled (using API data) */}
+              {/* Add New Stock Modal - Disabled (using API data) */}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      Currency
-                    </label>
-                    <Select
-                      value={portfolioForm.currency}
-                      onValueChange={(value) =>
-                        setPortfolioForm({ ...portfolioForm, currency: value })
-                      }
-                    >
-                      <SelectTrigger className="h-9 text-sm border-indigo-200 focus:ring-indigo-500">
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
-                        <SelectItem value="JPY">JPY (¥)</SelectItem>
-                        <SelectItem value="INR">INR (₹)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Modal Footer */}
-                <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowPortfolioModal(false)}
-                    className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
-                  >
-                    Cancel
-                  </Button>
-                  {portfolioEditMode && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (portfolioEditId) {
-                          handleDeletePortfolio(portfolioEditId);
-                        }
-                      }}
-                      className="flex-1 h-9 text-sm border-red-300 text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" />
-                      Delete
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleSavePortfolio}
-                    className="flex-1 h-9 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-md"
-                  >
-                    {portfolioEditMode ? 'Update' : 'Create'}
-                  </Button>
-                </div>
-              </div>
-            </div>
+              {/* Notifications Toast */}
+              <NotificationToast notifications={notifications} onRemove={removeNotification} />
+            </>
           )}
-
-          {/* Delete Purchase Confirmation Modal - Disabled (using API data) */}
-          {/* Add New Stock Modal - Disabled (using API data) */}
-
-          {/* Notifications Toast */}
-          <NotificationToast notifications={notifications} onRemove={removeNotification} />
         </>
       )}
 
@@ -1707,13 +1858,39 @@ const HoldingsPage: React.FC = () => {
                               </p>
                             </div>
                           </div>
-                          <p className="text-sm font-bold text-gray-900">
-                            {getCurrencySymbol(trade.currency)}{' '}
-                            {trade.total_value.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-gray-900">
+                              {getCurrencySymbol(trade.currency)}{' '}
+                              {trade.total_value.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                            <button
+                              onClick={() => {
+                                // Edit functionality - for future implementation
+                                addNotification('info', 'Edit functionality coming soon');
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600 transition-colors"
+                              title="Edit trade"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTradeToDelete({
+                                  index: idx,
+                                  symbol: trade.symbol,
+                                  shares: trade.shares,
+                                });
+                                setShowTradeDeleteConfirm(true);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                              title="Delete trade"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-xs">
@@ -1800,6 +1977,61 @@ const HoldingsPage: React.FC = () => {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete Trade Confirmation Modal */}
+      {showTradeDeleteConfirm && tradeToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-sm bg-white rounded-2xl shadow-2xl">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Delete Trade</h3>
+                  <p className="text-xs text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800">
+                  Are you sure you want to delete this trade?
+                  <br />
+                  <span className="font-semibold">
+                    {tradeToDelete.shares} shares of {tradeToDelete.symbol}
+                  </span>
+                  <br />
+                  This will be permanently removed from your trading history.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowTradeDeleteConfirm(false);
+                    setTradeToDelete(null);
+                  }}
+                  className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    // TODO: Implement trade deletion via API
+                    addNotification('info', 'Trade deletion coming soon');
+                    setShowTradeDeleteConfirm(false);
+                    setTradeToDelete(null);
+                  }}
+                  className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700 text-white shadow-md"
+                >
+                  Delete Trade
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
 

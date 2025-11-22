@@ -8,16 +8,41 @@ import type {
   PortfolioDetail,
   PortfolioTradingHistoryWrite,
   PortfolioDividendHistoryRead,
+  WatchlistRead,
+  WatchlistCreateRequest,
+  WatchlistCompanyItem,
 } from '../types/user';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
-const AUTH_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyYWppdGgiLCJleHAiOjE3NjI2MjMzOTV9.R1idSfkAkIBIgKadJ8lHo4tUiBIUxHKHx6oS_V4s8Lo';
+const TOKEN_STORAGE_KEY = 'stockmate_access_token';
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+interface ApiError {
+  detail: string;
+}
 
 class ApiClient {
+  private getToken(): string | null {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  }
+
+  private setToken(token: string): void {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  }
+
+  private clearToken(): void {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const token = this.getToken();
     const headers: HeadersInit = {
-      Authorization: `Bearer ${AUTH_TOKEN}`,
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...((options?.headers as Record<string, string>) || {}),
     };
 
@@ -26,8 +51,17 @@ class ApiClient {
       headers,
     });
 
+    // If token is expired or invalid, clear it and redirect to login
+    if (response.status === 401) {
+      this.clearToken();
+      // Dispatch custom event that AuthContext can listen to
+      window.dispatchEvent(new Event('auth-token-expired'));
+      throw new Error('Unauthorized: Token expired or invalid');
+    }
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
 
     // Handle 204 No Content responses (empty body)
@@ -36,6 +70,36 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  async login(username: string, password: string): Promise<LoginResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData: ApiError = await response.json();
+        throw new Error(errorData.detail || 'Login failed');
+      }
+
+      const data: LoginResponse = await response.json();
+      this.setToken(data.access_token);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  logout(): void {
+    this.clearToken();
   }
 
   async getCompanyPage(symbol: string): Promise<CompanyPageResponse> {
@@ -232,6 +296,74 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error(`Error fetching dividends for portfolio ${portfolioId}:`, error);
+      throw error;
+    }
+  }
+
+  async createWatchlist(watchlist: WatchlistCreateRequest): Promise<WatchlistRead> {
+    try {
+      const data = await this.request<WatchlistRead>('/watchlist/', {
+        method: 'POST',
+        body: JSON.stringify(watchlist),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error creating watchlist:', error);
+      throw error;
+    }
+  }
+
+  async getWatchlists(): Promise<WatchlistRead[]> {
+    try {
+      const data = await this.request<WatchlistRead[]>('/watchlist/');
+      return data;
+    } catch (error) {
+      console.error('Error fetching watchlists:', error);
+      throw error;
+    }
+  }
+
+  async getWatchlistItems(watchlistId: number): Promise<WatchlistCompanyItem[]> {
+    try {
+      const data = await this.request<WatchlistCompanyItem[]>(`/watchlist/${watchlistId}`);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching watchlist items for ${watchlistId}:`, error);
+      throw error;
+    }
+  }
+
+  async addWatchlistItem(watchlistId: number, symbol: string): Promise<WatchlistCompanyItem> {
+    try {
+      const data = await this.request<WatchlistCompanyItem>(`/watchlist/${watchlistId}/items`, {
+        method: 'POST',
+        body: JSON.stringify({ symbol }),
+      });
+      return data;
+    } catch (error) {
+      console.error(`Error adding item to watchlist ${watchlistId}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteWatchlistItem(watchlistId: number, itemId: string): Promise<void> {
+    try {
+      await this.request(`/watchlist/${watchlistId}/items/${itemId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error(`Error deleting item from watchlist ${watchlistId}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteWatchlist(watchlistId: number): Promise<void> {
+    try {
+      await this.request(`/watchlist/${watchlistId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error(`Error deleting watchlist ${watchlistId}:`, error);
       throw error;
     }
   }

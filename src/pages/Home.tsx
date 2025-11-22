@@ -1,499 +1,438 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Search, TrendingUp, BarChart2, X } from 'lucide-react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Gift,
+  LineChart,
+  Plus,
+  BarChart3,
+  Newspaper,
+  Calendar,
+} from 'lucide-react';
+import { apiClient } from '../api/client';
+import type { PortfolioRead, PortfolioDetail } from '../types/user';
+import { LoadingIndicator } from '../components/ui/loading-indicator';
 
-// Mock company data with logos (matching AppHeader)
-const mockCompanies = [
-  { symbol: 'AAPL', name: 'Apple Inc.', logo: 'https://logo.clearbit.com/apple.com' },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    logo: 'https://logo.clearbit.com/microsoft.com',
-  },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', logo: 'https://logo.clearbit.com/google.com' },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', logo: 'https://logo.clearbit.com/amazon.com' },
-  { symbol: 'TSLA', name: 'Tesla Inc.', logo: 'https://logo.clearbit.com/tesla.com' },
-  { symbol: 'META', name: 'Meta Platforms Inc.', logo: 'https://logo.clearbit.com/meta.com' },
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', logo: 'https://logo.clearbit.com/nvidia.com' },
-  {
-    symbol: 'JPM',
-    name: 'JPMorgan Chase & Co.',
-    logo: 'https://logo.clearbit.com/jpmorganchase.com',
-  },
-  { symbol: 'V', name: 'Visa Inc.', logo: 'https://logo.clearbit.com/visa.com' },
-  { symbol: 'JNJ', name: 'Johnson & Johnson', logo: 'https://logo.clearbit.com/jnj.com' },
-  { symbol: 'WMT', name: 'Walmart Inc.', logo: 'https://logo.clearbit.com/walmart.com' },
-  { symbol: 'DIS', name: 'The Walt Disney Company', logo: 'https://logo.clearbit.com/disney.com' },
-];
-
-const marketIndices = [
-  {
-    symbol: '^GSPC',
-    name: 'S&P 500',
-    price: 6848.57,
-    changePercentage: 0.83749,
-    change: 56.88,
-    volume: 977471474,
-    dayLow: 6843.94,
-    dayHigh: 6859.13,
-    yearHigh: 6859.13,
-    yearLow: 4835.04,
-    marketCap: 0,
-    priceAvg50: 6595.1616,
-    priceAvg200: 6086.792,
-    exchange: 'INDEX',
-    open: 6845.46,
-    previousClose: 6791.69,
-    timestamp: 1761577792,
-  },
-  {
-    symbol: '^DJI',
-    name: 'Dow Jones Industrial Average',
-    price: 39131.53,
-    changePercentage: 0.45,
-    change: 175.34,
-    volume: 350000000,
-    dayLow: 39000.0,
-    dayHigh: 39200.0,
-    yearHigh: 39200.0,
-    yearLow: 33000.0,
-    marketCap: 0,
-    priceAvg50: 38500.0,
-    priceAvg200: 37000.0,
-    exchange: 'INDEX',
-    open: 39050.0,
-    previousClose: 38956.19,
-    timestamp: 1761577792,
-  },
-  {
-    symbol: '^N225',
-    name: 'Nikkei 225',
-    price: 39098.68,
-    changePercentage: 1.12,
-    change: 433.1,
-    volume: 120000000,
-    dayLow: 38900.0,
-    dayHigh: 39150.0,
-    yearHigh: 39150.0,
-    yearLow: 32000.0,
-    marketCap: 0,
-    priceAvg50: 38500.0,
-    priceAvg200: 36000.0,
-    exchange: 'INDEX',
-    open: 39000.0,
-    previousClose: 38665.58,
-    timestamp: 1761577792,
-  },
-];
-
-// Example sector performance (replace with real API)
-const sectorPerformance = [
-  { sector: 'Technology', changePct: 1.23, value: 45.2 },
-  { sector: 'Healthcare', changePct: -0.45, value: 15.8 },
-  { sector: 'Financials', changePct: 0.87, value: 18.5 },
-  { sector: 'Consumer Discretionary', changePct: 0.34, value: 12.3 },
-  { sector: 'Energy', changePct: -1.12, value: 8.2 },
-  { sector: 'Industrials', changePct: 0.56, value: 10.5 },
-];
-
-// Example industry performance (replace with real API)
-const industryPerformance = [
-  { industry: 'Semiconductors', changePct: 2.45, leader: 'NVDA' },
-  { industry: 'Software', changePct: 1.78, leader: 'MSFT' },
-  { industry: 'E-commerce', changePct: -0.89, leader: 'AMZN' },
-  { industry: 'Automotive', changePct: -1.23, leader: 'TSLA' },
-  { industry: 'Banking', changePct: 0.92, leader: 'JPM' },
-  { industry: 'Pharmaceuticals', changePct: -0.34, leader: 'JNJ' },
-];
-
-// Example general news (replace with real API)
-const generalNews = [
-  {
-    id: 1,
-    title: 'Federal Reserve Holds Interest Rates Steady',
-    source: 'Financial Times',
-    time: '2 hours ago',
-    category: 'Markets',
-  },
-  {
-    id: 2,
-    title: 'Tech Sector Rallies on Strong Earnings Reports',
-    source: 'Bloomberg',
-    time: '4 hours ago',
-    category: 'Technology',
-  },
-  {
-    id: 3,
-    title: 'Oil Prices Drop Amid Global Supply Concerns',
-    source: 'Reuters',
-    time: '5 hours ago',
-    category: 'Energy',
-  },
-  {
-    id: 4,
-    title: 'US Jobs Report Exceeds Expectations',
-    source: 'CNBC',
-    time: '6 hours ago',
-    category: 'Economy',
-  },
-];
-
-export const HomePage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof mockCompanies>([]);
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [portfolios, setPortfolios] = useState<PortfolioRead[]>([]);
+  const [portfolioDetails, setPortfolioDetails] = useState<Map<number, PortfolioDetail>>(new Map());
+  const [loading, setLoading] = useState(true);
+  const hasInitializedRef = useRef(false);
 
-  // Handle search input
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
+  // Fetch portfolios and their details
+  useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
-    if (query.trim()) {
-      const filtered = mockCompanies.filter(
-        (company) =>
-          company.symbol.toLowerCase().includes(query.toLowerCase()) ||
-          company.name.toLowerCase().includes(query.toLowerCase()),
-      );
-      setSearchResults(filtered);
-      setShowSearchDropdown(true);
-    } else {
-      setSearchResults([]);
-      setShowSearchDropdown(false);
-    }
-  };
+    const fetchPortfoliosAndDetails = async () => {
+      try {
+        const portfoliosData = await apiClient.getPortfolios();
+        setPortfolios(portfoliosData);
 
-  // Handle company selection
-  const handleSelectCompany = (symbol: string) => {
-    setSearchQuery('');
-    setShowSearchDropdown(false);
-    setSearchResults([]);
-    navigate(`/app/company/${symbol}`);
-  };
-
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowSearchDropdown(false);
+        // Fetch details for each portfolio
+        const detailsMap = new Map<number, PortfolioDetail>();
+        for (const portfolio of portfoliosData) {
+          try {
+            const detail = await apiClient.getPortfolioDetail(portfolio.id);
+            detailsMap.set(portfolio.id, detail);
+          } catch (err) {
+            console.error(`Failed to fetch details for portfolio ${portfolio.id}:`, err);
+          }
+        }
+        setPortfolioDetails(detailsMap);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch portfolios:', err);
+        setLoading(false);
       }
-    }
-    if (showSearchDropdown) {
-      document.addEventListener('mousedown', handleClick);
-    }
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [showSearchDropdown]);
+    };
+
+    fetchPortfoliosAndDetails();
+  }, []);
+
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    JPY: '¥',
+    INR: '₹',
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    return currencySymbols[currency] || currency;
+  };
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${amount.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+  };
+
+  // Calculate aggregated stats
+  const aggregatedStats = useMemo(
+    () => ({
+      totalPortfolios: portfolios.length,
+      totalInvested: portfolios.reduce((sum, p) => {
+        const detail = portfolioDetails.get(p.id);
+        return sum + (detail?.total_invested || 0);
+      }, 0),
+      totalValue: portfolios.reduce((sum, p) => {
+        const detail = portfolioDetails.get(p.id);
+        return sum + (detail?.total_value || 0);
+      }, 0),
+      totalGainLoss: portfolios.reduce((sum, p) => {
+        const detail = portfolioDetails.get(p.id);
+        return sum + (detail?.total_gain_loss || 0);
+      }, 0),
+      totalDividends: portfolios.reduce((sum, p) => {
+        const detail = portfolioDetails.get(p.id);
+        return sum + (detail?.dividends_received || 0);
+      }, 0),
+      totalStocks: portfolios.reduce((sum, p) => {
+        const detail = portfolioDetails.get(p.id);
+        return sum + (detail?.holding_performances.length || 0);
+      }, 0),
+    }),
+    [portfolios, portfolioDetails],
+  );
+
+  const gainLossPercent = useMemo(
+    () =>
+      aggregatedStats.totalInvested > 0
+        ? ((aggregatedStats.totalGainLoss / aggregatedStats.totalInvested) * 100).toFixed(2)
+        : '0.00',
+    [aggregatedStats.totalInvested, aggregatedStats.totalGainLoss],
+  );
+
+  const isPositive = useMemo(
+    () => aggregatedStats.totalGainLoss >= 0,
+    [aggregatedStats.totalGainLoss],
+  );
+
+  if (loading) {
+    return <LoadingIndicator message="Loading your portfolio data..." minHeight="min-h-screen" />;
+  }
 
   return (
-    <div className="container mx-auto py-10 px-4">
-      {/* Hero Section */}
-      <div className="flex flex-col items-center justify-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 tracking-tight text-center">
-          Analyze Stocks Like a Pro
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 text-center max-w-2xl">
-          Discover market trends, track your favorite companies, and explore sector performance with
-          real-time insights.
-        </p>
-        {/* Search Bar with Company Logos */}
-        <div ref={searchContainerRef} className="relative w-full max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search stocks by symbol or company name..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onFocus={() => searchQuery && setShowSearchDropdown(true)}
-              className="w-full h-12 pl-12 pr-10 text-base rounded-xl border border-indigo-200 bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setShowSearchDropdown(false);
-                  setSearchResults([]);
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-
-            {/* Search Dropdown with Company Logos */}
-            {showSearchDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
-                {searchResults.map((company) => (
-                  <button
-                    key={company.symbol}
-                    onClick={() => handleSelectCompany(company.symbol)}
-                    className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={company.logo}
-                        alt={company.symbol}
-                        className="w-10 h-10 rounded-lg flex-shrink-0 object-contain bg-gray-100 dark:bg-gray-700 p-1"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
-                          {company.symbol}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 truncate">
-                          {company.name}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Header with Title and Quick Actions */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back to StockMate</h1>
+          <p className="text-sm text-gray-600">
+            {portfolios.length === 0
+              ? 'Start building your investment portfolio today'
+              : `${aggregatedStats.totalPortfolios} portfolio${aggregatedStats.totalPortfolios !== 1 ? 's' : ''} • ${aggregatedStats.totalStocks} holdings`}
+          </p>
+        </div>
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-2 justify-end">
+          <Button
+            onClick={() => navigate('/holdings')}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg text-sm"
+          >
+            <BarChart3 className="w-3 h-3 mr-1" />
+            Holdings
+          </Button>
+          <Button
+            onClick={() => navigate('/dividend')}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg text-sm"
+          >
+            <Gift className="w-3 h-3 mr-1" />
+            Dividends
+          </Button>
+          <Button
+            onClick={() => navigate('/watchlist')}
+            variant="outline"
+            className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 text-sm"
+          >
+            <TrendingUp className="w-3 h-3 mr-1" />
+            Watchlist
+          </Button>
         </div>
       </div>
 
-      {/* Market Indices */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-        {marketIndices.map((idx) => (
-          <Card
-            key={idx.symbol}
-            className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-all overflow-hidden relative"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full blur-3xl opacity-30"></div>
-            <CardHeader className="pb-2 relative">
-              <CardTitle className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                {idx.name}
-                <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded px-2 py-0.5">
-                  {idx.symbol}
-                </span>
-              </CardTitle>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{idx.exchange}</span>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="flex items-end gap-3 mb-2">
-                <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                  ${idx.price.toLocaleString()}
-                </span>
-                <span
-                  className={`text-base font-semibold ${
-                    idx.change > 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : idx.change < 0
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-gray-500 dark:text-gray-400'
-                  }`}
-                >
-                  {idx.change > 0 ? '+' : ''}
-                  {idx.change.toLocaleString()} ({idx.changePercentage > 0 ? '+' : ''}
-                  {(idx.changePercentage * 100).toFixed(2)}%)
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-6 mt-2 text-xs text-gray-600 dark:text-gray-400">
-                <span>
-                  <strong>Open:</strong> {idx.open}
-                </span>
-                <span>
-                  <strong>Prev Close:</strong> {idx.previousClose}
-                </span>
-                <span>
-                  <strong>Day Range:</strong> {idx.dayLow} - {idx.dayHigh}
-                </span>
-                <span>
-                  <strong>52W Range:</strong> {idx.yearLow} - {idx.yearHigh}
-                </span>
-              </div>
-              <div className="mt-4 flex gap-4 text-xs text-gray-400 dark:text-gray-500">
-                <span>Vol: {idx.volume.toLocaleString()}</span>
-                <span>50D Avg: {idx.priceAvg50.toLocaleString()}</span>
-                <span>200D Avg: {idx.priceAvg200.toLocaleString()}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Sector & Industry Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Sector Performance */}
-        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-b border-purple-100 dark:border-purple-800 py-3 px-4">
-            <div className="flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
-                Sector Performance
-              </CardTitle>
+      {portfolios.length === 0 ? (
+        // Empty State
+        <Card className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border-0 overflow-hidden">
+          <div className="p-12 text-center">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6 mx-auto">
+              <BarChart3 className="w-12 h-12 text-indigo-600" />
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              {sectorPerformance.map((sector) => (
-                <div
-                  key={sector.sector}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition"
-                >
-                  <div className="flex-1">
-                    <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                      {sector.sector}
-                    </span>
-                    <div className="mt-1 flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
-                          style={{ width: `${(sector.value / 50) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[3rem]">
-                        {sector.value}%
-                      </span>
-                    </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">No Portfolios Yet</h2>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              Create your first portfolio to start tracking your investments, monitor performance,
+              and achieve your financial goals.
+            </p>
+            <Button
+              onClick={() => navigate('/holdings')}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Portfolio
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {/* Key Statistics Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Invested */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-600">Total Invested</p>
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
                   </div>
-                  <span
-                    className={`ml-3 text-sm font-bold px-2 py-1 rounded ${
-                      sector.changePct > 0
-                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
-                        : sector.changePct < 0
-                          ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
-                          : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(aggregatedStats.totalInvested)}
+                </p>
+                <p className="text-[10px] text-gray-500">
+                  Across {aggregatedStats.totalPortfolios} portfolio
+                  {aggregatedStats.totalPortfolios !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </Card>
+
+            {/* Current Value */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-600">Current Value</p>
+                  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                    <LineChart className="w-4 h-4 text-green-600" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(aggregatedStats.totalValue)}
+                </p>
+                <p className="text-[10px] text-gray-500">Real-time value</p>
+              </div>
+            </Card>
+
+            {/* Total Gain/Loss */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-600">Total Gain/Loss</p>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isPositive ? 'bg-green-100' : 'bg-red-100'
                     }`}
                   >
-                    {sector.changePct > 0 ? '+' : ''}
-                    {sector.changePct.toFixed(2)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Industry Performance */}
-        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-b border-indigo-100 dark:border-indigo-800 py-3 px-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
-                Industry Performance
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              {industryPerformance.map((industry) => (
-                <div
-                  key={industry.industry}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition cursor-pointer"
-                  onClick={() => navigate(`/app/company/${industry.leader}`)}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                        {industry.industry}
-                      </span>
-                      <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40 rounded px-2 py-0.5">
-                        {industry.leader}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Leader: {industry.leader}
-                    </span>
+                    {isPositive ? (
+                      <TrendingUp
+                        className={`w-4 h-4 ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                      />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                    )}
                   </div>
-                  <span
-                    className={`ml-3 text-sm font-bold px-2 py-1 rounded ${
-                      industry.changePct > 0
-                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
-                        : industry.changePct < 0
-                          ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
-                          : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700'
-                    }`}
-                  >
-                    {industry.changePct > 0 ? '+' : ''}
-                    {industry.changePct.toFixed(2)}%
-                  </span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* General News */}
-      <div className="mb-12">
-        <Card className="border-0 shadow-xl rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-b border-indigo-100 dark:border-indigo-800 py-3 px-4">
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 text-indigo-600 dark:text-indigo-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                />
-              </svg>
-              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100">
-                Market News
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              {generalNews.map((news) => (
-                <div
-                  key={news.id}
-                  className="p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition cursor-pointer"
+                <p
+                  className={`text-2xl font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                  {formatCurrency(aggregatedStats.totalGainLoss)}
+                </p>
+                <p className={`text-[10px] ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {isPositive ? '+' : ''}
+                  {gainLossPercent}%
+                </p>
+              </div>
+            </Card>
+
+            {/* Dividend Income */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-600">Dividend Income</p>
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Gift className="w-4 h-4 text-amber-600" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(aggregatedStats.totalDividends)}
+                </p>
+                <p className="text-[10px] text-gray-500">All time</p>
+              </div>
+            </Card>
+          </div>
+
+          {/* Portfolio Summary Cards - Three Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* S&P 500 */}
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg rounded-2xl border border-blue-200 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wide">
+                    S&P 500
+                  </h3>
+                  <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-blue-900">4,783.45</p>
+                  <p className="text-xs text-blue-600 mt-1">↑ +2.45% today</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Dow Jones */}
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 shadow-lg rounded-2xl border border-green-200 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-green-600 uppercase tracking-wide">
+                    Dow Jones
+                  </h3>
+                  <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-green-900">37,291.82</p>
+                  <p className="text-xs text-green-600 mt-1">↑ +1.82% today</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Nikkei 225 */}
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 shadow-lg rounded-2xl border border-purple-200 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
+                    Nikkei 225
+                  </h3>
+                  <div className="w-10 h-10 rounded-lg bg-purple-600/10 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-purple-900">32,654.31</p>
+                  <p className="text-xs text-purple-600 mt-1">↑ +0.95% today</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Latest News and Upcoming Events - Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Latest News Section */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b border-blue-100">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-lg font-bold text-gray-800">Latest News</h2>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                {[
+                  {
+                    title: 'Market Update: Tech Sector Rally',
+                    source: 'Market News',
+                    time: '2 hours ago',
+                    category: 'Market',
+                  },
+                  {
+                    title: 'Fed Signals Pause in Rate Hikes',
+                    source: 'Financial Times',
+                    time: '4 hours ago',
+                    category: 'Economy',
+                  },
+                  {
+                    title: 'Your Dividend Stock Up 3.2%',
+                    source: 'Portfolio Alert',
+                    time: '1 hour ago',
+                    category: 'Portfolio',
+                  },
+                ].map((news, idx) => (
+                  <div key={idx} className="pb-4 border-b border-gray-100 last:pb-0 last:border-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
                         {news.title}
-                      </h3>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-3 h-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                            />
-                          </svg>
-                          {news.source}
-                        </span>
-                        <span>•</span>
-                        <span>{news.time}</span>
-                      </div>
+                      </p>
+                      <span
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                          news.category === 'Market'
+                            ? 'bg-blue-100 text-blue-700'
+                            : news.category === 'Economy'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-green-100 text-green-700'
+                        }`}
+                      >
+                        {news.category}
+                      </span>
                     </div>
-                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40 rounded px-2 py-1">
-                      {news.category}
-                    </span>
+                    <p className="text-xs text-gray-500">
+                      {news.source} • {news.time}
+                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                ))}
+              </div>
+            </Card>
 
-      {/* Footer */}
-      <div className="text-center text-xs text-gray-400 py-6">
-        © {new Date().getFullYear()}{' '}
-        <span className="font-semibold text-indigo-600">StockMate</span>
-      </div>
+            {/* Upcoming Events Section */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-100">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-amber-600" />
+                  <h2 className="text-lg font-bold text-gray-800">Upcoming Events</h2>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                {[
+                  {
+                    title: 'Apple Q4 Earnings',
+                    date: 'Jan 25, 2025',
+                    time: '4:30 PM EST',
+                    type: 'Earnings',
+                  },
+                  {
+                    title: 'Federal Reserve Meeting',
+                    date: 'Jan 29, 2025',
+                    time: '2:00 PM EST',
+                    type: 'Economic',
+                  },
+                  {
+                    title: 'Microsoft Dividend Payment',
+                    date: 'Feb 13, 2025',
+                    time: 'Ex-Dividend',
+                    type: 'Dividend',
+                  },
+                ].map((event, idx) => (
+                  <div key={idx} className="pb-4 border-b border-gray-100 last:pb-0 last:border-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
+                        {event.title}
+                      </p>
+                      <span
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                          event.type === 'Earnings'
+                            ? 'bg-purple-100 text-purple-700'
+                            : event.type === 'Economic'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-green-100 text-green-700'
+                        }`}
+                      >
+                        {event.type}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {event.date} • {event.time}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 };

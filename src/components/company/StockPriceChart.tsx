@@ -17,98 +17,140 @@ interface StockPriceChartProps {
   stock_prices?: StockPriceRead[] | null;
 }
 
-type TimePeriod = '5d' | '1m' | '3m' | '6m' | '1y' | '3y' | '5y';
-
-const periodDays: Record<TimePeriod, number> = {
-  '5d': 5,
-  '1m': 30,
-  '3m': 90,
-  '6m': 180,
-  '1y': 365,
-  '3y': 1095,
-  '5y': 1825,
-};
+type TimePeriod = '5d' | '1m' | '3m' | '6m' | 'ytd' | '1y' | '3y' | '5y';
 
 const periodLabels: Record<TimePeriod, string> = {
   '5d': '5 Days',
   '1m': '1 Month',
   '3m': '3 Months',
   '6m': '6 Months',
+  ytd: 'YTD',
   '1y': '1 Year',
   '3y': '3 Years',
   '5y': '5 Years',
-};
-
-// Sample data for demonstration with more realistic variability
-const generateSampleData = (days: number) => {
-  const data = [];
-  const basePrice = 150;
-  const today = new Date();
-
-  // Generate realistic stock price with volatility
-  let currentPrice = basePrice;
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-
-    // Multiple waves for more realistic trends
-    const longTrend = Math.sin(i / 100) * 15; // Long term trend
-    const mediumTrend = Math.sin(i / 30) * 8; // Medium term fluctuation
-    const shortTrend = Math.sin(i / 10) * 4; // Short term volatility
-
-    // Random walk for daily variation (more realistic)
-    const randomWalk = (Math.random() - 0.5) * 6;
-
-    // Combine all components
-    const priceChange = longTrend + mediumTrend + shortTrend + randomWalk;
-    currentPrice += priceChange * 0.1; // Smoothing factor
-
-    // Add some volatility spikes occasionally
-    if (Math.random() < 0.05) {
-      currentPrice += (Math.random() - 0.5) * 8;
-    }
-
-    // Ensure realistic price range
-    currentPrice = Math.max(basePrice * 0.7, Math.min(basePrice * 1.5, currentPrice));
-
-    const dayHigh = currentPrice + Math.random() * 3;
-    const dayLow = currentPrice - Math.random() * 3;
-    const dayOpen = currentPrice - (Math.random() - 0.5) * 2;
-
-    data.push({
-      date,
-      close_price: currentPrice,
-      open_price: dayOpen,
-      high_price: dayHigh,
-      low_price: dayLow,
-    });
-  }
-
-  return data;
 };
 
 export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }) => {
   const [selectedPeriod, setSelectedPeriod] = React.useState<TimePeriod>('1m');
 
   // Use sample data if stock_prices is not provided
-  const allData =
-    stock_prices && stock_prices.length > 0 ? stock_prices : generateSampleData(periodDays['5y']);
+  let allData = stock_prices && stock_prices.length > 0 ? stock_prices : [];
 
-  // Get the number of days for the selected period
-  const daysToShow = periodDays[selectedPeriod];
+  // IMPORTANT: Data comes sorted in DESCENDING order (newest first)
+  // Reverse it to ASCENDING order (oldest first) for proper chart display
+  allData = [...allData].reverse();
+
+  // Calculate cutoff date based on selected period
+  const getDateCutoff = (period: TimePeriod): Date => {
+    const today = new Date();
+    const cutoff = new Date(today);
+
+    switch (period) {
+      case '5d':
+        cutoff.setDate(today.getDate() - 5);
+        break;
+      case '1m':
+        cutoff.setMonth(today.getMonth() - 1);
+        break;
+      case '3m':
+        cutoff.setMonth(today.getMonth() - 3);
+        break;
+      case '6m':
+        cutoff.setMonth(today.getMonth() - 6);
+        break;
+      case 'ytd':
+        cutoff.setFullYear(today.getFullYear(), 0, 1); // Set to January 1st of current year
+        break;
+      case '1y':
+        cutoff.setFullYear(today.getFullYear() - 1);
+        break;
+      case '3y':
+        cutoff.setFullYear(today.getFullYear() - 3);
+        break;
+      case '5y':
+        cutoff.setFullYear(today.getFullYear() - 5);
+        break;
+    }
+    return cutoff;
+  };
+
+  const cutoffDate = getDateCutoff(selectedPeriod);
+
+  // Filter data based on date cutoff (not fixed day count)
+  // This ensures 1m = last month, 3m = last 3 months, etc.
+  const filteredData = allData.filter((price) => {
+    let dateObj: Date;
+    if (price.date instanceof Date) {
+      dateObj = price.date;
+    } else if (typeof price.date === 'string') {
+      const dateStr = price.date.trim();
+      const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (dateMatch) {
+        const year = parseInt(dateMatch[1]);
+        const month = parseInt(dateMatch[2]);
+        const day = parseInt(dateMatch[3]);
+        dateObj = new Date(year, month - 1, day);
+      } else {
+        dateObj = new Date(dateStr);
+      }
+    } else {
+      dateObj = new Date();
+    }
+    return dateObj >= cutoffDate;
+  });
 
   // Format data for chart based on selected period
-  const chartData = allData.slice(-daysToShow).map((price) => ({
-    date: new Date(price.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    open: Math.round(price.open_price * 100) / 100,
-    close: Math.round(price.close_price * 100) / 100,
-    high: Math.round(price.high_price * 100) / 100,
-    low: Math.round(price.low_price * 100) / 100,
-  }));
+  const chartData = filteredData.map((price) => {
+    let dateObj: Date;
 
-  // Calculate price change for the selected period
-  const periodStartPrice = chartData.length > 0 ? chartData[0].open : 0;
+    // Handle different date formats
+    if (price.date instanceof Date) {
+      dateObj = price.date;
+    } else if (typeof price.date === 'string') {
+      // Handle ISO 8601 format: "2025-06-10T00:00:00"
+      const dateStr = price.date.trim();
+
+      // Extract just the date part (2025-06-10)
+      const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (dateMatch) {
+        const year = parseInt(dateMatch[1]);
+        const month = parseInt(dateMatch[2]);
+        const day = parseInt(dateMatch[3]);
+        // Manually construct date to avoid timezone offset issues
+        dateObj = new Date(year, month - 1, day);
+      } else {
+        // Try generic date parsing for other formats
+        dateObj = new Date(dateStr);
+      }
+    } else {
+      dateObj = new Date();
+    }
+
+    // Format dates for display
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: '2-digit',
+    });
+
+    const fullDate = dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    return {
+      date: formattedDate,
+      fullDate: fullDate,
+      open: Math.round(price.open_price * 100) / 100,
+      close: Math.round(price.close_price * 100) / 100,
+      high: Math.round(price.high_price * 100) / 100,
+      low: Math.round(price.low_price * 100) / 100,
+    };
+  }); // Data is already in correct order (oldest to newest)
+
+  // Calculate price change for the selected period using the filtered data
+  const periodStartPrice = chartData.length > 0 ? chartData[0].close : 0;
   const periodEndPrice = chartData.length > 0 ? chartData[chartData.length - 1].close : 0;
   const priceChange = periodEndPrice - periodStartPrice;
   const priceChangePercent = periodStartPrice > 0 ? (priceChange / periodStartPrice) * 100 : 0;
@@ -142,7 +184,7 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {(Object.keys(periodDays) as TimePeriod[]).map((period) => (
+            {(Object.keys(periodLabels) as TimePeriod[]).map((period) => (
               <Button
                 key={period}
                 size="sm"
@@ -162,11 +204,13 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
                       ? '3M'
                       : period === '6m'
                         ? '6M'
-                        : period === '1y'
-                          ? '1Y'
-                          : period === '3y'
-                            ? '3Y'
-                            : '5Y'}
+                        : period === 'ytd'
+                          ? 'YTD'
+                          : period === '1y'
+                            ? '1Y'
+                            : period === '3y'
+                              ? '3Y'
+                              : '5Y'}
               </Button>
             ))}
           </div>
@@ -185,17 +229,69 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" stroke="#9ca3af" style={{ fontSize: '12px' }} />
               <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
+              {/* Tooltip with indicators */}
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #4f46e5',
                   borderRadius: '8px',
                   fontSize: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  padding: '8px',
                 }}
                 formatter={(value: number) => `$${value.toFixed(2)}`}
                 labelFormatter={(label: string) => `Date: ${label}`}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-gray-900 border border-indigo-500 rounded-lg p-3 shadow-lg">
+                        <p className="text-white font-semibold text-xs mb-2">{data.fullDate}</p>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-2 text-gray-200">
+                            <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+                            <span>
+                              Close:{' '}
+                              <span className="text-indigo-300 font-semibold">
+                                ${data.close.toFixed(2)}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                            <span>
+                              High:{' '}
+                              <span className="text-green-300 font-semibold">
+                                ${data.high.toFixed(2)}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                            <span>
+                              Low:{' '}
+                              <span className="text-red-300 font-semibold">
+                                ${data.low.toFixed(2)}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                            <span>
+                              Open:{' '}
+                              <span className="text-yellow-300 font-semibold">
+                                ${data.open.toFixed(2)}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
               />
+              {/* Close price area (main) */}
               <Area
                 type="monotone"
                 dataKey="close"

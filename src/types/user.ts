@@ -233,9 +233,7 @@ export interface Watchlist {
 
 export interface WatchlistUpsertRequest extends Watchlist {}
 
-export interface WatchlistCreate extends Watchlist {
-  user_id: number;
-}
+export interface WatchlistCreateRequest extends Watchlist {}
 
 export interface WatchlistUpdate extends Watchlist {
   id: number;
@@ -263,6 +261,7 @@ export interface WatchlistItemCreate extends WatchlistItem {
 }
 
 export interface WatchlistCompanyItem {
+  id: number;
   symbol: string;
   company_name: string;
   price: number;

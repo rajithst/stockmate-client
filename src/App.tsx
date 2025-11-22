@@ -8,7 +8,7 @@ import WatchlistPage from './pages/Watchlist.tsx';
 import HoldingsPage from './pages/Holdings.tsx';
 import StockScreener from './pages/Screener.tsx';
 import HealthDetails from './pages/HealthDetails.tsx';
-import { HomePage } from './pages/Home.tsx';
+import HomePage from './pages/Home.tsx';
 import DividendPage from './pages/Dividend.tsx';
 import SettingsPage from './pages/Settings.tsx';
 import LoginPage from './pages/Login.tsx';
