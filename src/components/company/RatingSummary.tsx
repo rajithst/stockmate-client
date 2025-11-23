@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip.tsx';
-import { Info, Clock, AlertCircle } from 'lucide-react';
+import { Info, Clock, AlertCircle, BarChart3 } from 'lucide-react';
 import type { CompanyRatingSummaryRead } from '../../types';
 
 export interface RatingSummary {
@@ -27,12 +27,13 @@ export const RatingSummaryCard: React.FC<{
 }> = ({ rating_summary }) => {
   if (!rating_summary) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">Rating Summary</CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Fundamental & performance metrics
-          </span>
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-xl">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-green-600" />
+            <CardTitle className="text-base font-bold text-gray-800">Rating Summary</CardTitle>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Fundamental & performance metrics</p>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
           <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -103,19 +104,20 @@ export const RatingSummaryCard: React.FC<{
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-xl">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <CardHeader className="flex flex-row justify-between items-center">
-        <div>
-          <CardTitle className="text-base font-semibold text-gray-800">Rating Summary</CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Fundamental & performance metrics
-          </span>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-green-600" />
+            <CardTitle className="text-base font-bold text-gray-800">Rating Summary</CardTitle>
+          </div>
+          <Badge className="text-base font-bold px-3 py-1 bg-blue-600 text-white">
+            {rating_summary.rating}
+          </Badge>
         </div>
-        <Badge className="text-base font-bold px-3 py-1 bg-blue-600 text-white">
-          {rating_summary.rating}
-        </Badge>
+        <p className="text-xs text-gray-500 mt-1">Fundamental & performance metrics</p>
       </CardHeader>
 
       <CardContent className="space-y-3 relative z-10">

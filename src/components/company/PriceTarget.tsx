@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
-import { AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, Clock, Target } from 'lucide-react';
 import type { CompanyPriceTargetRead, CompanyPriceTargetSummaryRead } from '../../types';
 
 export const PriceTargetCard: React.FC<{
@@ -15,12 +15,13 @@ export const PriceTargetCard: React.FC<{
     price_target.target_median === null
   ) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">Price Target</CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Analyst price target distribution
-          </span>
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            <CardTitle className="text-base font-bold text-gray-800">Price Target</CardTitle>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Analyst price target distribution</p>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
           <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -48,16 +49,15 @@ export const PriceTargetCard: React.FC<{
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full flex flex-col">
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl h-full flex flex-col">
       {/* Decorative Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <CardHeader>
-        <div>
-          <CardTitle className="text-base font-semibold text-gray-800">Price Target</CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Analyst price target distribution
-          </span>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-blue-600" />
+          <CardTitle className="text-base font-bold text-gray-800">Price Target</CardTitle>
         </div>
+        <p className="text-xs text-gray-500 mt-1">Analyst price target distribution</p>
       </CardHeader>
 
       <CardContent className="space-y-4 relative z-10 flex flex-col flex-1">
@@ -124,12 +124,18 @@ export const PriceTargetSummaryCard: React.FC<{
   // Handle null or missing data
   if (!price_target_summary) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl p-4">
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl p-4">
+        {/* Decorative Accent */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
         <div className="relative z-10">
-          <CardHeader className="p-0 mb-2">
-            <CardTitle className="text-sm font-semibold text-gray-800">
-              Price Target Summary
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-base font-bold text-gray-800">
+                Price Target Summary
+              </CardTitle>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Average price targets by period</p>
           </CardHeader>
           <CardContent className="flex items-center justify-center py-4">
             <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -177,18 +183,17 @@ export const PriceTargetSummaryCard: React.FC<{
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full flex flex-col">
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl h-full flex flex-col">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200 rounded-full blur-2xl opacity-15 pointer-events-none" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold text-gray-800">
-          Price Target Summary
-        </CardTitle>
-        <span className="text-xs text-gray-400 font-medium block mt-1">
-          Average price targets by period
-        </span>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-blue-600" />
+          <CardTitle className="text-base font-bold text-gray-800">Price Target Summary</CardTitle>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Average price targets by period</p>
       </CardHeader>
-      <CardContent className="pb-0 flex flex-col flex-1">
+      <CardContent className="pb-0 flex flex-col flex-1 relative z-10">
         <div className="space-y-1.5 flex-1">
           {metrics.map((m, idx) => (
             <div

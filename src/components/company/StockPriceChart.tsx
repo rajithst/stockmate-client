@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, BarChart3 } from 'lucide-react';
 import type { StockPriceRead } from '../../types/quote';
 
 interface StockPriceChartProps {
@@ -157,15 +157,20 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
   const isPositive = priceChange >= 0;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full flex flex-col">
-      <CardHeader>
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-sky-50 via-white to-cyan-50 rounded-xl h-full flex flex-col">
+      {/* Decorative Accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-sky-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div>
-            <CardTitle className="text-base font-semibold text-gray-800">
-              Stock Price ({periodLabels[selectedPeriod]})
-            </CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <BarChart3 className="w-5 h-5 text-sky-600" />
+              <CardTitle className="text-base font-bold text-gray-800">
+                Stock Price ({periodLabels[selectedPeriod]})
+              </CardTitle>
+            </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-gray-400 font-medium">Period Change:</span>
+              <span className="text-xs text-gray-500">Period Change:</span>
               <div
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-semibold ${
                   isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'

@@ -11,16 +11,22 @@ import { PriceTargetCard, PriceTargetSummaryCard } from '../components/company/P
 import { RatingSummaryCard } from '../components/company/RatingSummary.tsx';
 import LatestGrading from '../components/company/LatestGrading.tsx';
 import { TechnicalIndicators } from '../components/company/TechnicalIndicators.tsx';
+import { CompanyHealth } from '../components/company/CompanyHealth.tsx';
+import { CompanyInsights } from '../components/company/CompanyInsights.tsx';
+import { AnalystEstimates } from '../components/company/AnalystEstimates.tsx';
 import { apiClient } from '../api/client';
-import type { CompanyPageResponse } from '../types';
+import type { CompanyPageResponse, CompanyFinancialHealthResponse } from '../types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 export const CompanyPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const [data, setData] = React.useState<CompanyPageResponse | null>(null);
+  const [healthData, setHealthData] = React.useState<CompanyFinancialHealthResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [healthLoading, setHealthLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const hasInitializedRef = useRef<string | undefined>(undefined);
+  const healthLoadedRef = useRef<boolean>(false);
 
   React.useEffect(() => {
     // Skip if we've already fetched this exact symbol
@@ -43,7 +49,25 @@ export const CompanyPage: React.FC = () => {
 
     fetchData();
     hasInitializedRef.current = symbol;
+    // Reset loaded flags when symbol changes
+    healthLoadedRef.current = false;
   }, [symbol]);
+
+  // Load health data when switching to health tab
+  const handleHealthTabChange = async () => {
+    if (healthLoadedRef.current || !symbol) return;
+
+    try {
+      setHealthLoading(true);
+      const response = await apiClient.getCompanyFinancialHealth(symbol);
+      setHealthData(response);
+      healthLoadedRef.current = true;
+    } catch (err) {
+      console.error('Failed to load health data:', err);
+    } finally {
+      setHealthLoading(false);
+    }
+  };
 
   if (loading)
     return (
@@ -110,23 +134,41 @@ export const CompanyPage: React.FC = () => {
       <CompanyHeader company={data.company} />
 
       {/* Tabs Section */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
+      <Tabs
+        defaultValue="overview"
+        className="w-full"
+        onValueChange={(value) => {
+          if (value === 'health') handleHealthTabChange();
+        }}
+      >
+        <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
           <TabsTrigger
             value="overview"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
           >
             Overview
           </TabsTrigger>
           <TabsTrigger
+            value="insights"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
+          >
+            Insights
+          </TabsTrigger>
+          <TabsTrigger
+            value="health"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
+          >
+            Health
+          </TabsTrigger>
+          <TabsTrigger
             value="technical"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
           >
             Technical
           </TabsTrigger>
           <TabsTrigger
             value="news"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
           >
             News
           </TabsTrigger>
@@ -157,11 +199,29 @@ export const CompanyPage: React.FC = () => {
             <PriceTargetCard price_target={data.price_target} />
             <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
           </div>
+
+          {/* Row 3: Analyst Estimates */}
+          {data.analyst_estimates && data.analyst_estimates.length > 0 && (
+            <div>
+              <AnalystEstimates analyst_estimates={data.analyst_estimates} />
+            </div>
+          )}
         </TabsContent>
 
         {/* Technical Indicators Tab */}
         <TabsContent value="technical">
           <TechnicalIndicators symbol={data.company.symbol} />
+        </TabsContent>
+
+        {/* Health Tab */}
+        <TabsContent value="health">
+          <CompanyHealth healthData={healthData} healthLoading={healthLoading} />
+        </TabsContent>
+
+        {/* Insights Tab */}
+        {/* Insights Tab */}
+        <TabsContent value="insights">
+          <CompanyInsights />
         </TabsContent>
 
         {/* News Tab */}

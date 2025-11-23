@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Badge } from '../ui/badge.tsx';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, TrendingUp } from 'lucide-react';
 import type { CompanyGradingSummaryRead } from '../../types';
 
 export const StockGradingSummaryCard: React.FC<{
@@ -10,14 +10,15 @@ export const StockGradingSummaryCard: React.FC<{
   // Handle null or missing data
   if (!summary) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">
-            Stock Grading Summary
-          </CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Analyst consensus breakdown
-          </span>
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-indigo-600" />
+            <CardTitle className="text-base font-bold text-gray-800">
+              Stock Grading Summary
+            </CardTitle>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Analyst consensus breakdown</p>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
           <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -61,22 +62,23 @@ export const StockGradingSummaryCard: React.FC<{
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
-      <CardHeader className="flex flex-row justify-between items-center">
-        <div>
-          <CardTitle className="text-base font-semibold text-gray-800">
-            Stock Grading Summary
-          </CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Analyst consensus breakdown
-          </span>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-indigo-600" />
+            <CardTitle className="text-base font-bold text-gray-800">
+              Stock Grading Summary
+            </CardTitle>
+          </div>
+          <Badge className={`${consensusColor} text-sm font-semibold px-3 py-1`}>
+            {summary.consensus}
+          </Badge>
         </div>
-        <Badge className={`${consensusColor} text-sm font-semibold px-3 py-1`}>
-          {summary.consensus}
-        </Badge>
+        <p className="text-xs text-gray-500 mt-1">Analyst consensus breakdown</p>
       </CardHeader>
 
       <CardContent className="space-y-4 relative z-10 flex flex-col h-full">

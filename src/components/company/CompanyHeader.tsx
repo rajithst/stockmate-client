@@ -1,6 +1,6 @@
 import React from 'react';
-import { BarChart3, Heart, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Button } from '../ui/button.tsx';
 import type { CompanyRead } from '../../types/company';
@@ -24,15 +24,6 @@ function formatMarketCap(value: number): string {
 
 export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company }) => {
   const navigate = useNavigate();
-  const handleViewFinancials = () => {
-    navigate(`/app/financials/${company.symbol}`);
-  };
-  const handleViewHealth = () => {
-    navigate(`/app/health/${company.symbol}`);
-  };
-  const handleViewInsights = () => {
-    navigate(`/app/insights/${company.symbol}`);
-  };
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl">
@@ -100,35 +91,14 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company }) => {
             )}
           </div>
 
-          <div className="flex gap-1.5 flex-shrink-0">
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1 h-7"
-              onClick={handleViewFinancials}
-            >
-              <BarChart3 className="w-3 h-3 mr-1" />
-              See Financials
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 h-7"
-              onClick={handleViewHealth}
-            >
-              <Heart className="w-3 h-3 mr-1" />
-              Check Health
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white text-xs px-2 py-1 h-7"
-              onClick={handleViewInsights}
-            >
-              <Lightbulb className="w-3 h-3 mr-1" />
-              See Insights
-            </Button>
-          </div>
+          {/* Financials Button */}
+          <Button
+            onClick={() => navigate(`/app/financials/${company.symbol}`)}
+            className="h-7 px-3 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 rounded-lg flex items-center gap-1.5 flex-shrink-0"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Financials</span>
+          </Button>
         </div>
       </CardHeader>
     </Card>

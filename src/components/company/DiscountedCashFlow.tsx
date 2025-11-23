@@ -1,5 +1,12 @@
 import React from 'react';
-import { ArrowDownRight, ArrowUpRight, MinusCircle, Clock, AlertCircle } from 'lucide-react';
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  MinusCircle,
+  Clock,
+  AlertCircle,
+  TrendingDown,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import type { CompanyDiscountedCashFlowRead } from '../../types';
@@ -14,14 +21,17 @@ export const DcfSummaryCard: React.FC<{
     discounted_cash_flow.stock_price === null
   ) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">
-            Discounted Cash Flow
-          </CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Fundamental valuation snapshot
-          </span>
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-amber-50 via-white to-yellow-50 rounded-xl">
+        {/* Decorative Accent */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-amber-600" />
+            <CardTitle className="text-base font-bold text-gray-800">
+              Discounted Cash Flow
+            </CardTitle>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Fundamental valuation snapshot</p>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
           <div className="flex flex-col items-center gap-2 text-gray-500">
@@ -66,21 +76,22 @@ export const DcfSummaryCard: React.FC<{
     : null;
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-amber-50 via-white to-yellow-50 rounded-xl">
       {/* Decorative Accent */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle className="text-base font-semibold text-gray-800">
-            Discounted Cash Flow
-          </CardTitle>
-          <span className="text-xs text-gray-400 font-medium block mt-1">
-            Fundamental valuation snapshot
-          </span>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-amber-600" />
+            <CardTitle className="text-base font-bold text-gray-800">
+              Discounted Cash Flow
+            </CardTitle>
+          </div>
+          <Button variant="outline" size="sm" className="text-xs shadow hover:bg-gray-50">
+            Custom DCF
+          </Button>
         </div>
-        <Button variant="outline" size="sm" className="text-xs shadow hover:bg-gray-50">
-          Custom DCF
-        </Button>
+        <p className="text-xs text-gray-500 mt-1">Fundamental valuation snapshot</p>
       </CardHeader>
       <CardContent className="space-y-4 pt-1 relative z-10">
         <div className="flex flex-col gap-2">

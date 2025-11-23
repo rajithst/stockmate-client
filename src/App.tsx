@@ -7,7 +7,6 @@ import FinancialsPage from './pages/Financials.tsx';
 import WatchlistPage from './pages/Watchlist.tsx';
 import HoldingsPage from './pages/Holdings.tsx';
 import StockScreener from './pages/Screener.tsx';
-import HealthDetails from './pages/HealthDetails.tsx';
 import HomePage from './pages/Home.tsx';
 import DividendPage from './pages/Dividend.tsx';
 import SettingsPage from './pages/Settings.tsx';
@@ -40,7 +39,6 @@ function App() {
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/company/:symbol" element={<CompanyPage />} />
                     <Route path="/financials/:symbol" element={<FinancialsPage />} />
-                    <Route path="/health/:symbol" element={<HealthDetails />} />
                     <Route path="*" element={<Navigate to="/app" replace />} />
                   </Routes>
                 </AppLayout>

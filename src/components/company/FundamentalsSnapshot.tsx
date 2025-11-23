@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, Clock, Activity } from 'lucide-react';
 import type { CompanyRead } from '../../types/company';
 import type { CompanyFundamentalsRead } from '../../types/company';
 
@@ -160,9 +160,15 @@ export const FundamentalsSnapshot: React.FC<FundamentalsSnapshotProps> = ({
 
   if (dataPoints.length === 0) {
     return (
-      <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-800">Fundamentals</CardTitle>
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-purple-50 via-white to-pink-50 rounded-xl h-full">
+        {/* Decorative Accent */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-purple-600" />
+            <CardTitle className="text-base font-bold text-gray-800">Fundamentals</CardTitle>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Key metrics snapshot</p>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center h-48 gap-2">
           <AlertCircle className="w-6 h-6 text-amber-500" />
@@ -190,12 +196,17 @@ export const FundamentalsSnapshot: React.FC<FundamentalsSnapshotProps> = ({
   };
 
   return (
-    <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold text-gray-800">Fundamentals</CardTitle>
-        <span className="text-xs text-gray-400 font-medium">Key metrics snapshot</span>
+    <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-purple-50 via-white to-pink-50 rounded-xl h-full">
+      {/* Decorative Accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+      <CardHeader className="pb-3 relative z-10">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-purple-600" />
+          <CardTitle className="text-base font-bold text-gray-800">Fundamentals</CardTitle>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Key metrics snapshot</p>
       </CardHeader>
-      <CardContent className="pb-2 flex flex-col h-full">
+      <CardContent className="pb-2 flex flex-col h-full relative z-10">
         <div className="space-y-1 flex-1">
           {(Object.entries(categories) as [keyof typeof categories, DataPoint[]][]).map(
             ([category, points]) =>

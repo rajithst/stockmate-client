@@ -8,7 +8,7 @@ import type {
   CompanyIncomeStatementRead,
   CompanyFinancialRatioRead,
 } from './financial-statements';
-import type { CompanyDiscountedCashFlowRead, CompanyKeyMetricsRead } from './company-metrics';
+import type { CompanyAnalystEstimateRead, CompanyDiscountedCashFlowRead, CompanyKeyMetricsRead } from './company-metrics';
 import type {
   CompanyGradingRead,
   CompanyGradingSummaryRead,
@@ -102,6 +102,7 @@ export interface CompanyPageResponse {
   stock_prices?: StockPriceRead[] | null;
   fundamentals?: CompanyFundamentalsRead | null;
   latest_gradings: CompanyGradingRead[];
+  analyst_estimates: CompanyAnalystEstimateRead[];
   price_target_news: CompanyPriceTargetNewsRead[];
   general_news: CompanyGeneralNewsRead[];
   grading_news: CompanyGradingNewsRead[];
