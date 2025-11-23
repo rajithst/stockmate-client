@@ -132,21 +132,21 @@ const HomePage: React.FC = () => {
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2 justify-end">
           <Button
-            onClick={() => navigate('/holdings')}
+            onClick={() => navigate('/app/holdings')}
             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg text-sm"
           >
             <BarChart3 className="w-3 h-3 mr-1" />
             Holdings
           </Button>
           <Button
-            onClick={() => navigate('/dividend')}
+            onClick={() => navigate('/app/dividend')}
             className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg text-sm"
           >
             <Gift className="w-3 h-3 mr-1" />
             Dividends
           </Button>
           <Button
-            onClick={() => navigate('/watchlist')}
+            onClick={() => navigate('/app/watchlist')}
             variant="outline"
             className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 text-sm"
           >

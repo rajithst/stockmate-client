@@ -208,6 +208,20 @@ export interface PortfolioDividendHistoryWrite extends PortfolioDividendHistory 
   portfolio_id: number;
 }
 
+export interface PortfolioMonthlyPerformance {
+  year: number;
+  month: number;
+  date: string;
+  total_value: number;
+  total_invested: number;
+  total_gain_loss: number;
+  gain_loss_percentage: number;
+  dividends_received: number;
+}
+
+export interface PortfolioAnnualPerformanceRead extends PortfolioMonthlyPerformance {
+}
+
 // Composite Response Interfaces
 export interface PortfolioDetail {
   total_value: number;
@@ -217,9 +231,12 @@ export interface PortfolioDetail {
   total_return_percentage: number;
   sector_performances: PortfolioSectorPerformanceRead[];
   industry_performances: PortfolioIndustryPerformanceRead[];
+  monthly_performances: PortfolioMonthlyPerformance[];
   holding_performances: PortfolioHoldingPerformanceRead[];
   trading_histories: PortfolioTradingHistoryRead[];
 }
+
+
 
 // ========================
 // WATCHLIST INTERFACES

@@ -27,6 +27,7 @@ import {
   BarChart3,
   X,
   LineChart,
+  LineChart as LineChartIcon,
 } from 'lucide-react';
 import {
   PieChart as RechartsChart,
@@ -40,6 +41,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from 'recharts';
 import type { PortfolioRead, PortfolioDetail } from '../types/user';
 import { apiClient } from '../api/client';
@@ -51,6 +54,8 @@ const HoldingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [chartTimePeriod, setChartTimePeriod] = useState<'3m' | '6m' | '1y' | '3y' | '5y'>('1y');
+  const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [showSectorChart, setShowSectorChart] = useState(false);
   const [showIndustryChart, setShowIndustryChart] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
@@ -158,6 +163,29 @@ const HoldingsPage: React.FC = () => {
     const symbol = getCurrencySymbol(currency);
     return `${symbol}${amount.toLocaleString()}`;
   };
+
+  // Filter monthly performance data by time period
+  const getFilteredMonthlyData = () => {
+    if (
+      !portfolioDetail?.monthly_performances ||
+      portfolioDetail.monthly_performances.length === 0
+    ) {
+      return [];
+    }
+
+    const monthsMap: Record<string, number> = {
+      '3m': 3,
+      '6m': 6,
+      '1y': 12,
+      '3y': 36,
+      '5y': 60,
+    };
+
+    const monthsToShow = monthsMap[chartTimePeriod];
+    return portfolioDetail.monthly_performances.slice(-monthsToShow);
+  };
+
+  const filteredMonthlyData = getFilteredMonthlyData();
 
   const selectedPortfolio = portfolios.find((p) => p.id.toString() === selectedPortfolioId);
   const totalStocks = portfolioDetail?.holding_performances.length || 0;
@@ -585,56 +613,312 @@ const HoldingsPage: React.FC = () => {
                         <LineChart className="w-5 h-5 text-indigo-600" />
                         <h2 className="text-lg font-bold text-gray-800">Portfolio Performance</h2>
                       </div>
-                      <p className="text-xs text-gray-500">Last 12 months (projected)</p>
+
+                      {/* Time Period & Chart Type Switchers */}
+                      <div className="flex items-center gap-3">
+                        {/* Time Period Switcher */}
+                        <div className="flex items-center gap-1.5">
+                          {(['3m', '6m', '1y', '3y', '5y'] as const).map((period) => (
+                            <button
+                              key={period}
+                              onClick={() => setChartTimePeriod(period)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                chartTimePeriod === period
+                                  ? 'bg-indigo-500 text-white shadow-md'
+                                  : 'bg-white/50 text-gray-600 hover:bg-white/80 border border-indigo-100'
+                              }`}
+                            >
+                              {period.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Chart Type Switcher */}
+                        <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-indigo-200">
+                          <button
+                            onClick={() => setChartType('bar')}
+                            title="Bar Chart"
+                            className={`p-1.5 rounded transition-all ${
+                              chartType === 'bar'
+                                ? 'bg-indigo-500 text-white shadow-md'
+                                : 'text-gray-600 hover:text-indigo-600'
+                            }`}
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setChartType('line')}
+                            title="Line Chart"
+                            className={`p-1.5 rounded transition-all ${
+                              chartType === 'line'
+                                ? 'bg-indigo-500 text-white shadow-md'
+                                : 'text-gray-600 hover:text-indigo-600'
+                            }`}
+                          >
+                            <LineChartIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="p-6">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <RechartsLineChart
-                        data={[
-                          { month: 'Jan', value: 100000 },
-                          { month: 'Feb', value: 102500 },
-                          { month: 'Mar', value: 101800 },
-                          { month: 'Apr', value: 105200 },
-                          { month: 'May', value: 108900 },
-                          { month: 'Jun', value: 112400 },
-                          { month: 'Jul', value: 110800 },
-                          { month: 'Aug', value: 115300 },
-                          { month: 'Sep', value: 118700 },
-                          { month: 'Oct', value: 122100 },
-                          { month: 'Nov', value: 125600 },
-                          { month: 'Dec', value: 128900 },
-                        ]}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                        <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                        <Tooltip
-                          formatter={(value: number) =>
-                            formatCurrency(value, selectedPortfolio?.currency || 'USD')
-                          }
-                          contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '0.5rem',
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="value"
-                          stroke="url(#colorGradient)"
-                          dot={{ fill: '#6366f1', r: 5 }}
-                          activeDot={{ r: 7 }}
-                          strokeWidth={3}
-                        />
-                        <defs>
-                          <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6} />
-                          </linearGradient>
-                        </defs>
-                      </RechartsLineChart>
-                    </ResponsiveContainer>
+                    {filteredMonthlyData.length > 0 ? (
+                      <div className="space-y-6">
+                        {/* Chart */}
+                        <div>
+                          <ResponsiveContainer width="100%" height={350}>
+                            {chartType === 'bar' ? (
+                              <BarChart
+                                data={filteredMonthlyData.map((perf) => ({
+                                  date: perf.date,
+                                  month: new Date(perf.date).toLocaleString('default', {
+                                    month: 'short',
+                                    year: 'numeric',
+                                  }),
+                                  total_value: perf.total_value,
+                                  total_invested: perf.total_invested,
+                                  gain_loss: perf.total_gain_loss,
+                                  gain_loss_percentage: perf.gain_loss_percentage,
+                                  dividends_received: perf.dividends_received,
+                                }))}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '0.5rem',
+                                    padding: '0.75rem',
+                                  }}
+                                  content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                      const data = payload[0].payload;
+                                      const isPositive = data.gain_loss >= 0;
+                                      return (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg space-y-2">
+                                          <p className="text-sm font-semibold text-gray-800">
+                                            {data.month}
+                                          </p>
+                                          <div className="space-y-1 text-xs">
+                                            <p className="text-gray-600">
+                                              <span className="font-semibold">
+                                                Portfolio Value:
+                                              </span>{' '}
+                                              {formatCurrency(
+                                                data.total_value,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                            <p className="text-gray-600">
+                                              <span className="font-semibold">Invested:</span>{' '}
+                                              {formatCurrency(
+                                                data.total_invested,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                            <p
+                                              className={`${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                                            >
+                                              <span className="font-semibold">Gain/Loss:</span>{' '}
+                                              {formatCurrency(
+                                                data.gain_loss,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}{' '}
+                                              ({isPositive ? '+' : ''}
+                                              {data.gain_loss_percentage.toFixed(2)}%)
+                                            </p>
+                                            <p className="text-amber-600">
+                                              <span className="font-semibold">Dividends:</span>{' '}
+                                              {formatCurrency(
+                                                data.dividends_received,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <Legend />
+                                <Bar
+                                  dataKey="total_value"
+                                  fill="#6366f1"
+                                  radius={[8, 8, 0, 0]}
+                                  name="Portfolio Value"
+                                  isAnimationActive={true}
+                                />
+                                <Bar
+                                  dataKey="total_invested"
+                                  fill="#10b981"
+                                  radius={[8, 8, 0, 0]}
+                                  name="Total Invested"
+                                  isAnimationActive={true}
+                                />
+                                <defs>
+                                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                                  </linearGradient>
+                                </defs>
+                              </BarChart>
+                            ) : (
+                              <RechartsLineChart
+                                data={filteredMonthlyData.map((perf) => ({
+                                  date: perf.date,
+                                  month: new Date(perf.date).toLocaleString('default', {
+                                    month: 'short',
+                                    year: 'numeric',
+                                  }),
+                                  total_value: perf.total_value,
+                                  total_invested: perf.total_invested,
+                                  gain_loss: perf.total_gain_loss,
+                                  gain_loss_percentage: perf.gain_loss_percentage,
+                                  dividends_received: perf.dividends_received,
+                                }))}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '0.5rem',
+                                    padding: '0.75rem',
+                                  }}
+                                  content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                      const data = payload[0].payload;
+                                      const isPositive = data.gain_loss >= 0;
+                                      return (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg space-y-2">
+                                          <p className="text-sm font-semibold text-gray-800">
+                                            {data.month}
+                                          </p>
+                                          <div className="space-y-1 text-xs">
+                                            <p className="text-gray-600">
+                                              <span className="font-semibold">
+                                                Portfolio Value:
+                                              </span>{' '}
+                                              {formatCurrency(
+                                                data.total_value,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                            <p className="text-gray-600">
+                                              <span className="font-semibold">Invested:</span>{' '}
+                                              {formatCurrency(
+                                                data.total_invested,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                            <p
+                                              className={`${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                                            >
+                                              <span className="font-semibold">Gain/Loss:</span>{' '}
+                                              {formatCurrency(
+                                                data.gain_loss,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}{' '}
+                                              ({isPositive ? '+' : ''}
+                                              {data.gain_loss_percentage.toFixed(2)}%)
+                                            </p>
+                                            <p className="text-amber-600">
+                                              <span className="font-semibold">Dividends:</span>{' '}
+                                              {formatCurrency(
+                                                data.dividends_received,
+                                                selectedPortfolio?.currency || 'USD',
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <Legend />
+                                <Line
+                                  type="monotone"
+                                  dataKey="total_value"
+                                  stroke="#6366f1"
+                                  dot={{ fill: '#6366f1', r: 5 }}
+                                  activeDot={{ r: 7 }}
+                                  strokeWidth={3}
+                                  name="Portfolio Value"
+                                  isAnimationActive={true}
+                                />
+                                <Line
+                                  type="monotone"
+                                  dataKey="total_invested"
+                                  stroke="#10b981"
+                                  dot={{ fill: '#10b981', r: 4 }}
+                                  activeDot={{ r: 6 }}
+                                  strokeWidth={2}
+                                  name="Total Invested"
+                                  isAnimationActive={true}
+                                  strokeDasharray="5 5"
+                                />
+                                <defs>
+                                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6} />
+                                  </linearGradient>
+                                </defs>
+                              </RechartsLineChart>
+                            )}
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Monthly Summary Grid */}
+                        <div className="grid grid-cols-4 gap-3 pt-4 border-t border-gray-200">
+                          {filteredMonthlyData.slice(-3).map((perf, idx) => {
+                            const isPositive = perf.total_gain_loss >= 0;
+                            return (
+                              <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-gray-600 mb-2">
+                                  {new Date(perf.date).toLocaleString('default', {
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })}
+                                </p>
+                                <p className="text-base font-bold text-indigo-600 mb-1">
+                                  {formatCurrency(
+                                    perf.total_value,
+                                    selectedPortfolio?.currency || 'USD',
+                                  )}
+                                </p>
+                                <p
+                                  className={`text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                                >
+                                  {isPositive ? '+' : ''}
+                                  {perf.gain_loss_percentage.toFixed(2)}%
+                                </p>
+                              </div>
+                            );
+                          })}
+                          <div className="bg-indigo-50 rounded-lg p-3 flex items-center justify-center">
+                            <p className="text-xs font-semibold text-indigo-600 text-center">
+                              Displayed Months: {filteredMonthlyData.length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <Calendar className="w-12 h-12 text-gray-300 mb-3" />
+                        <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                          No Performance Data
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Performance data will appear as you make trades
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               )}

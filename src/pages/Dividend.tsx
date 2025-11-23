@@ -9,10 +9,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { TrendingUp, Calendar, DollarSign, Gift, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import {
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  Gift,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  BarChart3,
+  LineChart as LineChartIcon,
+} from 'lucide-react';
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -41,6 +53,8 @@ const DividendPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [chartTimePeriod, setChartTimePeriod] = useState<'3m' | '6m' | '1y' | '3y' | '5y'>('1y');
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [portfolioForm, setPortfolioForm] = useState({ name: '', currency: 'USD' });
   const hasInitializedRef = useRef(false);
@@ -83,6 +97,7 @@ const DividendPage: React.FC = () => {
         setDividendHistories(dividends);
       } catch (err) {
         console.error('Failed to fetch portfolio dividends:', err);
+        setDividendHistories([]);
       } finally {
         setLoading(false);
       }
@@ -202,14 +217,70 @@ const DividendPage: React.FC = () => {
   const allMonths = Object.values(dividendsByYear)
     .flat()
     .sort((a, b) => new Date(b.year, b.month).getTime() - new Date(a.year, a.month).getTime())
-    .slice(0, 12)
+    .slice(0, 60) // Get up to 5 years
     .reverse();
 
-  const chartData = allMonths.map((m) => ({
-    month: m.monthName.substring(0, 3),
-    amount: m.totalAmount,
-    year: m.year,
-  }));
+  const chartData = allMonths.map((m) => {
+    // Group payments by symbol for tooltip
+    const payerDetails = m.payments.reduce(
+      (acc, payment) => {
+        acc[payment.symbol] = (acc[payment.symbol] || 0) + payment.dividend_amount;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return {
+      month: m.monthName.substring(0, 3),
+      monthNum: m.month,
+      year: m.year,
+      amount: m.totalAmount,
+      payerDetails, // Object with symbol as key and total amount as value
+    };
+  });
+
+  // Filter chart data by time period
+  const getFilteredChartData = () => {
+    const monthsMap: Record<string, number> = {
+      '3m': 3,
+      '6m': 6,
+      '1y': 12,
+      '3y': 36,
+      '5y': 60,
+    };
+
+    const monthsToShow = monthsMap[chartTimePeriod];
+    return chartData.slice(-monthsToShow);
+  };
+
+  const filteredChartData = getFilteredChartData();
+
+  // Custom tooltip component to display dividend payers
+  const DividendTooltip = (props: any) => {
+    const { active, payload } = props;
+    if (active && payload && payload.length > 0) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white border border-indigo-200 rounded-lg p-3 shadow-lg">
+          <p className="font-semibold text-sm text-gray-800 mb-2">
+            {data.month} {data.year}
+          </p>
+          <div className="space-y-1">
+            {Object.entries(data.payerDetails).map(([symbol, amount]: [string, any]) => (
+              <p key={symbol} className="text-xs text-gray-700">
+                <span className="font-semibold text-indigo-600">{symbol}:</span>{' '}
+                <span>{formatCurrency(amount)}</span>
+              </p>
+            ))}
+          </div>
+          <div className="border-t border-gray-200 mt-2 pt-2">
+            <p className="text-sm font-bold text-gray-800">Total: {formatCurrency(data.amount)}</p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loading) {
     return <LoadingIndicator message="Loading dividend data..." minHeight="min-h-[60vh]" />;
@@ -390,7 +461,52 @@ const DividendPage: React.FC = () => {
                       <TrendingUp className="w-4 h-4 text-indigo-600" />
                       <h2 className="text-base font-bold text-gray-800">Monthly Dividend Income</h2>
                     </div>
-                    <p className="text-[10px] text-gray-500">Last 12 months</p>
+
+                    {/* Chart Controls */}
+                    <div className="flex items-center gap-3">
+                      {/* Time Period Switcher */}
+                      <div className="flex items-center gap-1.5">
+                        {(['3m', '6m', '1y', '3y', '5y'] as const).map((period) => (
+                          <button
+                            key={period}
+                            onClick={() => setChartTimePeriod(period)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                              chartTimePeriod === period
+                                ? 'bg-indigo-500 text-white shadow-md'
+                                : 'bg-white/50 text-gray-600 hover:bg-white/80 border border-indigo-100'
+                            }`}
+                          >
+                            {period.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Chart Type Switcher */}
+                      <div className="flex items-center gap-1 bg-white/50 rounded-lg p-1 border border-indigo-100">
+                        <button
+                          onClick={() => setChartType('bar')}
+                          title="Bar Chart"
+                          className={`p-1.5 rounded transition-all ${
+                            chartType === 'bar'
+                              ? 'bg-indigo-500 text-white shadow-md'
+                              : 'text-gray-600 hover:text-indigo-600'
+                          }`}
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setChartType('line')}
+                          title="Line Chart"
+                          className={`p-1.5 rounded transition-all ${
+                            chartType === 'line'
+                              ? 'bg-indigo-500 text-white shadow-md'
+                              : 'text-gray-600 hover:text-indigo-600'
+                          }`}
+                        >
+                          <LineChartIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="p-4">
@@ -409,40 +525,68 @@ const DividendPage: React.FC = () => {
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fill: '#6b7280', fontSize: 11 }}
-                          axisLine={{ stroke: '#d1d5db' }}
-                        />
-                        <YAxis
-                          tick={{ fill: '#6b7280', fontSize: 11 }}
-                          axisLine={{ stroke: '#d1d5db' }}
-                          tickFormatter={(value) => formatCurrency(value)}
-                        />
-                        <Tooltip
-                          formatter={(value: number) => [formatCurrency(value), 'Amount']}
-                          contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '0.5rem',
-                          }}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="amount"
-                          fill="url(#colorGradient)"
-                          radius={[8, 8, 0, 0]}
-                          name="Dividend"
-                        />
-                        <defs>
-                          <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                          </linearGradient>
-                        </defs>
-                      </BarChart>
+                      {chartType === 'bar' ? (
+                        <BarChart data={filteredChartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: '#6b7280', fontSize: 11 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                          />
+                          <YAxis
+                            tick={{ fill: '#6b7280', fontSize: 11 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                            tickFormatter={(value) => formatCurrency(value)}
+                          />
+                          <Tooltip content={<DividendTooltip />} />
+                          <Legend />
+                          <Bar
+                            dataKey="amount"
+                            fill="url(#colorGradient)"
+                            radius={[8, 8, 0, 0]}
+                            name="Dividend"
+                            isAnimationActive={true}
+                          />
+                          <defs>
+                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                        </BarChart>
+                      ) : (
+                        <LineChart data={filteredChartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: '#6b7280', fontSize: 11 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                          />
+                          <YAxis
+                            tick={{ fill: '#6b7280', fontSize: 11 }}
+                            axisLine={{ stroke: '#d1d5db' }}
+                            tickFormatter={(value) => formatCurrency(value)}
+                          />
+                          <Tooltip content={<DividendTooltip />} />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="amount"
+                            stroke="url(#colorGradient)"
+                            dot={{ fill: '#6366f1', r: 5 }}
+                            activeDot={{ r: 7 }}
+                            strokeWidth={3}
+                            name="Dividend"
+                            isAnimationActive={true}
+                          />
+                          <defs>
+                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                        </LineChart>
+                      )}
                     </ResponsiveContainer>
                   )}
                 </div>
