@@ -140,11 +140,8 @@ export type {
   PortfolioDividendHistoryRead,
   PortfolioDividendHistoryWrite,
   PortfolioDetail,
-  DividendSyncResult,
-  DividendSyncBatchResult,
   Watchlist,
   WatchlistUpsertRequest,
-  WatchlistCreate,
   WatchlistUpdate,
   WatchlistRead,
   WatchlistItem,
@@ -161,4 +158,6 @@ export type {
   CompanyWrite,
   CompanyPageResponse,
   CompanyFinancialResponse,
+  CompanyInsight,
+  CompanyInsightsResponse,
 } from './company';

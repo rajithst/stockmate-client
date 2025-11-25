@@ -22,11 +22,14 @@ export const CompanyPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const [data, setData] = React.useState<CompanyPageResponse | null>(null);
   const [healthData, setHealthData] = React.useState<CompanyFinancialHealthResponse | null>(null);
+  const [insightsData, setInsightsData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [healthLoading, setHealthLoading] = React.useState(false);
+  const [insightsLoading, setInsightsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const hasInitializedRef = useRef<string | undefined>(undefined);
   const healthLoadedRef = useRef<boolean>(false);
+  const insightsLoadedRef = useRef<boolean>(false);
 
   React.useEffect(() => {
     // Skip if we've already fetched this exact symbol
@@ -51,6 +54,7 @@ export const CompanyPage: React.FC = () => {
     hasInitializedRef.current = symbol;
     // Reset loaded flags when symbol changes
     healthLoadedRef.current = false;
+    insightsLoadedRef.current = false;
   }, [symbol]);
 
   // Load health data when switching to health tab
@@ -66,6 +70,23 @@ export const CompanyPage: React.FC = () => {
       console.error('Failed to load health data:', err);
     } finally {
       setHealthLoading(false);
+    }
+  };
+
+  // Load insights data when switching to insights tab
+  const handleInsightsTabChange = async () => {
+    if (insightsLoadedRef.current || !symbol) return;
+
+    try {
+      setInsightsLoading(true);
+      const response = await apiClient.getCompanyInsights(symbol);
+      console.log('Insights data loaded:', response);
+      setInsightsData(response);
+      insightsLoadedRef.current = true;
+    } catch (err) {
+      console.error('Failed to load insights data:', err);
+    } finally {
+      setInsightsLoading(false);
     }
   };
 
@@ -139,6 +160,7 @@ export const CompanyPage: React.FC = () => {
         className="w-full"
         onValueChange={(value) => {
           if (value === 'health') handleHealthTabChange();
+          if (value === 'insights') handleInsightsTabChange();
         }}
       >
         <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
@@ -219,9 +241,8 @@ export const CompanyPage: React.FC = () => {
         </TabsContent>
 
         {/* Insights Tab */}
-        {/* Insights Tab */}
         <TabsContent value="insights">
-          <CompanyInsights />
+          <CompanyInsights data={insightsData} loading={insightsLoading} />
         </TabsContent>
 
         {/* News Tab */}

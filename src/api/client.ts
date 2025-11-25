@@ -2,6 +2,7 @@ import type {
   CompanyFinancialHealthResponse,
   CompanyFinancialResponse,
   CompanyPageResponse,
+  CompanyInsightsResponse,
 } from '../types';
 import type {
   PortfolioRead,
@@ -142,6 +143,20 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error(`Error fetching financial health data for ${symbol}:`, error);
+      throw error;
+    }
+  }
+
+  async getCompanyInsights(symbol: string) {
+    if (!symbol) {
+      throw new Error('Symbol is required');
+    }
+
+    try {
+      const data = await this.request<CompanyInsightsResponse>(`/company/${symbol}/insights`);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching insights data for ${symbol}:`, error);
       throw error;
     }
   }

@@ -8,7 +8,11 @@ import type {
   CompanyIncomeStatementRead,
   CompanyFinancialRatioRead,
 } from './financial-statements';
-import type { CompanyAnalystEstimateRead, CompanyDiscountedCashFlowRead, CompanyKeyMetricsRead } from './company-metrics';
+import type {
+  CompanyAnalystEstimateRead,
+  CompanyDiscountedCashFlowRead,
+  CompanyKeyMetricsRead,
+} from './company-metrics';
 import type {
   CompanyGradingRead,
   CompanyGradingSummaryRead,
@@ -106,6 +110,7 @@ export interface CompanyPageResponse {
   price_target_news: CompanyPriceTargetNewsRead[];
   general_news: CompanyGeneralNewsRead[];
   grading_news: CompanyGradingNewsRead[];
+  insights?: CompanyInsightsResponse | null;
 }
 
 export interface CompanyFinancialResponse {
@@ -115,4 +120,27 @@ export interface CompanyFinancialResponse {
   key_metrics: CompanyKeyMetricsRead[];
   financial_ratios: CompanyFinancialRatioRead[];
   dividends: CompanyDividendRead[];
+}
+
+export interface CompanyInsight {
+  year: number;
+  quarter: string;
+  value: number;
+}
+
+export interface CompanyInsightsResponse {
+  net_income: CompanyInsight[];
+  gross_profit_margin: CompanyInsight[];
+  operating_profit_margin: CompanyInsight[];
+  ebita: CompanyInsight[];
+  free_cash_flow: CompanyInsight[];
+  eps: CompanyInsight[];
+  eps_diluted: CompanyInsight[];
+  weighted_average_shs_out: CompanyInsight[];
+  return_on_equity: CompanyInsight[];
+  debt_to_equity_ratio: CompanyInsight[];
+  total_debt: CompanyInsight[];
+  operating_cash_flow: CompanyInsight[];
+  market_cap: CompanyInsight[];
+  dividend_yield: CompanyInsight[];
 }
