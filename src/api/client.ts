@@ -12,6 +12,8 @@ import type {
   WatchlistRead,
   WatchlistCreateRequest,
   WatchlistCompanyItem,
+  DashboardResponse,
+  StockSymbol,
 } from '../types/user';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
@@ -379,6 +381,26 @@ class ApiClient {
       });
     } catch (error) {
       console.error(`Error deleting watchlist ${watchlistId}:`, error);
+      throw error;
+    }
+  }
+
+  async getDashboard(): Promise<DashboardResponse> {
+    try {
+      const data = await this.request<DashboardResponse>('/dashboard');
+      return data;
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+      throw error;
+    }
+  }
+
+  async getCompanies(): Promise<StockSymbol[]> {
+    try {
+      const data = await this.request<StockSymbol[]>('/dashboard/symbols');
+      return data;
+    } catch (error) {
+      console.error('Error fetching companies:', error);
       throw error;
     }
   }

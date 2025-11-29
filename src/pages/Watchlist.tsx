@@ -11,33 +11,11 @@ import {
 import { NotificationToast } from '../components/ui/notification-toast';
 import { useNotification } from '../lib/hooks/useNotification';
 import { apiClient } from '../api/client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import type { StockSymbol } from '../types/user';
 import { Link } from 'react-router-dom';
 import { Star, Plus, Trash2, Search, TrendingUp, TrendingDown, X } from 'lucide-react';
-
-// Mock company data with logos (matching AppHeader)
-const mockCompanies = [
-  { symbol: 'AAPL', name: 'Apple Inc.', logo: 'https://logo.clearbit.com/apple.com' },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    logo: 'https://logo.clearbit.com/microsoft.com',
-  },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', logo: 'https://logo.clearbit.com/google.com' },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', logo: 'https://logo.clearbit.com/amazon.com' },
-  { symbol: 'TSLA', name: 'Tesla Inc.', logo: 'https://logo.clearbit.com/tesla.com' },
-  { symbol: 'META', name: 'Meta Platforms Inc.', logo: 'https://logo.clearbit.com/meta.com' },
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', logo: 'https://logo.clearbit.com/nvidia.com' },
-  {
-    symbol: 'JPM',
-    name: 'JPMorgan Chase & Co.',
-    logo: 'https://logo.clearbit.com/jpmorganchase.com',
-  },
-  { symbol: 'V', name: 'Visa Inc.', logo: 'https://logo.clearbit.com/visa.com' },
-  { symbol: 'JNJ', name: 'Johnson & Johnson', logo: 'https://logo.clearbit.com/jnj.com' },
-  { symbol: 'WMT', name: 'Walmart Inc.', logo: 'https://logo.clearbit.com/walmart.com' },
-  { symbol: 'DIS', name: 'The Walt Disney Company', logo: 'https://logo.clearbit.com/disney.com' },
-];
 
 interface WatchlistItem {
   id: number;
@@ -66,10 +44,11 @@ interface Watchlist {
 }
 
 const WatchlistPage: React.FC = () => {
+  const { companies } = useAuth();
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof mockCompanies>([]);
+  const [searchResults, setSearchResults] = useState<StockSymbol[]>([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -83,6 +62,19 @@ const WatchlistPage: React.FC = () => {
   const { notifications, addNotification, removeNotification } = useNotification();
 
   const activeWatchlist = watchlists.find((wl) => wl.id === activeWatchlistId);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showAddModal || showDeleteConfirmation) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAddModal, showDeleteConfirmation]);
 
   // Load watchlists on mount
   React.useEffect(() => {
@@ -174,7 +166,7 @@ const WatchlistPage: React.FC = () => {
     setSearchQuery(query);
 
     if (query.trim()) {
-      const filtered = mockCompanies.filter(
+      const filtered = companies.filter(
         (company) =>
           company.symbol.toLowerCase().includes(query.toLowerCase()) ||
           company.name.toLowerCase().includes(query.toLowerCase()),
@@ -270,7 +262,7 @@ const WatchlistPage: React.FC = () => {
   };
 
   // Add stock to active watchlist
-  const addStockToActive = async (company: (typeof mockCompanies)[0]) => {
+  const addStockToActive = async (company: StockSymbol) => {
     if (!activeWatchlist) return;
 
     // Check if already exists
@@ -453,14 +445,16 @@ const WatchlistPage: React.FC = () => {
                       className="w-full px-3 py-2 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
-                        <img
-                          src={company.logo}
-                          alt={company.symbol}
-                          className="w-7 h-7 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-0.5"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                        {company.image && (
+                          <img
+                            src={company.image}
+                            alt={company.symbol}
+                            className="w-7 h-7 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-0.5"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">
                             {company.symbol}
@@ -602,8 +596,8 @@ const WatchlistPage: React.FC = () => {
 
       {/* Add Watchlist Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -639,12 +633,18 @@ const WatchlistPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Currency</label>
-                <Input
-                  placeholder="USD"
-                  value={newWatchlistCurrency}
-                  onChange={(e) => setNewWatchlistCurrency(e.target.value.toUpperCase())}
-                  className="h-9 text-sm border-indigo-200 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+                <Select value={newWatchlistCurrency} onValueChange={setNewWatchlistCurrency}>
+                  <SelectTrigger className="h-9 text-sm border-indigo-200 focus:ring-indigo-500">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="JPY">JPY (¥)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -669,8 +669,8 @@ const WatchlistPage: React.FC = () => {
 
       {/* Delete Watchlist Confirmation Modal */}
       {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
             <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 text-white">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">

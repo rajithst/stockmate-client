@@ -149,10 +149,33 @@ export const CompanyPage: React.FC = () => {
     grading_news: data.grading_news,
   };
 
+  // Check if company is in database
+  const isInDatabase = data.company?.is_in_db !== false;
+
+  // Filter stock prices to 1 month if not in database
+  const filteredStockPrices = isInDatabase
+    ? data.stock_prices
+    : data.stock_prices?.filter((price) => {
+        const priceDate = new Date(price.date);
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        return priceDate >= oneMonthAgo;
+      });
+
   return (
     <div className="container mx-auto p-4 space-y-4">
       {/* Main Header - Always Visible */}
-      <CompanyHeader company={data.company} />
+      <CompanyHeader company={data.company} isInDatabase={isInDatabase} />
+
+      {!isInDatabase && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+          <p className="font-medium">📡 Data loaded on demand</p>
+          <p className="text-xs text-blue-700 mt-1">
+            This company data is loaded in real-time. Add it to the database to enable full features
+            and tracking.
+          </p>
+        </div>
+      )}
 
       {/* Tabs Section */}
       <Tabs
@@ -163,7 +186,11 @@ export const CompanyPage: React.FC = () => {
           if (value === 'insights') handleInsightsTabChange();
         }}
       >
-        <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100">
+        <TabsList
+          className={`grid w-full bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100 ${
+            isInDatabase ? 'grid-cols-5' : 'grid-cols-2'
+          }`}
+        >
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
@@ -176,43 +203,49 @@ export const CompanyPage: React.FC = () => {
           >
             Insights
           </TabsTrigger>
-          <TabsTrigger
-            value="health"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-          >
-            Health
-          </TabsTrigger>
-          <TabsTrigger
-            value="technical"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-          >
-            Technical
-          </TabsTrigger>
-          <TabsTrigger
-            value="news"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-          >
-            News
-          </TabsTrigger>
+          {isInDatabase && (
+            <>
+              <TabsTrigger
+                value="health"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
+              >
+                Health
+              </TabsTrigger>
+              <TabsTrigger
+                value="technical"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
+              >
+                Technical
+              </TabsTrigger>
+              <TabsTrigger
+                value="news"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
+              >
+                News
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          {/* Top Row: Stock Price Chart (Left) + Fundamentals Snapshot (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2">
-              <StockPriceChart stock_prices={data.stock_prices} />
-            </div>
-            <div>
-              <FundamentalsSnapshot company={data.company} fundamentals={data.fundamentals} />
-            </div>
+          {/* Stock Price Chart */}
+          <div>
+            <StockPriceChart stock_prices={filteredStockPrices} />
+          </div>
+
+          {/* Fundamentals Snapshot - Full Width */}
+          <div>
+            <FundamentalsSnapshot company={data.company} ratios={data.ratios} />
           </div>
 
           {/* Row 1: Grading, Rating, Analyst Gradings (3 cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className={`grid gap-4 ${isInDatabase ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}
+          >
             <StockGradingSummaryCard summary={data.grading_summary} />
             <RatingSummaryCard rating_summary={data.rating_summary} />
-            <LatestGrading latest_gradings={data.latest_gradings} />
+            {isInDatabase && <LatestGrading latest_gradings={data.latest_gradings} />}
           </div>
 
           {/* Row 2: DCF, Price Target, Price Target Summary (3 cards) */}
@@ -230,25 +263,31 @@ export const CompanyPage: React.FC = () => {
           )}
         </TabsContent>
 
-        {/* Technical Indicators Tab */}
-        <TabsContent value="technical">
-          <TechnicalIndicators symbol={data.company.symbol} />
-        </TabsContent>
-
-        {/* Health Tab */}
-        <TabsContent value="health">
-          <CompanyHealth healthData={healthData} healthLoading={healthLoading} />
-        </TabsContent>
-
-        {/* Insights Tab */}
+        {/* Insights Tab - Available for both on-demand and database data */}
         <TabsContent value="insights">
           <CompanyInsights data={insightsData} loading={insightsLoading} />
         </TabsContent>
 
+        {/* Health Tab */}
+        {isInDatabase && (
+          <TabsContent value="health">
+            <CompanyHealth healthData={healthData} healthLoading={healthLoading} />
+          </TabsContent>
+        )}
+
+        {/* Technical Tab */}
+        {isInDatabase && (
+          <TabsContent value="technical">
+            <TechnicalIndicators symbol={symbol || ''} />
+          </TabsContent>
+        )}
+
         {/* News Tab */}
-        <TabsContent value="news">
-          <CompanyNewsTabs news={companyNews} />
-        </TabsContent>
+        {isInDatabase && (
+          <TabsContent value="news">
+            <CompanyNewsTabs news={companyNews} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

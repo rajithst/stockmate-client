@@ -117,25 +117,6 @@ const LatestGrading: React.FC<{ latest_gradings: CompanyGradingRead[] }> = ({
             +{latest_gradings.length - 6} more gradings
           </div>
         )}
-
-        {/* Last updated - Bottom */}
-        {latest_gradings.length > 0 && (
-          <div className="flex items-center justify-end pt-2 mt-2 border-t border-gray-100">
-            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-3 h-3 text-gray-400" />
-              Last updated:{' '}
-              {typeof latest_gradings[0].date === 'string'
-                ? new Date(latest_gradings[0].date).toLocaleString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : latest_gradings[0].date?.toString().split('T')[0]}
-            </span>
-          </div>
-        )}
       </div>
     </Card>
   );

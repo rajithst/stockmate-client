@@ -57,6 +57,7 @@ export interface CompanyRead extends Company {
   open_price?: number | null;
   high_price?: number | null;
   low_price?: number | null;
+  is_in_db: boolean;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -97,6 +98,7 @@ export interface CompanyFundamentalsRead {
 
 export interface CompanyPageResponse {
   company: CompanyRead;
+  ratios?: CompanyFinancialRatioRead | null;
   grading_summary?: CompanyGradingSummaryRead | null;
   rating_summary?: CompanyRatingSummaryRead | null;
   dcf?: CompanyDiscountedCashFlowRead | null;

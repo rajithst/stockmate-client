@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import type { StockSymbol } from '../types/user';
 
 interface User {
   username: string;
@@ -7,6 +8,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  companies: StockSymbol[];
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -19,6 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [companies, setCompanies] = useState<StockSymbol[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,15 +32,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = () => {
       const token = localStorage.getItem('stockmate_access_token');
       const storedUser = localStorage.getItem('stockmate_user');
+      const storedCompanies = localStorage.getItem('stockmate_companies');
 
       if (token && storedUser) {
         try {
           setUser(JSON.parse(storedUser));
           setIsAuthenticated(true);
+
+          if (storedCompanies) {
+            setCompanies(JSON.parse(storedCompanies));
+          }
         } catch (err) {
           // Invalid stored user data
           localStorage.removeItem('stockmate_user');
           localStorage.removeItem('stockmate_access_token');
+          localStorage.removeItem('stockmate_companies');
           setIsAuthenticated(false);
         }
       }
@@ -50,8 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleTokenExpired = () => {
       setIsAuthenticated(false);
       setUser(null);
+      setCompanies([]);
       localStorage.removeItem('stockmate_user');
       localStorage.removeItem('stockmate_access_token');
+      localStorage.removeItem('stockmate_companies');
     };
 
     window.addEventListener('auth-token-expired', handleTokenExpired);
@@ -65,6 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Call backend API for login (email parameter is actually username now)
       await apiClient.login(username, password);
+
+      // Fetch companies list
+      const companiesList = await apiClient.getCompanies();
+      setCompanies(companiesList);
+      localStorage.setItem('stockmate_companies', JSON.stringify(companiesList));
 
       // On success, store user info (token is already stored by apiClient)
       const userData: User = {
@@ -100,10 +116,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLogoutLoading(true);
     try {
       setUser(null);
+      setCompanies([]);
       setIsAuthenticated(false);
       setError(null);
       localStorage.removeItem('stockmate_user');
       localStorage.removeItem('stockmate_access_token');
+      localStorage.removeItem('stockmate_companies');
       apiClient.logout();
     } finally {
       setLogoutLoading(false);
@@ -112,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated, loading, error, logoutLoading }}
+      value={{ user, companies, login, logout, isAuthenticated, loading, error, logoutLoading }}
     >
       {children}
     </AuthContext.Provider>

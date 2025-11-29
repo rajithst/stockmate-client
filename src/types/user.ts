@@ -11,6 +11,8 @@
  * - Token: Authentication token
  */
 
+import type { CompanyDividendRead, CompanyEarningsCalendarRead, IndexQuoteRead } from './quote';
+
 // ========================
 // USER & AUTH INTERFACES
 // ========================
@@ -219,8 +221,7 @@ export interface PortfolioMonthlyPerformance {
   dividends_received: number;
 }
 
-export interface PortfolioAnnualPerformanceRead extends PortfolioMonthlyPerformance {
-}
+export interface PortfolioAnnualPerformanceRead extends PortfolioMonthlyPerformance {}
 
 // Composite Response Interfaces
 export interface PortfolioDetail {
@@ -235,8 +236,6 @@ export interface PortfolioDetail {
   holding_performances: PortfolioHoldingPerformanceRead[];
   trading_histories: PortfolioTradingHistoryRead[];
 }
-
-
 
 // ========================
 // WATCHLIST INTERFACES
@@ -299,4 +298,26 @@ export interface WatchlistCompanyItem {
 export interface WatchlistResponse {
   watchlist: WatchlistRead;
   items: WatchlistCompanyItem[];
+}
+
+export interface DashboardResponse {
+  total_portfolios: number;
+  total_invested: number;
+  total_current_value: number;
+  total_profit_loss: number;
+  total_dividends: number;
+  gain_loss_percentage: number;
+  index_quotes: IndexQuoteRead[];
+  earnings_calendar: CompanyEarningsCalendarRead[];
+  dividends_calendar: CompanyDividendRead[];
+  latest_news: [];
+}
+
+export interface StockSymbol {
+  symbol: string;
+  name: string;
+  exchange?: string | null;
+  currency?: string | null;
+  image?: string | null;
+  is_in_db: boolean;
 }

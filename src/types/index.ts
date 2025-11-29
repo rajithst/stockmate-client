@@ -96,6 +96,9 @@ export type {
   CompanyTechnicalIndicator,
   CompanyTechnicalIndicatorWrite,
   CompanyTechnicalIndicatorRead,
+  CompanyEarningsCalendar,
+  IndexQuote,
+  IndexQuoteRead,
 } from './quote';
 
 // Financial Health
@@ -149,6 +152,7 @@ export type {
   WatchlistItemCreate,
   WatchlistCompanyItem,
   WatchlistResponse,
+  DashboardResponse,
 } from './user';
 
 // Company

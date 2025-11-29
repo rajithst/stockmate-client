@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Button } from '../ui/button.tsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../ui/dialog.tsx';
 import type { CompanyRead } from '../../types/company';
 
 interface CompanyHeaderProps {
   company: CompanyRead;
+  isInDatabase?: boolean;
 }
 
 function formatMarketCap(value: number): string {
@@ -22,8 +31,9 @@ function formatMarketCap(value: number): string {
   return value.toString();
 }
 
-export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company }) => {
+export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, isInDatabase = true }) => {
   const navigate = useNavigate();
+  const [showDialog, setShowDialog] = useState(false);
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl">
@@ -91,15 +101,67 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company }) => {
             )}
           </div>
 
-          {/* Financials Button */}
-          <Button
-            onClick={() => navigate(`/app/financials/${company.symbol}`)}
-            className="h-7 px-3 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 rounded-lg flex items-center gap-1.5 flex-shrink-0"
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Financials</span>
-          </Button>
+          {/* Financials Button - Only show if in database */}
+          {isInDatabase && (
+            <Button
+              onClick={() => navigate(`/app/financials/${company.symbol}`)}
+              className="h-7 px-3 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 rounded-lg flex items-center gap-1.5 flex-shrink-0"
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Financials</span>
+            </Button>
+          )}
+
+          {/* Add to Database Button - Only show if not in database */}
+          {!isInDatabase && (
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="h-7 px-3 text-xs bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 rounded-lg flex items-center gap-1.5 flex-shrink-0"
+            >
+              <span>+ Add to Database</span>
+            </Button>
+          )}
         </div>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add to Database</DialogTitle>
+              <DialogDescription>
+                Add {company.company_name} ({company.symbol}) to the database?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p className="font-medium">⏱️ Data Synchronization</p>
+              <p className="text-xs text-blue-700 mt-1">
+                This will take a few minutes to sync all historical data and analytics. You'll be
+                able to access full features once the sync is complete.
+              </p>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDialog(false)}
+                className="h-8 px-3 text-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="h-8 px-3 text-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                onClick={() => {
+                  // TODO: Implement API call to add company to database
+                  console.log('Adding company to database:', company.symbol);
+                  setShowDialog(false);
+                }}
+              >
+                Add to Database
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
     </Card>
   );

@@ -14,45 +14,34 @@ import {
   Calendar,
 } from 'lucide-react';
 import { apiClient } from '../api/client';
-import type { PortfolioRead, PortfolioDetail } from '../types/user';
+import type { DashboardResponse } from '../types/user';
 import { LoadingIndicator } from '../components/ui/loading-indicator';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [portfolios, setPortfolios] = useState<PortfolioRead[]>([]);
-  const [portfolioDetails, setPortfolioDetails] = useState<Map<number, PortfolioDetail>>(new Map());
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const hasInitializedRef = useRef(false);
 
-  // Fetch portfolios and their details
+  // Fetch dashboard data
   useEffect(() => {
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
 
-    const fetchPortfoliosAndDetails = async () => {
+    const fetchData = async () => {
       try {
-        const portfoliosData = await apiClient.getPortfolios();
-        setPortfolios(portfoliosData);
+        // Fetch dashboard data
+        const dashboard = await apiClient.getDashboard();
+        setDashboardData(dashboard);
 
-        // Fetch details for each portfolio
-        const detailsMap = new Map<number, PortfolioDetail>();
-        for (const portfolio of portfoliosData) {
-          try {
-            const detail = await apiClient.getPortfolioDetail(portfolio.id);
-            detailsMap.set(portfolio.id, detail);
-          } catch (err) {
-            console.error(`Failed to fetch details for portfolio ${portfolio.id}:`, err);
-          }
-        }
-        setPortfolioDetails(detailsMap);
         setLoading(false);
       } catch (err) {
-        console.error('Failed to fetch portfolios:', err);
+        console.error('Failed to fetch dashboard:', err);
         setLoading(false);
       }
     };
 
-    fetchPortfoliosAndDetails();
+    fetchData();
   }, []);
 
   const currencySymbols: Record<string, string> = {
@@ -72,32 +61,17 @@ const HomePage: React.FC = () => {
     return `${symbol}${amount.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
   };
 
-  // Calculate aggregated stats
+  // Calculate aggregated stats from dashboard data
   const aggregatedStats = useMemo(
     () => ({
-      totalPortfolios: portfolios.length,
-      totalInvested: portfolios.reduce((sum, p) => {
-        const detail = portfolioDetails.get(p.id);
-        return sum + (detail?.total_invested || 0);
-      }, 0),
-      totalValue: portfolios.reduce((sum, p) => {
-        const detail = portfolioDetails.get(p.id);
-        return sum + (detail?.total_value || 0);
-      }, 0),
-      totalGainLoss: portfolios.reduce((sum, p) => {
-        const detail = portfolioDetails.get(p.id);
-        return sum + (detail?.total_gain_loss || 0);
-      }, 0),
-      totalDividends: portfolios.reduce((sum, p) => {
-        const detail = portfolioDetails.get(p.id);
-        return sum + (detail?.dividends_received || 0);
-      }, 0),
-      totalStocks: portfolios.reduce((sum, p) => {
-        const detail = portfolioDetails.get(p.id);
-        return sum + (detail?.holding_performances.length || 0);
-      }, 0),
+      totalPortfolios: dashboardData?.total_portfolios || 0,
+      totalInvested: dashboardData?.total_invested || 0,
+      totalValue: dashboardData?.total_current_value || 0,
+      totalGainLoss: dashboardData?.total_profit_loss || 0,
+      totalDividends: dashboardData?.total_dividends || 0,
+      totalStocks: 0, // This info isn't in dashboard response
     }),
-    [portfolios, portfolioDetails],
+    [dashboardData],
   );
 
   const gainLossPercent = useMemo(
@@ -124,9 +98,9 @@ const HomePage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back to StockMate</h1>
           <p className="text-sm text-gray-600">
-            {portfolios.length === 0
+            {aggregatedStats.totalPortfolios === 0
               ? 'Start building your investment portfolio today'
-              : `${aggregatedStats.totalPortfolios} portfolio${aggregatedStats.totalPortfolios !== 1 ? 's' : ''} • ${aggregatedStats.totalStocks} holdings`}
+              : `${aggregatedStats.totalPortfolios} portfolio${aggregatedStats.totalPortfolios !== 1 ? 's' : ''}`}
           </p>
         </div>
         {/* Quick Actions */}
@@ -156,7 +130,7 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {portfolios.length === 0 ? (
+      {aggregatedStats.totalPortfolios === 0 ? (
         // Empty State
         <Card className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl border-0 overflow-hidden">
           <div className="p-12 text-center">
@@ -264,61 +238,241 @@ const HomePage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Portfolio Summary Cards - Three Column Layout */}
+          {/* Portfolio Summary Cards - Market Indices */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* S&P 500 */}
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg rounded-2xl border border-blue-200 overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wide">
-                    S&P 500
-                  </h3>
-                  <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-blue-900">4,783.45</p>
-                  <p className="text-xs text-blue-600 mt-1">↑ +2.45% today</p>
-                </div>
-              </div>
-            </Card>
+            {dashboardData?.index_quotes && dashboardData.index_quotes.length > 0 ? (
+              dashboardData.index_quotes.map((quote, idx) => {
+                const isPositive = quote.change >= 0;
+                const colorScheme =
+                  idx === 0
+                    ? {
+                        bg: 'from-blue-50/40 to-blue-100/40',
+                        border: 'border-blue-200/50',
+                        text: 'text-blue-600',
+                        dark: 'text-blue-900',
+                        icon: 'bg-blue-600/10',
+                        headerBg: 'bg-gradient-to-r from-blue-50 to-cyan-50',
+                        headerBorder: 'border-blue-100',
+                      }
+                    : idx === 1
+                      ? {
+                          bg: 'from-green-50/40 to-green-100/40',
+                          border: 'border-green-200/50',
+                          text: 'text-green-600',
+                          dark: 'text-green-900',
+                          icon: 'bg-green-600/10',
+                          headerBg: 'bg-gradient-to-r from-green-50 to-emerald-50',
+                          headerBorder: 'border-green-100',
+                        }
+                      : {
+                          bg: 'from-purple-50/40 to-purple-100/40',
+                          border: 'border-purple-200/50',
+                          text: 'text-purple-600',
+                          dark: 'text-purple-900',
+                          icon: 'bg-purple-600/10',
+                          headerBg: 'bg-gradient-to-r from-purple-50 to-pink-50',
+                          headerBorder: 'border-purple-100',
+                        };
 
-            {/* Dow Jones */}
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 shadow-lg rounded-2xl border border-green-200 overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-green-600 uppercase tracking-wide">
-                    Dow Jones
-                  </h3>
-                  <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-green-900">37,291.82</p>
-                  <p className="text-xs text-green-600 mt-1">↑ +1.82% today</p>
-                </div>
-              </div>
-            </Card>
+                return (
+                  <Card
+                    key={idx}
+                    className={`bg-gradient-to-br ${colorScheme.bg} shadow-lg rounded-2xl border ${colorScheme.border} overflow-hidden hover:shadow-xl transition-all duration-300 backdrop-blur-sm`}
+                  >
+                    {/* Header */}
+                    <div
+                      className={`${colorScheme.headerBg} px-4 py-3 border-b ${colorScheme.headerBorder}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p
+                            className={`text-[10px] font-semibold ${colorScheme.text} uppercase tracking-wider`}
+                          >
+                            Index
+                          </p>
+                          <h3 className={`text-base font-bold ${colorScheme.dark} truncate`}>
+                            {quote.symbol}
+                          </h3>
+                          <p className={`text-xs ${colorScheme.text} truncate`}>{quote.name}</p>
+                        </div>
+                        <div
+                          className={`w-10 h-10 rounded-lg ${colorScheme.icon} flex items-center justify-center flex-shrink-0`}
+                        >
+                          {isPositive ? (
+                            <TrendingUp className={`w-5 h-5 ${colorScheme.text}`} />
+                          ) : (
+                            <TrendingDown className={`w-5 h-5 ${colorScheme.text}`} />
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Nikkei 225 */}
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 shadow-lg rounded-2xl border border-purple-200 overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
-                    Nikkei 225
-                  </h3>
-                  <div className="w-10 h-10 rounded-lg bg-purple-600/10 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    {/* Main Content */}
+                    <div className="p-3 space-y-3">
+                      {/* Price & Change Row */}
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p
+                            className={`text-[10px] font-semibold ${colorScheme.text} uppercase tracking-wide`}
+                          >
+                            Price
+                          </p>
+                          <p className={`text-2xl font-bold ${colorScheme.dark}`}>
+                            {quote.price.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={`text-xs font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {isPositive ? '↑' : '↓'} {Math.abs(quote.change_percent).toFixed(2)}%
+                          </p>
+                          <p
+                            className={`text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                          >
+                            {isPositive ? '+' : ''}
+                            {quote.change.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Day Range */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-current border-opacity-10">
+                        <div>
+                          <p
+                            className={`text-[9px] font-semibold ${colorScheme.text} uppercase tracking-wide mb-0.5`}
+                          >
+                            Low
+                          </p>
+                          <p className={`text-xs font-bold ${colorScheme.dark}`}>
+                            {quote.day_low_price.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            className={`text-[9px] font-semibold ${colorScheme.text} uppercase tracking-wide mb-0.5`}
+                          >
+                            High
+                          </p>
+                          <p className={`text-xs font-bold ${colorScheme.dark}`}>
+                            {quote.day_high_price.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 52-Week Range */}
+                      {(quote.year_low_price || quote.year_high_price) && (
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-current border-opacity-10">
+                          {quote.year_low_price && (
+                            <div>
+                              <p
+                                className={`text-[9px] font-semibold ${colorScheme.text} uppercase tracking-wide mb-0.5`}
+                              >
+                                52W Low
+                              </p>
+                              <p className={`text-xs font-bold ${colorScheme.dark}`}>
+                                {quote.year_low_price.toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
+                          )}
+                          {quote.year_high_price && (
+                            <div>
+                              <p
+                                className={`text-[9px] font-semibold ${colorScheme.text} uppercase tracking-wide mb-0.5`}
+                              >
+                                52W High
+                              </p>
+                              <p className={`text-xs font-bold ${colorScheme.dark}`}>
+                                {quote.year_high_price.toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })
+            ) : (
+              <>
+                {/* Placeholder cards when no data */}
+                <Card className="bg-gradient-to-br from-blue-50/40 to-blue-100/40 shadow-lg rounded-2xl border border-blue-200/50 overflow-hidden hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-3 border-b border-blue-100">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">
+                          Index
+                        </p>
+                        <h3 className="text-base font-bold text-blue-900 truncate">^GSPC</h3>
+                        <p className="text-xs text-blue-600 truncate">S&P 500</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-purple-900">32,654.31</p>
-                  <p className="text-xs text-purple-600 mt-1">↑ +0.95% today</p>
-                </div>
-              </div>
-            </Card>
+                  <div className="p-3 space-y-3">
+                    <div className="text-xs text-blue-600 text-center py-2">Loading data...</div>
+                  </div>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-50/40 to-green-100/40 shadow-lg rounded-2xl border border-green-200/50 overflow-hidden hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-green-100">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">
+                          Index
+                        </p>
+                        <h3 className="text-base font-bold text-green-900 truncate">^DJI</h3>
+                        <p className="text-xs text-green-600 truncate">Dow Jones</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    <div className="text-xs text-green-600 text-center py-2">Loading data...</div>
+                  </div>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50/40 to-purple-100/40 shadow-lg rounded-2xl border border-purple-200/50 overflow-hidden hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b border-purple-100">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wider">
+                          Index
+                        </p>
+                        <h3 className="text-base font-bold text-purple-900 truncate">^N225</h3>
+                        <p className="text-xs text-purple-600 truncate">Nikkei 225</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-purple-600/10 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-5 h-5 text-purple-600" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    <div className="text-xs text-purple-600 text-center py-2">Loading data...</div>
+                  </div>
+                </Card>
+              </>
+            )}
           </div>
 
           {/* Latest News and Upcoming Events - Two Column Layout */}
@@ -332,52 +486,29 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                {[
-                  {
-                    title: 'Market Update: Tech Sector Rally',
-                    source: 'Market News',
-                    time: '2 hours ago',
-                    category: 'Market',
-                  },
-                  {
-                    title: 'Fed Signals Pause in Rate Hikes',
-                    source: 'Financial Times',
-                    time: '4 hours ago',
-                    category: 'Economy',
-                  },
-                  {
-                    title: 'Your Dividend Stock Up 3.2%',
-                    source: 'Portfolio Alert',
-                    time: '1 hour ago',
-                    category: 'Portfolio',
-                  },
-                ].map((news, idx) => (
-                  <div key={idx} className="pb-4 border-b border-gray-100 last:pb-0 last:border-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
-                        {news.title}
-                      </p>
-                      <span
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
-                          news.category === 'Market'
-                            ? 'bg-blue-100 text-blue-700'
-                            : news.category === 'Economy'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-green-100 text-green-700'
-                        }`}
-                      >
-                        {news.category}
-                      </span>
+                {dashboardData?.latest_news && dashboardData.latest_news.length > 0 ? (
+                  dashboardData.latest_news.slice(0, 3).map((news: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="pb-4 border-b border-gray-100 last:pb-0 last:border-0"
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
+                          {news.title || 'Market Update'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-500">{news.source || 'Financial News'}</p>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      {news.source} • {news.time}
-                    </p>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">No news available</p>
                   </div>
-                ))}
+                )}
               </div>
             </Card>
 
-            {/* Upcoming Events Section */}
+            {/* Upcoming Events Section - Combined Earnings & Dividends */}
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl border-0 overflow-hidden hover:shadow-xl transition-shadow">
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-100">
                 <div className="flex items-center gap-2">
@@ -386,48 +517,87 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                {[
-                  {
-                    title: 'Apple Q4 Earnings',
-                    date: 'Jan 25, 2025',
-                    time: '4:30 PM EST',
-                    type: 'Earnings',
-                  },
-                  {
-                    title: 'Federal Reserve Meeting',
-                    date: 'Jan 29, 2025',
-                    time: '2:00 PM EST',
-                    type: 'Economic',
-                  },
-                  {
-                    title: 'Microsoft Dividend Payment',
-                    date: 'Feb 13, 2025',
-                    time: 'Ex-Dividend',
-                    type: 'Dividend',
-                  },
-                ].map((event, idx) => (
-                  <div key={idx} className="pb-4 border-b border-gray-100 last:pb-0 last:border-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
-                        {event.title}
-                      </p>
-                      <span
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
-                          event.type === 'Earnings'
-                            ? 'bg-purple-100 text-purple-700'
-                            : event.type === 'Economic'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-green-100 text-green-700'
-                        }`}
+                {dashboardData &&
+                (dashboardData.earnings_calendar || dashboardData.dividends_calendar) ? (
+                  (() => {
+                    // Combine and sort earnings and dividends calendars
+                    const events: Array<{
+                      symbol: string;
+                      title: string;
+                      date: string;
+                      type: 'Earnings' | 'Dividend';
+                      isEarnings?: boolean;
+                      isDividend?: boolean;
+                    }> = [];
+
+                    // Add earnings calendar events
+                    if (dashboardData.earnings_calendar) {
+                      dashboardData.earnings_calendar.forEach((earning: any) => {
+                        events.push({
+                          symbol: earning.symbol,
+                          title: `${earning.symbol} Q Earnings`,
+                          date: new Date(earning.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }),
+                          type: 'Earnings',
+                          isEarnings: true,
+                        });
+                      });
+                    }
+
+                    // Add dividends calendar events
+                    if (dashboardData.dividends_calendar) {
+                      dashboardData.dividends_calendar.forEach((dividend: any) => {
+                        events.push({
+                          symbol: dividend.symbol,
+                          title: `${dividend.symbol} Dividend`,
+                          date: new Date(dividend.payment_date || dividend.date).toLocaleDateString(
+                            'en-US',
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            },
+                          ),
+                          type: 'Dividend',
+                          isDividend: true,
+                        });
+                      });
+                    }
+
+                    // Sort by date
+                    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                    return events.slice(0, 3).map((event, idx) => (
+                      <div
+                        key={idx}
+                        className="pb-4 border-b border-gray-100 last:pb-0 last:border-0"
                       >
-                        {event.type}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {event.date} • {event.time}
-                    </p>
+                        <div className="flex items-start justify-between mb-1">
+                          <p className="text-sm font-semibold text-gray-800 leading-snug flex-1 pr-2">
+                            {event.title}
+                          </p>
+                          <span
+                            className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                              event.type === 'Earnings'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}
+                          >
+                            {event.type}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">{event.date}</p>
+                      </div>
+                    ));
+                  })()
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">No upcoming events</p>
                   </div>
-                ))}
+                )}
               </div>
             </Card>
           </div>

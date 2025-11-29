@@ -12,6 +12,7 @@ import { Input } from '../components/ui/input';
 import { NotificationToast } from '../components/ui/notification-toast';
 import { LoadingIndicator } from '../components/ui/loading-indicator';
 import { useNotification } from '../lib/hooks/useNotification';
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
   TrendingUp,
@@ -28,6 +29,7 @@ import {
   X,
   LineChart,
   LineChart as LineChartIcon,
+  Search,
 } from 'lucide-react';
 import {
   PieChart as RechartsChart,
@@ -48,6 +50,7 @@ import type { PortfolioRead, PortfolioDetail } from '../types/user';
 import { apiClient } from '../api/client';
 
 const HoldingsPage: React.FC = () => {
+  const { companies } = useAuth();
   const [portfolios, setPortfolios] = useState<PortfolioRead[]>([]);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>('');
   const [portfolioDetail, setPortfolioDetail] = useState<PortfolioDetail | null>(null);
@@ -73,6 +76,9 @@ const HoldingsPage: React.FC = () => {
     symbol: string;
     shares: number;
   } | null>(null);
+  const [companySearchFilter, setCompanySearchFilter] = useState('');
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const companySearchRef = useRef<HTMLDivElement>(null);
   const [tradeForm, setTradeForm] = useState({
     symbol: '',
     shares: '',
@@ -86,6 +92,44 @@ const HoldingsPage: React.FC = () => {
 
   const { notifications, addNotification, removeNotification } = useNotification();
   const hasInitializedRef = useRef(false);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (
+      showTradeModal ||
+      showPortfolioModal ||
+      showDeleteConfirm ||
+      showTradeDeleteConfirm ||
+      showTradingHistoryModal
+    ) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [
+    showTradeModal,
+    showPortfolioModal,
+    showDeleteConfirm,
+    showTradeDeleteConfirm,
+    showTradingHistoryModal,
+  ]);
+
+  // Close company dropdown when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (companySearchRef.current && !companySearchRef.current.contains(e.target as Node)) {
+        setShowCompanyDropdown(false);
+      }
+    }
+    if (showCompanyDropdown) {
+      document.addEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showCompanyDropdown]);
 
   // Fetch portfolios on mount
   useEffect(() => {
@@ -361,7 +405,7 @@ const HoldingsPage: React.FC = () => {
         tax,
         total_value,
         net_total,
-        currency: getCurrencySymbol(selectedPortfolio?.currency || 'USD'),
+        currency: selectedPortfolio?.currency || 'USD',
         trade_date: `${tradeForm.trade_date}T00:00:00`,
         trade_type: tradeForm.trade_type,
       };
@@ -1757,87 +1801,201 @@ const HoldingsPage: React.FC = () => {
       {/* Buy/Sell Stock Modal */}
       {showTradeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Plus className="w-4 h-4" />
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold">Add Stock to Portfolio</h2>
+                    <p className="text-xs text-green-100">Record a buy or sell transaction</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold">Add Stock to Portfolio</h2>
-                  <p className="text-xs text-green-100">Record a buy or sell transaction</p>
-                </div>
+                <button
+                  onClick={() => setShowTradeModal(false)}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 space-y-3">
-              {/* Trade Type Selection */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Transaction Type
-                </label>
-                <Select
-                  value={tradeForm.trade_type}
-                  onValueChange={(value) =>
-                    setTradeForm({ ...tradeForm, trade_type: value as 'BUY' | 'SELL' })
-                  }
-                >
-                  <SelectTrigger className="h-9 text-sm border-green-200 focus:ring-green-500">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BUY">Buy</SelectItem>
-                    <SelectItem value="SELL">Sell</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Transaction Type & Trade Date - Row 1 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    Transaction Type
+                  </label>
+                  <Select
+                    value={tradeForm.trade_type}
+                    onValueChange={(value) =>
+                      setTradeForm({ ...tradeForm, trade_type: value as 'BUY' | 'SELL' })
+                    }
+                  >
+                    <SelectTrigger className="h-10 text-sm border-green-200 focus:ring-green-500">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BUY">Buy</SelectItem>
+                      <SelectItem value="SELL">Sell</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    Trade Date *
+                  </label>
+                  <Input
+                    type="date"
+                    value={tradeForm.trade_date}
+                    onChange={(e) => setTradeForm({ ...tradeForm, trade_date: e.target.value })}
+                    className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
               </div>
 
-              {/* Trade Date */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Trade Date *
-                </label>
-                <Input
-                  type="date"
-                  value={tradeForm.trade_date}
-                  onChange={(e) => setTradeForm({ ...tradeForm, trade_date: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
-                />
+              {/* Symbol & Shares - Row 2 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    Stock Symbol *
+                  </label>
+                  <div ref={companySearchRef} className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      {tradeForm.symbol ? (
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                          {companies.find((c) => c.symbol === tradeForm.symbol)?.image && (
+                            <img
+                              src={
+                                companies.find((c) => c.symbol === tradeForm.symbol)?.image || ''
+                              }
+                              alt={tradeForm.symbol}
+                              className="w-5 h-5 rounded object-contain bg-gray-100 p-0.5"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </div>
+                      ) : null}
+                      <input
+                        type="text"
+                        placeholder="Search or select stock..."
+                        value={tradeForm.symbol || companySearchFilter}
+                        onChange={(e) => {
+                          setCompanySearchFilter(e.target.value);
+                          setTradeForm({ ...tradeForm, symbol: '' });
+                          setShowCompanyDropdown(true);
+                        }}
+                        onFocus={() => {
+                          if (!tradeForm.symbol) {
+                            setShowCompanyDropdown(true);
+                          }
+                        }}
+                        className={`w-full h-10 pr-8 text-sm rounded-lg border border-green-200 bg-white focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 ${
+                          tradeForm.symbol ? 'pl-10' : 'pl-9'
+                        }`}
+                      />
+                      {(companySearchFilter || tradeForm.symbol) && (
+                        <button
+                          onClick={() => {
+                            setCompanySearchFilter('');
+                            setShowCompanyDropdown(false);
+                            setTradeForm({ ...tradeForm, symbol: '' });
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Company Dropdown with Logos */}
+                    {showCompanyDropdown && !tradeForm.symbol && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl z-[100] max-h-80 overflow-y-auto">
+                        {companies
+                          .filter(
+                            (company) =>
+                              company.symbol
+                                .toLowerCase()
+                                .includes(companySearchFilter.toLowerCase()) ||
+                              company.name
+                                .toLowerCase()
+                                .includes(companySearchFilter.toLowerCase()),
+                          )
+                          .map((company) => (
+                            <div
+                              key={company.symbol}
+                              onClick={() => {
+                                setTradeForm({ ...tradeForm, symbol: company.symbol });
+                                setCompanySearchFilter('');
+                                setShowCompanyDropdown(false);
+                              }}
+                              className="w-full px-3 py-2 text-left hover:bg-green-50 transition-colors border-b border-gray-100 last:border-b-0 group cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                {company.image && (
+                                  <img
+                                    src={company.image}
+                                    alt={company.symbol}
+                                    className="w-6 h-6 rounded-lg flex-shrink-0 object-contain bg-gray-100 p-0.5"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-green-600 group-hover:text-green-700">
+                                    {company.symbol}
+                                  </p>
+                                  <p className="text-xs text-gray-500 group-hover:text-gray-700 truncate">
+                                    {company.name}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        {companies.filter(
+                          (company) =>
+                            company.symbol
+                              .toLowerCase()
+                              .includes(companySearchFilter.toLowerCase()) ||
+                            company.name.toLowerCase().includes(companySearchFilter.toLowerCase()),
+                        ).length === 0 && (
+                          <div className="px-3 py-4 text-center text-xs text-gray-500">
+                            No stocks found
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    Number of Shares *
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 10"
+                    step="0.01"
+                    value={tradeForm.shares}
+                    onChange={(e) => setTradeForm({ ...tradeForm, shares: e.target.value })}
+                    className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
               </div>
 
-              {/* Symbol */}
+              {/* Price Per Share - Row 3 (Full width) */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Stock Symbol *
-                </label>
-                <Input
-                  placeholder="e.g., AAPL, GOOGL"
-                  value={tradeForm.symbol}
-                  onChange={(e) => setTradeForm({ ...tradeForm, symbol: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500 uppercase"
-                />
-              </div>
-
-              {/* Shares */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Number of Shares *
-                </label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 10"
-                  step="0.01"
-                  value={tradeForm.shares}
-                  onChange={(e) => setTradeForm({ ...tradeForm, shares: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
-
-              {/* Price Per Share */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
                   Price Per Share *
                 </label>
                 <Input
@@ -1846,138 +2004,143 @@ const HoldingsPage: React.FC = () => {
                   step="0.01"
                   value={tradeForm.price_per_share}
                   onChange={(e) => setTradeForm({ ...tradeForm, price_per_share: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                  className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
                 />
               </div>
 
-              {/* Commission */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Commission (optional)
-                </label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  step="0.01"
-                  value={tradeForm.commission}
-                  onChange={(e) => setTradeForm({ ...tradeForm, commission: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
+              {/* Additional Costs - Row 4 */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-xs font-semibold text-gray-700 mb-3">
+                  Additional Costs (optional)
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Commission
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      step="0.01"
+                      value={tradeForm.commission}
+                      onChange={(e) => setTradeForm({ ...tradeForm, commission: e.target.value })}
+                      className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
 
-              {/* Fees */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Fees (optional)
-                </label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  step="0.01"
-                  value={tradeForm.fees}
-                  onChange={(e) => setTradeForm({ ...tradeForm, fees: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Fees</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      step="0.01"
+                      value={tradeForm.fees}
+                      onChange={(e) => setTradeForm({ ...tradeForm, fees: e.target.value })}
+                      className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
 
-              {/* Tax */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Tax (optional)
-                </label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  step="0.01"
-                  value={tradeForm.tax}
-                  onChange={(e) => setTradeForm({ ...tradeForm, tax: e.target.value })}
-                  className="h-9 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
-                />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Tax</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      step="0.01"
+                      value={tradeForm.tax}
+                      onChange={(e) => setTradeForm({ ...tradeForm, tax: e.target.value })}
+                      className="h-10 text-sm border-green-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Summary */}
-              {tradeForm.shares && tradeForm.price_per_share && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200 mt-4">
-                  <div className="space-y-1.5 text-xs">
+              <div
+                className={`bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200 transition-opacity duration-200 ${
+                  tradeForm.shares && tradeForm.price_per_share
+                    ? 'opacity-100'
+                    : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Base Value:</span>
+                    <span className="font-semibold text-gray-900">
+                      {(
+                        parseFloat(tradeForm.shares) * parseFloat(tradeForm.price_per_share)
+                      ).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                  {(parseFloat(tradeForm.commission) || 0) > 0 && (
                     <div className="flex justify-between text-gray-600">
-                      <span>Base Value:</span>
-                      <span className="font-semibold text-gray-900">
-                        {(
-                          parseFloat(tradeForm.shares) * parseFloat(tradeForm.price_per_share)
-                        ).toLocaleString('en-US', {
+                      <span>Commission:</span>
+                      <span className="font-semibold">
+                        +
+                        {parseFloat(tradeForm.commission).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </span>
                     </div>
-                    {(parseFloat(tradeForm.commission) || 0) > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Commission:</span>
-                        <span className="font-semibold">
-                          +
-                          {parseFloat(tradeForm.commission).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    {(parseFloat(tradeForm.fees) || 0) > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Fees:</span>
-                        <span className="font-semibold">
-                          +
-                          {parseFloat(tradeForm.fees).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    {(parseFloat(tradeForm.tax) || 0) > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Tax:</span>
-                        <span className="font-semibold">
-                          +
-                          {parseFloat(tradeForm.tax).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    <div className="border-t border-green-200 pt-1.5 flex justify-between">
-                      <span className="font-semibold text-gray-900">Total:</span>
-                      <span className="font-bold text-green-600">
-                        {(
-                          parseFloat(tradeForm.shares) * parseFloat(tradeForm.price_per_share) +
-                          (parseFloat(tradeForm.commission) || 0) +
-                          (parseFloat(tradeForm.fees) || 0) +
-                          (parseFloat(tradeForm.tax) || 0)
-                        ).toLocaleString('en-US', {
+                  )}
+                  {(parseFloat(tradeForm.fees) || 0) > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Fees:</span>
+                      <span className="font-semibold">
+                        +
+                        {parseFloat(tradeForm.fees).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </span>
                     </div>
+                  )}
+                  {(parseFloat(tradeForm.tax) || 0) > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Tax:</span>
+                      <span className="font-semibold">
+                        +
+                        {parseFloat(tradeForm.tax).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-green-200 pt-2 flex justify-between">
+                    <span className="font-semibold text-gray-900">Total:</span>
+                    <span className="font-bold text-green-600">
+                      {(
+                        parseFloat(tradeForm.shares) * parseFloat(tradeForm.price_per_share) +
+                        (parseFloat(tradeForm.commission) || 0) +
+                        (parseFloat(tradeForm.fees) || 0) +
+                        (parseFloat(tradeForm.tax) || 0)
+                      ).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="flex gap-2.5 p-4 bg-gray-50 border-t">
+            <div className="flex gap-3 p-4 bg-gray-50 border-t sticky bottom-0">
               <Button
                 variant="outline"
                 onClick={() => setShowTradeModal(false)}
-                className="flex-1 h-9 text-sm border-gray-300 hover:bg-gray-100"
+                className="flex-1 h-10 text-sm border-gray-300 hover:bg-gray-100"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSaveTrade}
                 disabled={loading}
-                className="flex-1 h-9 text-sm bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+                className="flex-1 h-10 text-sm bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
               >
                 {loading ? 'Processing...' : `${tradeForm.trade_type === 'BUY' ? 'Buy' : 'Sell'}`}
               </Button>

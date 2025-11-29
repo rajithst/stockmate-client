@@ -4,35 +4,12 @@ import { Bell, Moon, Sun, UserCircle2, Search, X, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import type { StockSymbol } from '../types/user';
 
 const notifications = [
   { id: 1, text: 'AAPL reached new 52-week high.' },
   { id: 2, text: 'TSLA quarterly earnings released.' },
   { id: 3, text: 'S&P 500 up 1.2% today.' },
-];
-
-// Mock company data for search
-const mockCompanies = [
-  { symbol: 'AAPL', name: 'Apple Inc.', logo: 'https://logo.clearbit.com/apple.com' },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    logo: 'https://logo.clearbit.com/microsoft.com',
-  },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', logo: 'https://logo.clearbit.com/google.com' },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', logo: 'https://logo.clearbit.com/amazon.com' },
-  { symbol: 'TSLA', name: 'Tesla Inc.', logo: 'https://logo.clearbit.com/tesla.com' },
-  { symbol: 'META', name: 'Meta Platforms Inc.', logo: 'https://logo.clearbit.com/meta.com' },
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', logo: 'https://logo.clearbit.com/nvidia.com' },
-  {
-    symbol: 'JPM',
-    name: 'JPMorgan Chase & Co.',
-    logo: 'https://logo.clearbit.com/jpmorganchase.com',
-  },
-  { symbol: 'V', name: 'Visa Inc.', logo: 'https://logo.clearbit.com/visa.com' },
-  { symbol: 'JNJ', name: 'Johnson & Johnson', logo: 'https://logo.clearbit.com/jnj.com' },
-  { symbol: 'WMT', name: 'Walmart Inc.', logo: 'https://logo.clearbit.com/walmart.com' },
-  { symbol: 'DIS', name: 'The Walt Disney Company', logo: 'https://logo.clearbit.com/disney.com' },
 ];
 
 interface AppHeaderProps {
@@ -42,11 +19,11 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const { user, logout, logoutLoading } = useAuth();
+  const { user, logout, logoutLoading, companies } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof mockCompanies>([]);
+  const [searchResults, setSearchResults] = useState<StockSymbol[]>([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
@@ -65,7 +42,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
     setSearchQuery(query);
 
     if (query.trim()) {
-      const filtered = mockCompanies.filter(
+      const filtered = companies.filter(
         (company) =>
           company.symbol.toLowerCase().includes(query.toLowerCase()) ||
           company.name.toLowerCase().includes(query.toLowerCase()),
@@ -143,14 +120,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
                     className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group"
                   >
                     <div className="flex items-center gap-3">
-                      <img
-                        src={company.logo}
-                        alt={company.symbol}
-                        className="w-8 h-8 rounded flex-shrink-0 object-contain bg-gray-100"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                      {company.image && (
+                        <img
+                          src={company.image}
+                          alt={company.symbol}
+                          className="w-8 h-8 rounded flex-shrink-0 object-contain bg-gray-100"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
                           {company.symbol}

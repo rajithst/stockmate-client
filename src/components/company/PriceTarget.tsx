@@ -103,16 +103,6 @@ export const PriceTargetCard: React.FC<{
             <div className="font-semibold text-green-600">${price_target.target_high!}</div>
           </div>
         </div>
-
-        {/* Last updated */}
-        {formattedLastUpdated && (
-          <div className="flex items-center justify-end pt-2 mt-auto border-t border-gray-100">
-            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-3 h-3 text-gray-400" />
-              Last updated: {formattedLastUpdated}
-            </span>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
@@ -208,16 +198,6 @@ export const PriceTargetSummaryCard: React.FC<{
             </div>
           ))}
         </div>
-
-        {/* Last updated - Bottom */}
-        {formattedLastUpdated && (
-          <div className="flex items-center justify-end pt-3 mt-auto">
-            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-3 h-3 text-gray-400" />
-              Last updated: {formattedLastUpdated}
-            </span>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

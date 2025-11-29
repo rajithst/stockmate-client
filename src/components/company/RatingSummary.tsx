@@ -160,16 +160,6 @@ export const RatingSummaryCard: React.FC<{
             </div>
           ))}
         </TooltipProvider>
-
-        {/* Last updated */}
-        {formattedLastUpdated && (
-          <div className="flex items-center justify-end pt-3">
-            <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-              <Clock className="w-4 h-4 text-gray-400" />
-              Last updated: {formattedLastUpdated}
-            </span>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

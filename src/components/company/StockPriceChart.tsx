@@ -156,6 +156,39 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
   const priceChangePercent = periodStartPrice > 0 ? (priceChange / periodStartPrice) * 100 : 0;
   const isPositive = priceChange >= 0;
 
+  // Debug log
+  React.useEffect(() => {
+    console.log('StockPriceChart - stock_prices:', stock_prices);
+    console.log('StockPriceChart - allData length:', allData.length);
+    console.log('StockPriceChart - chartData length:', chartData.length);
+    console.log('StockPriceChart - selectedPeriod:', selectedPeriod);
+  }, [stock_prices, chartData, selectedPeriod]);
+
+  // Show empty state if no data
+  if (!stock_prices || stock_prices.length === 0 || chartData.length === 0) {
+    return (
+      <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-sky-50 via-white to-cyan-50 rounded-xl h-full flex flex-col">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-sky-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <BarChart3 className="w-5 h-5 text-sky-600" />
+            <CardTitle className="text-base font-bold text-gray-800">
+              Stock Price ({periodLabels[selectedPeriod]})
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-sm font-medium">No price data available</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Stock price data will appear here when available
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-sky-50 via-white to-cyan-50 rounded-xl h-full flex flex-col">
       {/* Decorative Accent */}
@@ -222,8 +255,8 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
         </div>
       </CardHeader>
       <CardContent className="pb-0 flex flex-col flex-1 min-h-0 gap-0">
-        <div className="flex-1 min-h-0 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="flex-1 w-full" style={{ minHeight: '300px', height: '100%' }}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorClose" x1="0" y1="0" x2="0" y2="1">
@@ -309,21 +342,6 @@ export const StockPriceChart: React.FC<StockPriceChartProps> = ({ stock_prices }
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Last updated - Bottom */}
-        <div className="flex items-center justify-end pt-2 mt-2 border-t border-gray-100">
-          <span className="inline-flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs text-gray-500 shadow-sm">
-            <Clock className="w-3 h-3 text-gray-400" />
-            Last updated:{' '}
-            {new Date().toLocaleString(undefined, {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
         </div>
       </CardContent>
     </Card>

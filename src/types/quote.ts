@@ -146,3 +146,48 @@ export interface CompanyTechnicalIndicatorRead extends CompanyTechnicalIndicator
   created_at?: Date | string | null;
   updated_at?: Date | string | null;
 }
+
+// ========================
+// INDEX QUOTE INTERFACES
+// ========================
+export interface IndexQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_percent: number;
+  open_price: number;
+  previous_close_price: number;
+  day_high_price: number;
+  day_low_price: number;
+  year_high_price?: number | null;
+  year_low_price?: number | null;
+  price_average_50d?: number | null;
+  price_average_200d?: number | null;
+  volume?: number | null;
+  vwap?: number | null;
+}
+
+export interface IndexQuoteRead extends IndexQuote {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
+// ========================
+// COMPANY EARNINGS CALENDAR INTERFACES
+// ========================
+
+export interface CompanyEarningsCalendar {
+  symbol: string;
+  date: Date | string;
+  eps_actual: number;
+  eps_estimated?: number | null;
+  revenue_actual: number;
+  revenue_estimated?: number | null;
+  last_updated?: Date | string | null;
+}
+
+export interface CompanyEarningsCalendarRead extends CompanyEarningsCalendar {
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
