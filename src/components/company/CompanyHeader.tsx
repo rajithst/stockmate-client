@@ -16,6 +16,7 @@ import type { CompanyRead } from '../../types/company';
 interface CompanyHeaderProps {
   company: CompanyRead;
   isInDatabase?: boolean;
+  exchange?: string | null;
 }
 
 function formatMarketCap(value: number): string {
@@ -31,7 +32,11 @@ function formatMarketCap(value: number): string {
   return value.toString();
 }
 
-export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, isInDatabase = true }) => {
+export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
+  company,
+  isInDatabase = true,
+  exchange,
+}) => {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
 
@@ -104,7 +109,12 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, isInDatab
           {/* Financials Button - Only show if in database */}
           {isInDatabase && (
             <Button
-              onClick={() => navigate(`/app/financials/${company.symbol}`)}
+              onClick={() => {
+                const url = exchange
+                  ? `/app/financials/${company.symbol}?exchange=${exchange}`
+                  : `/app/financials/${company.symbol}`;
+                navigate(url);
+              }}
               className="h-7 px-3 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 rounded-lg flex items-center gap-1.5 flex-shrink-0"
             >
               <BarChart3 className="w-3.5 h-3.5" />

@@ -164,4 +164,5 @@ export type {
   CompanyFinancialResponse,
   CompanyInsight,
   CompanyInsightsResponse,
+  NonUSCompany,
 } from './company';

@@ -2,34 +2,26 @@ import React, { useRef } from 'react';
 
 import { useParams } from 'react-router-dom';
 import { CompanyHeader } from '../components/company/CompanyHeader.tsx';
-import { StockPriceChart } from '../components/company/StockPriceChart.tsx';
-import { FundamentalsSnapshot } from '../components/company/FundamentalsSnapshot.tsx';
-import { CompanyNewsTabs } from '../components/company/CompanyNews.tsx';
-import { StockGradingSummaryCard } from '../components/company/GradingSummary.tsx';
-import { DcfSummaryCard } from '../components/company/DiscountedCashFlow.tsx';
-import { PriceTargetCard, PriceTargetSummaryCard } from '../components/company/PriceTarget.tsx';
-import { RatingSummaryCard } from '../components/company/RatingSummary.tsx';
-import LatestGrading from '../components/company/LatestGrading.tsx';
-import { TechnicalIndicators } from '../components/company/TechnicalIndicators.tsx';
-import { CompanyHealth } from '../components/company/CompanyHealth.tsx';
-import { CompanyInsights } from '../components/company/CompanyInsights.tsx';
-import { AnalystEstimates } from '../components/company/AnalystEstimates.tsx';
+import { USCompanyOverview } from '../components/company/USCompanyOverview.tsx';
+import { NonUSCompanyOverview } from '../components/company/NonUSCompanyOverview.tsx';
 import { apiClient } from '../api/client';
-import type { CompanyPageResponse, CompanyFinancialHealthResponse } from '../types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import type { CompanyPageResponse, NonUSCompany } from '../types';
+
+// Type guard to check if data is CompanyPageResponse
+function isCompanyPageResponse(
+  data: CompanyPageResponse | NonUSCompany,
+): data is CompanyPageResponse {
+  return 'company' in data;
+}
 
 export const CompanyPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
-  const [data, setData] = React.useState<CompanyPageResponse | null>(null);
-  const [healthData, setHealthData] = React.useState<CompanyFinancialHealthResponse | null>(null);
-  const [insightsData, setInsightsData] = React.useState<any>(null);
+  const searchParams = new URLSearchParams(window.location.search);
+  const exchange = searchParams.get('exchange');
+  const [data, setData] = React.useState<CompanyPageResponse | NonUSCompany | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [healthLoading, setHealthLoading] = React.useState(false);
-  const [insightsLoading, setInsightsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const hasInitializedRef = useRef<string | undefined>(undefined);
-  const healthLoadedRef = useRef<boolean>(false);
-  const insightsLoadedRef = useRef<boolean>(false);
 
   React.useEffect(() => {
     // Skip if we've already fetched this exact symbol
@@ -41,8 +33,9 @@ export const CompanyPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const companyData = await apiClient.getCompanyPage(symbol);
+        const companyData = await apiClient.getCompanyPage(symbol, exchange || undefined);
         setData(companyData);
+        hasInitializedRef.current = symbol;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -51,44 +44,7 @@ export const CompanyPage: React.FC = () => {
     };
 
     fetchData();
-    hasInitializedRef.current = symbol;
-    // Reset loaded flags when symbol changes
-    healthLoadedRef.current = false;
-    insightsLoadedRef.current = false;
-  }, [symbol]);
-
-  // Load health data when switching to health tab
-  const handleHealthTabChange = async () => {
-    if (healthLoadedRef.current || !symbol) return;
-
-    try {
-      setHealthLoading(true);
-      const response = await apiClient.getCompanyFinancialHealth(symbol);
-      setHealthData(response);
-      healthLoadedRef.current = true;
-    } catch (err) {
-      console.error('Failed to load health data:', err);
-    } finally {
-      setHealthLoading(false);
-    }
-  };
-
-  // Load insights data when switching to insights tab
-  const handleInsightsTabChange = async () => {
-    if (insightsLoadedRef.current || !symbol) return;
-
-    try {
-      setInsightsLoading(true);
-      const response = await apiClient.getCompanyInsights(symbol);
-      console.log('Insights data loaded:', response);
-      setInsightsData(response);
-      insightsLoadedRef.current = true;
-    } catch (err) {
-      console.error('Failed to load insights data:', err);
-    } finally {
-      setInsightsLoading(false);
-    }
-  };
+  }, [symbol, exchange]);
 
   if (loading)
     return (
@@ -143,31 +99,29 @@ export const CompanyPage: React.FC = () => {
       </div>
     );
 
-  const companyNews = {
-    general_news: data.general_news,
-    price_target_news: data.price_target_news,
-    grading_news: data.grading_news,
-  };
+  // Check if company is in database (only for CompanyPageResponse)
+  const isInDatabase = isCompanyPageResponse(data) && data.company?.is_in_db !== false;
 
-  // Check if company is in database
-  const isInDatabase = data.company?.is_in_db !== false;
-
-  // Filter stock prices to 1 month if not in database
-  const filteredStockPrices = isInDatabase
-    ? data.stock_prices
-    : data.stock_prices?.filter((price) => {
-        const priceDate = new Date(price.date);
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        return priceDate >= oneMonthAgo;
-      });
+  // Filter stock prices to 1 month if not in database (only for CompanyPageResponse)
+  const filteredStockPrices = isCompanyPageResponse(data)
+    ? isInDatabase
+      ? data.stock_prices
+      : data.stock_prices?.filter((price) => {
+          const priceDate = new Date(price.date);
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          return priceDate >= oneMonthAgo;
+        })
+    : [];
 
   return (
     <div className="container mx-auto p-4 space-y-4">
-      {/* Main Header - Always Visible */}
-      <CompanyHeader company={data.company} isInDatabase={isInDatabase} />
+      {/* Main Header - Only for US Companies */}
+      {isCompanyPageResponse(data) && (
+        <CompanyHeader company={data.company} isInDatabase={isInDatabase} exchange={exchange} />
+      )}
 
-      {!isInDatabase && (
+      {isCompanyPageResponse(data) && !isInDatabase && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
           <p className="font-medium">📡 Data loaded on demand</p>
           <p className="text-xs text-blue-700 mt-1">
@@ -177,118 +131,88 @@ export const CompanyPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tabs Section */}
-      <Tabs
-        defaultValue="overview"
-        className="w-full"
-        onValueChange={(value) => {
-          if (value === 'health') handleHealthTabChange();
-          if (value === 'insights') handleInsightsTabChange();
-        }}
-      >
-        <TabsList
-          className={`grid w-full bg-gradient-to-r from-indigo-50 to-purple-50 p-1 rounded-xl border border-indigo-100 ${
-            isInDatabase ? 'grid-cols-5' : 'grid-cols-2'
-          }`}
-        >
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-          >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="insights"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-          >
-            Insights
-          </TabsTrigger>
-          {isInDatabase && (
-            <>
-              <TabsTrigger
-                value="health"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-              >
-                Health
-              </TabsTrigger>
-              <TabsTrigger
-                value="technical"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-              >
-                Technical
-              </TabsTrigger>
-              <TabsTrigger
-                value="news"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg text-xs"
-              >
-                News
-              </TabsTrigger>
-            </>
-          )}
-        </TabsList>
+      {/* Content Section */}
+      {isCompanyPageResponse(data) ? (
+        <USCompanyOverview
+          data={data}
+          filteredStockPrices={filteredStockPrices as any[]}
+          isInDatabase={isInDatabase}
+        />
+      ) : (
+        <>
+          {/* Non-US Company Header - Matching US Company Header Style */}
+          <div className="relative overflow-hidden border-none shadow-lg bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl p-4">
+            {/* Decorative Accent */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full blur-2xl opacity-20 pointer-events-none" />
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
-          {/* Stock Price Chart */}
-          <div>
-            <StockPriceChart stock_prices={filteredStockPrices} />
-          </div>
+            <div className="flex flex-col gap-2">
+              {/* Top row - Company info and Price */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {data.image && (
+                    <img
+                      src={data.image}
+                      alt={data.short_name}
+                      className="w-9 h-9 rounded-lg object-contain border bg-gray-50 flex-shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <h1 className="text-base font-semibold text-gray-800 leading-tight">
+                      {data.short_name}
+                    </h1>
+                    <p className="text-xs text-gray-500 leading-tight">
+                      {data.symbol} • {data.full_exchange_name}
+                    </p>
+                  </div>
+                </div>
 
-          {/* Fundamentals Snapshot - Full Width */}
-          <div>
-            <FundamentalsSnapshot company={data.company} ratios={data.ratios} />
-          </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="text-base font-bold text-indigo-700 leading-tight">
+                    {data.currency} {data.current_price?.toFixed(2)}
+                  </div>
+                  {data.regular_market_change !== null && (
+                    <div
+                      className={`text-xs font-semibold ${
+                        data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    >
+                      {data.regular_market_change >= 0 ? '+' : ''}
+                      {data.regular_market_change?.toFixed(2)}%
+                    </div>
+                  )}
+                </div>
+              </div>
 
-          {/* Row 1: Grading, Rating, Analyst Gradings (3 cards) */}
-          <div
-            className={`grid gap-4 ${isInDatabase ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}
-          >
-            <StockGradingSummaryCard summary={data.grading_summary} />
-            <RatingSummaryCard rating_summary={data.rating_summary} />
-            {isInDatabase && <LatestGrading latest_gradings={data.latest_gradings} />}
-          </div>
-
-          {/* Row 2: DCF, Price Target, Price Target Summary (3 cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <DcfSummaryCard discounted_cash_flow={data.dcf} />
-            <PriceTargetCard price_target={data.price_target} />
-            <PriceTargetSummaryCard price_target_summary={data.price_target_summary} />
-          </div>
-
-          {/* Row 3: Analyst Estimates */}
-          {data.analyst_estimates && data.analyst_estimates.length > 0 && (
-            <div>
-              <AnalystEstimates analyst_estimates={data.analyst_estimates} />
+              {/* Bottom row - Info on left */}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+                <span className="whitespace-nowrap">
+                  <strong>Exchange:</strong> {data.country}
+                </span>
+                {data.sector && (
+                  <span className="whitespace-nowrap">
+                    <strong>Sector:</strong> {data.sector}
+                  </span>
+                )}
+                {data.industry && (
+                  <span className="whitespace-nowrap hidden sm:inline">
+                    <strong>Industry:</strong> {data.industry}
+                  </span>
+                )}
+              </div>
             </div>
-          )}
-        </TabsContent>
+          </div>
 
-        {/* Insights Tab - Available for both on-demand and database data */}
-        <TabsContent value="insights">
-          <CompanyInsights data={insightsData} loading={insightsLoading} />
-        </TabsContent>
+          {/* Non-US Company On-Demand Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+            <p className="font-medium">📡 Data loaded on demand</p>
+            <p className="text-xs text-blue-700 mt-1">
+              This company data is loaded in real-time from external sources.
+            </p>
+          </div>
 
-        {/* Health Tab */}
-        {isInDatabase && (
-          <TabsContent value="health">
-            <CompanyHealth healthData={healthData} healthLoading={healthLoading} />
-          </TabsContent>
-        )}
-
-        {/* Technical Tab */}
-        {isInDatabase && (
-          <TabsContent value="technical">
-            <TechnicalIndicators symbol={symbol || ''} />
-          </TabsContent>
-        )}
-
-        {/* News Tab */}
-        {isInDatabase && (
-          <TabsContent value="news">
-            <CompanyNewsTabs news={companyNews} />
-          </TabsContent>
-        )}
-      </Tabs>
+          <NonUSCompanyOverview company={data} />
+        </>
+      )}
     </div>
   );
 };

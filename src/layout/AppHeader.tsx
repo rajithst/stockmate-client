@@ -56,11 +56,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
   };
 
   // Handle company selection
-  const handleSelectCompany = (symbol: string) => {
+  const handleSelectCompany = (symbol: string, exchange?: string | null) => {
     setSearchQuery('');
     setShowSearchDropdown(false);
     setSearchResults([]);
-    navigate(`/app/company/${symbol}`);
+    const url = exchange ? `/app/company/${symbol}?exchange=${exchange}` : `/app/company/${symbol}`;
+    navigate(url);
   };
 
   // Close dropdowns when clicking outside
@@ -116,7 +117,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ hideSearch = false }) => {
                 {searchResults.map((company) => (
                   <button
                     key={company.symbol}
-                    onClick={() => handleSelectCompany(company.symbol)}
+                    onClick={() => handleSelectCompany(company.symbol, company.exchange)}
                     className="w-full px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0 group"
                   >
                     <div className="flex items-center gap-3">

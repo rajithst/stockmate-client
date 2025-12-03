@@ -3,6 +3,7 @@ import type {
   CompanyFinancialResponse,
   CompanyPageResponse,
   CompanyInsightsResponse,
+  NonUSCompany,
 } from '../types';
 import type {
   PortfolioRead,
@@ -105,7 +106,25 @@ class ApiClient {
     this.clearToken();
   }
 
-  async getCompanyPage(symbol: string): Promise<CompanyPageResponse> {
+  async getCompanyPage(
+    symbol: string,
+    exchange?: string,
+  ): Promise<CompanyPageResponse | NonUSCompany> {
+    if (!symbol) {
+      throw new Error('Symbol is required');
+    }
+
+    // Use non-US endpoint for TSE (Tokyo Stock Exchange)
+    const isNonUS = exchange?.toUpperCase() === 'TSE';
+
+    if (isNonUS) {
+      return this.getNonUSCompanyPage(symbol);
+    } else {
+      return this.getUSCompanyPage(symbol);
+    }
+  }
+
+  async getUSCompanyPage(symbol: string): Promise<CompanyPageResponse> {
     if (!symbol) {
       throw new Error('Symbol is required');
     }
@@ -114,7 +133,21 @@ class ApiClient {
       const data = await this.request<CompanyPageResponse>(`/company/${symbol}`);
       return data;
     } catch (error) {
-      console.error(`Error fetching company data for ${symbol}:`, error);
+      console.error(`Error fetching US company data for ${symbol}:`, error);
+      throw error;
+    }
+  }
+
+  async getNonUSCompanyPage(symbol: string): Promise<NonUSCompany> {
+    if (!symbol) {
+      throw new Error('Symbol is required');
+    }
+
+    try {
+      const data = await this.request<NonUSCompany>(`/company/non-us/${symbol}`);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching non-US company data for ${symbol}:`, error);
       throw error;
     }
   }

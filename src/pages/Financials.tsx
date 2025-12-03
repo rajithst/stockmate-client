@@ -28,6 +28,8 @@ import {
 const FinancialsPage: React.FC = () => {
   const navigate = useNavigate();
   const { symbol } = useParams<{ symbol: string }>();
+  const searchParams = new URLSearchParams(window.location.search);
+  const exchange = searchParams.get('exchange');
   const [financialData, setFinancialData] = React.useState<CompanyFinancialResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -166,7 +168,12 @@ const FinancialsPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/app/company/${symbol}`)}
+          onClick={() => {
+            const url = exchange
+              ? `/app/company/${symbol}?exchange=${exchange}`
+              : `/app/company/${symbol}`;
+            navigate(url);
+          }}
           className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-100"
         >
           <ArrowLeft className="w-3.5 h-3.5 mr-1" />
