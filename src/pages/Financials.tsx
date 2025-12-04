@@ -7,7 +7,15 @@ import { BalanceSheetTab } from '../components/financials/BalanceSheetTab';
 import { CashFlowTab } from '../components/financials/CashFlowTab';
 import { RatiosTab } from '../components/financials/RatiosTab';
 import { Button } from '../components/ui/button.tsx';
-import { ArrowLeft, TrendingUp, BarChart3 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import { Input } from '../components/ui/input';
+import { ArrowLeft, TrendingUp, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import { KeyMetricsTab } from '../components/financials/KeyMetrics.tsx';
 import { DividendTab } from '../components/financials/Dividend.tsx';
 import type { CompanyFinancialResponse } from '../types/index.ts';
@@ -21,9 +29,22 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
+
+const formatYAxis = (value: number): string => {
+  if (value === 0) return '0';
+  if (Math.abs(value) >= 1e9) {
+    return `$${(value / 1e9).toFixed(1)}B`;
+  }
+  if (Math.abs(value) >= 1e6) {
+    return `$${(value / 1e6).toFixed(1)}M`;
+  }
+  if (Math.abs(value) >= 1e3) {
+    return `$${(value / 1e3).toFixed(1)}K`;
+  }
+  return `${value.toFixed(0)}`;
+};
 
 const FinancialsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,9 +57,180 @@ const FinancialsPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = React.useState<
     'income' | 'balance' | 'cashflow' | 'ratios' | 'metrics' | 'dividend'
   >('income');
-  const [activeMetric, setActiveMetric] = React.useState<string>('revenue');
+  const [activeMetric, setActiveMetric] = React.useState<string>('');
   const [timeframe, setTimeframe] = React.useState<'yearly' | 'quarterly'>('yearly');
-  const [chartType, setChartType] = React.useState<'line' | 'bar'>('line');
+  const [chartType, setChartType] = React.useState<'line' | 'bar'>('bar');
+
+  // Extract available metrics from financial data
+  const getAvailableMetrics = React.useCallback((): Record<string, string> => {
+    let metrics: Record<string, string> = {};
+
+    if (selectedTab === 'income' && financialData?.income_statements?.[0]) {
+      const stmt = financialData.income_statements[0];
+      Object.keys(stmt).forEach((key) => {
+        if (
+          key !== 'date' &&
+          key !== 'symbol' &&
+          key !== 'currency' &&
+          key !== 'reported_currency' &&
+          key !== 'id' &&
+          key !== 'fiscal_year' &&
+          key !== 'period' &&
+          key !== 'created_at' &&
+          key !== 'updated_at'
+        ) {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    } else if (selectedTab === 'balance' && financialData?.balance_sheets?.[0]) {
+      const stmt = financialData.balance_sheets[0];
+      Object.keys(stmt).forEach((key) => {
+        if (
+          key !== 'date' &&
+          key !== 'symbol' &&
+          key !== 'currency' &&
+          key !== 'reported_currency' &&
+          key !== 'id' &&
+          key !== 'fiscal_year' &&
+          key !== 'period' &&
+          key !== 'created_at' &&
+          key !== 'updated_at'
+        ) {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    } else if (selectedTab === 'cashflow' && financialData?.cash_flow_statements?.[0]) {
+      const stmt = financialData.cash_flow_statements[0];
+      Object.keys(stmt).forEach((key) => {
+        if (
+          key !== 'date' &&
+          key !== 'symbol' &&
+          key !== 'currency' &&
+          key !== 'reported_currency' &&
+          key !== 'id' &&
+          key !== 'fiscal_year' &&
+          key !== 'period' &&
+          key !== 'created_at' &&
+          key !== 'updated_at'
+        ) {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    } else if (selectedTab === 'ratios' && financialData?.financial_ratios?.[0]) {
+      const stmt = financialData.financial_ratios[0];
+      Object.keys(stmt).forEach((key) => {
+        if (
+          key !== 'date' &&
+          key !== 'symbol' &&
+          key !== 'currency' &&
+          key !== 'reported_currency' &&
+          key !== 'id' &&
+          key !== 'fiscal_year' &&
+          key !== 'period' &&
+          key !== 'created_at' &&
+          key !== 'updated_at'
+        ) {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    } else if (selectedTab === 'metrics' && financialData?.key_metrics?.[0]) {
+      const stmt = financialData.key_metrics[0];
+      Object.keys(stmt).forEach((key) => {
+        if (
+          key !== 'date' &&
+          key !== 'symbol' &&
+          key !== 'currency' &&
+          key !== 'reported_currency' &&
+          key !== 'id' &&
+          key !== 'fiscal_year' &&
+          key !== 'period' &&
+          key !== 'created_at' &&
+          key !== 'updated_at'
+        ) {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    } else if (selectedTab === 'dividend' && financialData?.dividends?.[0]) {
+      const stmt = financialData.dividends[0];
+      Object.keys(stmt).forEach((key) => {
+        if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+          metrics[key] =
+            key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.replace(/_/g, ' ').slice(1);
+        }
+      });
+    }
+
+    return metrics;
+  }, [selectedTab, financialData]);
+
+  // Get chart data for selected metric
+  const getChartDataForMetric = React.useCallback((): any[] => {
+    if (!activeMetric) return [];
+
+    let data: any[] = [];
+
+    if (selectedTab === 'income' && financialData?.income_statements) {
+      data = financialData.income_statements
+        .filter((s) => (timeframe === 'yearly' ? s.period === 'FY' : s.period !== 'FY'))
+        .map((stmt) => ({
+          label: `${stmt.period} ${stmt.fiscal_year}`,
+          value: (stmt as any)[activeMetric],
+          year: stmt.fiscal_year,
+        }))
+        .sort((a, b) => (a.year || 0) - (b.year || 0));
+    } else if (selectedTab === 'balance' && financialData?.balance_sheets) {
+      data = financialData.balance_sheets
+        .filter((s) => (timeframe === 'yearly' ? s.period === 'FY' : s.period !== 'FY'))
+        .map((stmt) => ({
+          label: `${stmt.period} ${stmt.fiscal_year}`,
+          value: (stmt as any)[activeMetric],
+          year: stmt.fiscal_year,
+        }))
+        .sort((a, b) => (a.year || 0) - (b.year || 0));
+    } else if (selectedTab === 'cashflow' && financialData?.cash_flow_statements) {
+      data = financialData.cash_flow_statements
+        .filter((s) => (timeframe === 'yearly' ? s.period === 'FY' : s.period !== 'FY'))
+        .map((stmt) => ({
+          label: `${stmt.period} ${stmt.fiscal_year}`,
+          value: (stmt as any)[activeMetric],
+          year: stmt.fiscal_year,
+        }))
+        .sort((a, b) => (a.year || 0) - (b.year || 0));
+    } else if (selectedTab === 'ratios' && financialData?.financial_ratios) {
+      data = financialData.financial_ratios
+        .filter((s) => (timeframe === 'yearly' ? s.period === 'FY' : s.period !== 'FY'))
+        .map((stmt) => ({
+          label: `${stmt.period} ${stmt.fiscal_year}`,
+          value: (stmt as any)[activeMetric],
+          year: stmt.fiscal_year,
+        }))
+        .sort((a, b) => (a.year || 0) - (b.year || 0));
+    } else if (selectedTab === 'metrics' && financialData?.key_metrics) {
+      data = financialData.key_metrics
+        .filter((s) => (timeframe === 'yearly' ? s.period === 'FY' : s.period !== 'FY'))
+        .map((stmt) => ({
+          label: `${stmt.period} ${stmt.fiscal_year}`,
+          value: (stmt as any)[activeMetric],
+          year: stmt.fiscal_year,
+        }))
+        .sort((a, b) => (a.year || 0) - (b.year || 0));
+    } else if (selectedTab === 'dividend' && financialData?.dividends) {
+      data = financialData.dividends
+        .map((stmt) => ({
+          label: stmt.date,
+          value: (stmt as any)[activeMetric],
+          date: stmt.date,
+        }))
+        .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
+    }
+
+    return data;
+  }, [activeMetric, selectedTab, financialData, timeframe]);
 
   React.useEffect(() => {
     const fetchFinancials = async () => {
@@ -59,76 +251,79 @@ const FinancialsPage: React.FC = () => {
     fetchFinancials();
   }, [symbol]);
 
+  // Auto-select important properties based on tab
+  const getDefaultMetricForTab = React.useCallback((): string => {
+    const metrics = getAvailableMetrics();
+    const metricKeys = Object.keys(metrics);
+
+    if (metricKeys.length === 0) return '';
+
+    // Define important properties for each tab
+    const importantProps = {
+      income: ['net_income', 'revenue', 'total_revenue', 'operating_income', 'income_before_taxes'],
+      balance: [
+        'total_assets',
+        'total_liabilities',
+        'stockholders_equity',
+        'current_assets',
+        'current_liabilities',
+      ],
+      cashflow: [
+        'operating_cash_flow',
+        'free_cash_flow',
+        'investing_cash_flow',
+        'financing_cash_flow',
+      ],
+      ratios: ['current_ratio', 'debt_to_equity', 'roe', 'roa', 'net_profit_margin'],
+      metrics: ['market_cap', 'pe_ratio', 'price_to_book', 'enterprise_value', 'ev_revenue'],
+      dividend: ['dividend_amount', 'dividend_value', 'amount', 'value'],
+    };
+
+    const tabImportant = importantProps[selectedTab as keyof typeof importantProps] || [];
+    for (const prop of tabImportant) {
+      if (metricKeys.includes(prop)) return prop;
+    }
+
+    // If no important property found, return first available
+    return metricKeys[0];
+  }, [selectedTab, getAvailableMetrics]);
+
+  // Reset active metric when tab or available metrics change
+  React.useEffect(() => {
+    const defaultMetric = getDefaultMetricForTab();
+    if (defaultMetric) {
+      setActiveMetric(defaultMetric);
+    }
+  }, [selectedTab, financialData, getDefaultMetricForTab]);
+
   // Mock data for charts - in production, this would come from financialData
   const mockYearlyData = [
-    { year: '2021', revenue: 365000, freeCashFlow: 110000, netIncome: 94000 },
-    { year: '2022', revenue: 394000, freeCashFlow: 110000, netIncome: 99000 },
-    { year: '2023', revenue: 383000, freeCashFlow: 114000, netIncome: 96000 },
-    { year: '2024', revenue: 420000, freeCashFlow: 120000, netIncome: 115000 },
+    { year: '2021', value: 365000 },
+    { year: '2022', value: 394000 },
+    { year: '2023', value: 383000 },
+    { year: '2024', value: 420000 },
   ];
 
-  const mockQuarterlyData = [
-    { quarter: 'Q1 24', revenue: 90000, freeCashFlow: 25000, netIncome: 25000 },
-    { quarter: 'Q2 24', revenue: 110000, freeCashFlow: 30000, netIncome: 28000 },
-    { quarter: 'Q3 24', revenue: 105000, freeCashFlow: 32000, netIncome: 31000 },
-    { quarter: 'Q4 24', revenue: 115000, freeCashFlow: 33000, netIncome: 31000 },
-  ];
-
-  const chartData = timeframe === 'yearly' ? mockYearlyData : mockQuarterlyData;
-  const xAxisKey = timeframe === 'yearly' ? 'year' : 'quarter';
-
-  // Dynamic metrics based on selected tab
-  const getMetricsForTab = () => {
-    const metricsMap: Record<
-      string,
-      Record<string, { label: string; color: string; icon: string }>
-    > = {
-      income: {
-        revenue: { label: 'Revenue', color: '#6366f1', icon: '📊' },
-        netIncome: { label: 'Net Income', color: '#f59e0b', icon: '📈' },
-        operatingIncome: { label: 'Operating Income', color: '#8b5cf6', icon: '💹' },
-      },
-      balance: {
-        totalAssets: { label: 'Total Assets', color: '#3b82f6', icon: '🏦' },
-        totalLiabilities: { label: 'Total Liabilities', color: '#ef4444', icon: '📉' },
-        equity: { label: 'Equity', color: '#10b981', icon: '💼' },
-      },
-      cashflow: {
-        freeCashFlow: { label: 'Free Cash Flow', color: '#10b981', icon: '💰' },
-        operatingCashFlow: { label: 'Operating Cash Flow', color: '#06b6d4', icon: '💵' },
-        investingCashFlow: { label: 'Investing Cash Flow', color: '#ec4899', icon: '📊' },
-      },
-      ratios: {
-        peRatio: { label: 'P/E Ratio', color: '#14b8a6', icon: '📊' },
-        debtToEquity: { label: 'Debt to Equity', color: '#f59e0b', icon: '⚖️' },
-        currentRatio: { label: 'Current Ratio', color: '#06b6d4', icon: '📈' },
-      },
-      metrics: {
-        eps: { label: 'EPS', color: '#6366f1', icon: '💹' },
-        bookValue: { label: 'Book Value', color: '#8b5cf6', icon: '📚' },
-        roe: { label: 'ROE', color: '#10b981', icon: '📊' },
-      },
-      dividend: {
-        dividendPerShare: { label: 'Dividend per Share', color: '#f59e0b', icon: '🎁' },
-        dividendYield: { label: 'Dividend Yield', color: '#10b981', icon: '📈' },
-        payoutRatio: { label: 'Payout Ratio', color: '#6366f1', icon: '💰' },
-      },
-    };
-    return metricsMap[selectedTab] || metricsMap.income;
-  };
-
-  const availableMetrics = getMetricsForTab();
-  const metricsConfig = availableMetrics as Record<
-    string,
-    { label: string; color: string; icon: string }
-  >;
-
-  // Reset active metric if it's not available in the new tab
-  React.useEffect(() => {
-    if (!Object.keys(availableMetrics).includes(activeMetric)) {
-      setActiveMetric(Object.keys(availableMetrics)[0]);
-    }
-  }, [selectedTab, availableMetrics, activeMetric]);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const availableMetrics = getAvailableMetrics();
+  const filteredMetrics = React.useMemo(() => {
+    if (!searchQuery) return availableMetrics;
+    return Object.entries(availableMetrics)
+      .filter(
+        ([key, label]) =>
+          key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          label.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .reduce(
+        (acc, [key, label]) => {
+          acc[key] = label;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+  }, [searchQuery, availableMetrics]);
+  const currentChartData =
+    getChartDataForMetric().length > 0 ? getChartDataForMetric() : mockYearlyData;
 
   if (loading)
     return (
@@ -214,7 +409,7 @@ const FinancialsPage: React.FC = () => {
             <div className="flex items-center gap-3">
               <TrendingUp className="w-4 h-4 text-indigo-600" />
               <p className="text-sm font-bold text-gray-800">
-                {metricsConfig[activeMetric]?.label || 'Revenue'} Trend
+                {availableMetrics[activeMetric] || 'Metric'} Trend
               </p>
 
               {/* Tab Indicator */}
@@ -230,45 +425,63 @@ const FinancialsPage: React.FC = () => {
 
             {/* Controls in Header */}
             <div className="flex items-center gap-3">
-              {/* Metric Dropdown */}
+              {/* Metric Select with Search */}
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-gray-600">Metric:</label>
-                <select
-                  value={activeMetric}
-                  onChange={(e) => setActiveMetric(e.target.value)}
-                  className="h-7 px-2 text-xs rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  {Object.entries(metricsConfig).map(([key, config]) => (
-                    <option key={key} value={key}>
-                      {config.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={activeMetric} onValueChange={setActiveMetric}>
+                  <SelectTrigger className="w-72 h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="w-72">
+                    <div className="p-3" onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        placeholder="Search metrics..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-9 text-sm mb-2"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {Object.entries(filteredMetrics).length > 0 ? (
+                        Object.entries(filteredMetrics).map(([key, label]) => (
+                          <SelectItem key={key} value={key} className="text-sm">
+                            {label}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500">No metrics found</div>
+                      )}
+                    </div>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Chart Type Switcher */}
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setChartType('line')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-                    chartType === 'line'
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  title="Line Chart"
-                >
-                  📈
-                </button>
+              {/* Chart Type Switcher - Aligned with CompanyInsights style */}
+              <div className="flex items-center gap-1.5 pl-2 border-l border-indigo-200">
                 <button
                   onClick={() => setChartType('bar')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded transition-all ${
-                    chartType === 'bar'
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
                   title="Bar Chart"
+                  className={`p-1.5 rounded transition-all ${
+                    chartType === 'bar'
+                      ? 'bg-indigo-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  }`}
                 >
-                  📊
+                  <BarChart3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setChartType('line')}
+                  title="Line Chart"
+                  className={`p-1.5 rounded transition-all ${
+                    chartType === 'line'
+                      ? 'bg-indigo-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  }`}
+                >
+                  <LineChartIcon className="w-4 h-4" />
                 </button>
               </div>
 
@@ -301,47 +514,69 @@ const FinancialsPage: React.FC = () => {
         <div className="p-4">
           <ResponsiveContainer width="100%" height={350}>
             {chartType === 'line' ? (
-              <LineChart data={chartData}>
+              <LineChart data={currentChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey={xAxisKey} stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '0.5rem',
                   }}
-                  formatter={(value: number) => `$${(value / 1000).toFixed(0)}B`}
+                  formatter={(value: any) => {
+                    if (typeof value === 'number') {
+                      if (Math.abs(value) >= 1e9) {
+                        return `$${(value / 1e9).toFixed(2)}B`;
+                      }
+                      if (Math.abs(value) >= 1e6) {
+                        return `$${(value / 1e6).toFixed(2)}M`;
+                      }
+                      if (Math.abs(value) >= 1e3) {
+                        return `$${(value / 1e3).toFixed(2)}K`;
+                      }
+                      return `$${value.toFixed(2)}`;
+                    }
+                    return value;
+                  }}
                 />
-                <Legend />
                 <Line
                   type="monotone"
-                  dataKey={activeMetric}
-                  stroke={metricsConfig[activeMetric]?.color || '#6366f1'}
-                  strokeWidth={3}
-                  dot={{ fill: metricsConfig[activeMetric]?.color || '#6366f1', r: 5 }}
-                  activeDot={{ r: 7 }}
+                  dataKey="value"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  dot={{ fill: '#6366f1', r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             ) : (
-              <BarChart data={chartData}>
+              <BarChart data={currentChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey={xAxisKey} stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
                     borderRadius: '0.5rem',
                   }}
-                  formatter={(value: number) => `$${(value / 1000).toFixed(0)}B`}
+                  formatter={(value: any) => {
+                    if (typeof value === 'number') {
+                      if (Math.abs(value) >= 1e9) {
+                        return `$${(value / 1e9).toFixed(2)}B`;
+                      }
+                      if (Math.abs(value) >= 1e6) {
+                        return `$${(value / 1e6).toFixed(2)}M`;
+                      }
+                      if (Math.abs(value) >= 1e3) {
+                        return `$${(value / 1e3).toFixed(2)}K`;
+                      }
+                      return `$${value.toFixed(2)}`;
+                    }
+                    return value;
+                  }}
                 />
-                <Legend />
-                <Bar
-                  dataKey={activeMetric}
-                  fill={metricsConfig[activeMetric]?.color || '#6366f1'}
-                  radius={[8, 8, 0, 0]}
-                />
+                <Bar dataKey="value" fill="#6366f1" radius={[8, 8, 0, 0]} />
               </BarChart>
             )}
           </ResponsiveContainer>

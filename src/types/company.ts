@@ -145,6 +145,7 @@ export interface CompanyInsightsResponse {
   operating_cash_flow: CompanyInsight[];
   market_cap: CompanyInsight[];
   dividend_yield: CompanyInsight[];
+  revenue_by_product_segments: Record<string, CompanyInsight[]>;
 }
 
 export interface NonUSCompany {

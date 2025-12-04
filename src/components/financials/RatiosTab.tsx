@@ -75,22 +75,16 @@ export const RatiosTab: React.FC<{ financial_ratios: CompanyFinancialRatioRead[]
     return <p className="text-center text-gray-500">No data available</p>;
   }
 
-  const quarterOrder = ['FY', 'Q1', 'Q2', 'Q3', 'Q4'];
+  const quarterOrder = ['FY', 'Q4', 'Q3', 'Q2', 'Q1'];
 
   const groupedByYear = data.reduce(
     (acc, stmt) => {
-      if (!acc[stmt.fiscal_year]) acc[stmt.fiscal_year] = [];
-      acc[stmt.fiscal_year].push(stmt);
+      if (!acc[stmt.fiscal_year]) acc[stmt.fiscal_year] = {};
+      acc[stmt.fiscal_year][stmt.period] = stmt;
       return acc;
     },
-    {} as Record<string, CompanyFinancialRatioRead[]>,
+    {} as Record<string, Record<string, CompanyFinancialRatioRead>>,
   );
-
-  Object.keys(groupedByYear).forEach((year) => {
-    groupedByYear[year].sort(
-      (a, b) => quarterOrder.indexOf(a.period) - quarterOrder.indexOf(b.period),
-    );
-  });
   const metricGroups: Record<string, (keyof CompanyFinancialRatioRead)[]> = {
     'Profitability Margins': [
       'gross_profit_margin',
@@ -180,13 +174,17 @@ export const RatiosTab: React.FC<{ financial_ratios: CompanyFinancialRatioRead[]
                       <Table>
                         <TableHeader>
                           <TableRow className="h-7">
-                            <TableHead className="px-2 py-1 text-xs">Metric</TableHead>
-                            {statements.map((stmt) => (
+                            <TableHead className="px-2 py-1 text-xs text-center border-r border-gray-200">
+                              Metric
+                            </TableHead>
+                            {quarterOrder.map((quarter, idx) => (
                               <TableHead
-                                key={stmt.period}
-                                className="px-2 py-1 text-xs text-center"
+                                key={quarter}
+                                className={`px-2 py-1 text-xs text-center border-r border-gray-200 ${
+                                  idx === quarterOrder.length - 1 ? 'border-r-0' : ''
+                                }`}
                               >
-                                {stmt.period}
+                                {quarter}
                               </TableHead>
                             ))}
                           </TableRow>
@@ -194,20 +192,25 @@ export const RatiosTab: React.FC<{ financial_ratios: CompanyFinancialRatioRead[]
                         <TableBody>
                           {metrics.map((metric) => (
                             <TableRow key={metric} className="h-6 hover:bg-indigo-50">
-                              <TableCell className="px-2 py-1 font-medium text-xs">
+                              <TableCell className="px-2 py-1 font-medium text-xs border-r border-gray-200 flex items-center justify-center">
                                 {metricLabels[metric as string] ||
                                   String(metric).replace(/_/g, ' ')}
                               </TableCell>
-                              {statements.map((stmt) => (
-                                <TableCell
-                                  key={`${stmt.period}-${metric}`}
-                                  className="px-2 py-1 text-xs text-right"
-                                >
-                                  {stmt[metric] !== null && stmt[metric] !== undefined
-                                    ? stmt[metric].toLocaleString?.()
-                                    : '-'}
-                                </TableCell>
-                              ))}
+                              {quarterOrder.map((quarter, idx) => {
+                                const stmt = statements[quarter];
+                                return (
+                                  <TableCell
+                                    key={`${quarter}-${metric}`}
+                                    className={`px-2 py-1 text-xs text-right border-r border-gray-200 ${
+                                      idx === quarterOrder.length - 1 ? 'border-r-0' : ''
+                                    }`}
+                                  >
+                                    {stmt && stmt[metric] !== null && stmt[metric] !== undefined
+                                      ? stmt[metric].toLocaleString?.()
+                                      : '-'}
+                                  </TableCell>
+                                );
+                              })}
                             </TableRow>
                           ))}
                         </TableBody>

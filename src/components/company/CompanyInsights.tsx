@@ -49,6 +49,20 @@ const formatValue = (value: number): string => {
   return `$${value.toFixed(2)}`;
 };
 
+const formatYAxis = (value: number): string => {
+  if (value === 0) return '0';
+  if (Math.abs(value) >= 1e9) {
+    return `$${(value / 1e9).toFixed(1)}B`;
+  }
+  if (Math.abs(value) >= 1e6) {
+    return `$${(value / 1e6).toFixed(1)}M`;
+  }
+  if (Math.abs(value) >= 1e3) {
+    return `$${(value / 1e3).toFixed(1)}K`;
+  }
+  return `${value.toFixed(0)}`;
+};
+
 interface ChartSwitcherProps {
   chartType: 'line' | 'bar';
   onChange: (type: 'line' | 'bar') => void;
@@ -104,7 +118,10 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
     totalDebt: 'bar',
     operatingCashFlow: 'bar',
     marketCap: 'bar',
+    productSegment: 'bar',
   });
+
+  const [selectedSegment, setSelectedSegment] = React.useState<string | null>(null);
 
   const handleChartTypeChange = (chartName: string, type: 'line' | 'bar') => {
     setChartTypes((prev) => ({
@@ -115,6 +132,13 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
 
   React.useEffect(() => {
     console.log('CompanyInsights received data:', data);
+    // Initialize selected segment with the first available one
+    if (data?.revenue_by_product_segments && !selectedSegment) {
+      const segments = Object.keys(data.revenue_by_product_segments);
+      if (segments.length > 0) {
+        setSelectedSegment(segments[0]);
+      }
+    }
   }, [data]);
 
   if (loading) {
@@ -245,7 +269,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -260,7 +284,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -310,7 +334,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -325,7 +349,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -509,7 +533,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -524,7 +548,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -572,7 +596,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -587,7 +611,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -771,7 +795,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -786,7 +810,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -939,7 +963,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -954,7 +978,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -1007,7 +1031,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -1022,7 +1046,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -1072,7 +1096,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -1087,7 +1111,7 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
-                    <YAxis stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
@@ -1151,6 +1175,113 @@ export const CompanyInsights: React.FC<CompanyInsightsProps> = ({ data, loading 
           )}
         </CardContent>
       </Card>
+
+      {/* Product/Service Revenue Segments */}
+      {data.revenue_by_product_segments &&
+        Object.keys(data.revenue_by_product_segments).length > 0 && (
+          <Card className="shadow-lg rounded-xl border-0 overflow-hidden bg-gradient-to-br from-pink-50 via-white to-fuchsia-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-pink-600" />
+                  <CardTitle className="text-base font-bold text-gray-800">
+                    Revenue by Product/Service
+                  </CardTitle>
+                </div>
+                <ChartSwitcher
+                  chartType={chartTypes.productSegment}
+                  onChange={(type) => handleChartTypeChange('productSegment', type)}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Revenue breakdown by product categories</p>
+            </CardHeader>
+            <CardContent>
+              {/* Product Segment Selector */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {Object.keys(data.revenue_by_product_segments).map((segment) => (
+                  <button
+                    key={segment}
+                    onClick={() => setSelectedSegment(segment)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      selectedSegment === segment
+                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg'
+                        : 'bg-white border border-pink-200 text-gray-700 hover:border-pink-400'
+                    }`}
+                  >
+                    {segment}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chart */}
+              {selectedSegment &&
+              data.revenue_by_product_segments[selectedSegment] &&
+              data.revenue_by_product_segments[selectedSegment].length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  {chartTypes.productSegment === 'bar' ? (
+                    <BarChart
+                      data={data.revenue_by_product_segments[selectedSegment]
+                        .sort((a, b) => a.year - b.year)
+                        .map((item) => ({
+                          label: formatQuarterLabel(item.year, item.quarter),
+                          value: item.value,
+                        }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
+                      <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '0.5rem',
+                        }}
+                        formatter={(value: number) => formatValue(value)}
+                      />
+                      <Bar
+                        dataKey="value"
+                        fill="#ec4899"
+                        name={selectedSegment}
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  ) : (
+                    <LineChart
+                      data={data.revenue_by_product_segments[selectedSegment]
+                        .sort((a, b) => a.year - b.year)
+                        .map((item) => ({
+                          label: formatQuarterLabel(item.year, item.quarter),
+                          value: item.value,
+                        }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} />
+                      <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={formatYAxis} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '0.5rem',
+                        }}
+                        formatter={(value: number) => formatValue(value)}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#ec4899"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        name={selectedSegment}
+                      />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              ) : (
+                <EmptyChartMessage />
+              )}
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 };
