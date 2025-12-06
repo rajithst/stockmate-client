@@ -65,15 +65,9 @@ export type {
   CompanyStockNews,
   CompanyStockNewsRead,
   CompanyStockNewsWrite,
-  CompanyGeneralNews,
-  CompanyGeneralNewsRead,
-  CompanyGeneralNewsWrite,
-  CompanyPriceTargetNews,
-  CompanyPriceTargetNewsWrite,
-  CompanyPriceTargetNewsRead,
-  CompanyGradingNews,
-  CompanyGradingNewsWrite,
-  CompanyGradingNewsRead,
+  News,
+  NewsRead,
+  NewsWrite,
 } from './market-data';
 
 // Quote & Technical Data

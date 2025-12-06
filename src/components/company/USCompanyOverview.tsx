@@ -155,13 +155,7 @@ export const USCompanyOverview: React.FC<USCompanyOverviewProps> = ({
       {/* News Tab - Only for database companies */}
       {isInDatabase && (
         <TabsContent value="news" className="animate-fade-in">
-          <CompanyNewsTabs
-            news={{
-              general_news: data.general_news || [],
-              price_target_news: data.price_target_news || [],
-              grading_news: data.grading_news || [],
-            }}
-          />
+          <CompanyNewsTabs news={data.stock_news || []} />
         </TabsContent>
       )}
     </Tabs>

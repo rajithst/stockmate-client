@@ -16,12 +16,10 @@ import type {
 import type {
   CompanyGradingRead,
   CompanyGradingSummaryRead,
-  CompanyGeneralNewsRead,
-  CompanyGradingNewsRead,
-  CompanyPriceTargetNewsRead,
   CompanyPriceTargetRead,
   CompanyPriceTargetSummaryRead,
   CompanyRatingSummaryRead,
+  NewsRead,
 } from './market-data';
 import type { StockPriceChangeRead, CompanyDividendRead, StockPriceRead } from './quote';
 
@@ -109,9 +107,12 @@ export interface CompanyPageResponse {
   fundamentals?: CompanyFundamentalsRead | null;
   latest_gradings: CompanyGradingRead[];
   analyst_estimates: CompanyAnalystEstimateRead[];
-  price_target_news: CompanyPriceTargetNewsRead[];
-  general_news: CompanyGeneralNewsRead[];
-  grading_news: CompanyGradingNewsRead[];
+  stock_news?: NewsRead[] | null;
+  dividends?: CompanyDividendRead[] | null;
+  income_statements?: CompanyIncomeStatementRead[] | null;
+  balance_sheets?: CompanyBalanceSheetRead[] | null;
+  cash_flow_statements?: CompanyCashFlowStatementRead[] | null;
+  key_metrics?: CompanyKeyMetricsRead[] | null;
   insights?: CompanyInsightsResponse | null;
 }
 

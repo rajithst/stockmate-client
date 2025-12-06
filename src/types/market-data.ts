@@ -5,10 +5,7 @@
  * - CompanyRatingSummary: Analyst rating summaries with various score components
  * - CompanyPriceTarget: Price target data
  * - CompanyPriceTargetSummary: Summary of price targets
- * - CompanyStockNews: Stock-related news
- * - CompanyGeneralNews: General company news
- * - CompanyPriceTargetNews: News related to price targets
- * - CompanyGradingNews: News related to grading changes
+ * - News: news articles related to companies
  */
 
 // ========================
@@ -145,7 +142,7 @@ export interface CompanyStockNewsWrite extends CompanyStockNews {
   company_id: number;
 }
 
-export interface CompanyGeneralNews {
+export interface News {
   symbol?: string | null;
   published_date: Date | string;
   publisher: string;
@@ -157,59 +154,11 @@ export interface CompanyGeneralNews {
   sentiment?: string | null;
 }
 
-export interface CompanyGeneralNewsRead extends CompanyGeneralNews {
+export interface NewsRead extends News {
   created_at?: Date | string | null;
   updated_at?: Date | string | null;
 }
 
-export interface CompanyGeneralNewsWrite extends CompanyGeneralNews {
+export interface NewsWrite extends News {
   company_id: number;
-}
-
-export interface CompanyPriceTargetNews {
-  symbol: string;
-  published_date: Date | string;
-  news_url: string;
-  news_title: string;
-  analyst_name: string;
-  price_target: number;
-  adj_price_target?: number | null;
-  price_when_posted: number;
-  news_publisher?: string | null;
-  news_base_url?: string | null;
-  analyst_company?: string | null;
-  sentiment?: string | null;
-}
-
-export interface CompanyPriceTargetNewsWrite extends CompanyPriceTargetNews {
-  company_id: number;
-}
-
-export interface CompanyPriceTargetNewsRead extends CompanyPriceTargetNews {
-  created_at?: Date | string | null;
-  updated_at?: Date | string | null;
-}
-
-export interface CompanyGradingNews {
-  symbol: string;
-  published_date: Date | string;
-  news_url: string;
-  news_title: string;
-  news_base_url?: string | null;
-  news_publisher?: string | null;
-  new_grade: string;
-  previous_grade?: string | null;
-  grading_company?: string | null;
-  action?: string | null;
-  price_when_posted: number;
-  sentiment?: string | null;
-}
-
-export interface CompanyGradingNewsWrite extends CompanyGradingNews {
-  company_id: number;
-}
-
-export interface CompanyGradingNewsRead extends CompanyGradingNews {
-  created_at?: Date | string | null;
-  updated_at?: Date | string | null;
 }

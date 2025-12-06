@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Select,
@@ -18,143 +18,72 @@ import {
   ExternalLink,
   ChevronLeft,
 } from 'lucide-react';
+import { apiClient } from '../api/client';
+import type { NewsRead } from '../types';
 
-interface NewsItem {
-  id: number;
-  title: string;
-  source: string;
-  time: string;
-  date: string;
-  category: string;
-  symbol?: string;
-  snippet: string;
-  content: string;
-  url: string;
+interface NewsItem extends NewsRead {
+  id?: string | number;
+  category?: string;
+  time?: string;
+  snippet?: string;
   imageUrl?: string;
+  image?: string;
 }
 
-// Mock news data (replace with real API)
-const mockNewsData: NewsItem[] = [
-  {
-    id: 1,
-    title: 'Federal Reserve Holds Interest Rates Steady',
-    source: 'Financial Times',
-    time: '2 hours ago',
-    date: '2025-11-01',
-    category: 'Markets',
-    snippet:
-      'The Federal Reserve announced today that it will maintain current interest rates, citing stable inflation...',
-    content:
-      'The Federal Reserve announced today that it will maintain current interest rates at their current levels, citing stable inflation metrics and a strong labor market. Fed Chair Jerome Powell emphasized the committee\'s commitment to monitoring economic indicators closely. "We believe the current stance of monetary policy is appropriate," Powell stated during the press conference. The decision was unanimous among voting members. Market analysts had widely anticipated this move, with futures markets pricing in a high probability of no rate change. The S&P 500 rose 0.8% following the announcement, while Treasury yields remained relatively stable. Economists suggest that the Fed will likely maintain this position through the end of Q4 2025, barring any unexpected economic shocks.',
-    url: 'https://example.com/news/1',
-    imageUrl: 'https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Federal+Reserve',
-  },
-  {
-    id: 2,
-    title: 'Tech Sector Rallies on Strong Earnings Reports',
-    source: 'Bloomberg',
-    time: '4 hours ago',
-    date: '2025-11-01',
-    category: 'Technology',
-    symbol: 'MSFT',
-    snippet:
-      'Major technology companies exceeded earnings expectations this quarter, driving a broad rally...',
-    content:
-      "Major technology companies exceeded earnings expectations this quarter, driving a broad rally across the sector. Microsoft reported a 15% year-over-year revenue increase, powered by strong cloud computing demand. The company's Azure platform continues to gain market share, with enterprise customers increasingly adopting AI-powered services. CEO Satya Nadella highlighted the company's leadership in artificial intelligence integration. \"We're seeing unprecedented demand for AI capabilities across all customer segments,\" Nadella noted. Apple, Google, and Amazon also posted impressive results, with each company beating analyst estimates. The tech-heavy Nasdaq Composite jumped 2.3% on the news. Analysts are raising their price targets for several tech giants, citing robust fundamentals and growing AI adoption.",
-    url: 'https://example.com/news/2',
-    imageUrl: 'https://via.placeholder.com/800x400/7C3AED/FFFFFF?text=Tech+Rally',
-  },
-  {
-    id: 3,
-    title: 'Oil Prices Drop Amid Global Supply Concerns',
-    source: 'Reuters',
-    time: '5 hours ago',
-    date: '2025-11-01',
-    category: 'Energy',
-    snippet:
-      'Crude oil prices fell 3% today as new supply sources come online and demand forecasts are revised...',
-    content:
-      'Crude oil prices fell 3% today as new supply sources come online and demand forecasts are revised downward. West Texas Intermediate (WTI) crude settled at $78.45 per barrel, while Brent crude closed at $82.30. OPEC+ members are reportedly considering increasing production quotas in response to higher-than-expected output from non-member nations. Energy analysts point to several factors contributing to the price decline, including improved production from U.S. shale fields and weakening demand signals from China. "The market is rebalancing after months of tight supply," noted one commodity strategist. The drop in oil prices is providing relief to consumers at the pump, with gasoline prices expected to decline in coming weeks. Energy stocks fell broadly, with the energy sector down 2.1% for the day.',
-    url: 'https://example.com/news/3',
-    imageUrl: 'https://via.placeholder.com/800x400/DC2626/FFFFFF?text=Oil+Markets',
-  },
-  {
-    id: 4,
-    title: 'US Jobs Report Exceeds Expectations',
-    source: 'CNBC',
-    time: '6 hours ago',
-    date: '2025-11-01',
-    category: 'Economy',
-    snippet:
-      'The U.S. economy added 275,000 jobs in October, significantly beating economist forecasts...',
-    content:
-      'The U.S. economy added 275,000 jobs in October, significantly beating economist forecasts of 180,000. The unemployment rate held steady at 3.8%, indicating a healthy labor market. Job gains were broad-based, with notable increases in healthcare, professional services, and manufacturing. Average hourly earnings rose 4.2% year-over-year, slightly above inflation rates. Labor economists describe the report as evidence of continued economic resilience. "This is a Goldilocks scenario – strong job growth without overheating," commented one Fed watcher. The strong employment data could influence the Federal Reserve\'s future policy decisions. However, some analysts caution that seasonal adjustments may have played a role in the better-than-expected figures. Stock markets reacted positively to the news, with major indices posting gains.',
-    url: 'https://example.com/news/4',
-    imageUrl: 'https://via.placeholder.com/800x400/059669/FFFFFF?text=Jobs+Report',
-  },
-  {
-    id: 5,
-    title: 'Tesla Unveils New Manufacturing Facility in Texas',
-    source: 'Wall Street Journal',
-    time: '8 hours ago',
-    date: '2025-10-31',
-    category: 'Technology',
-    symbol: 'TSLA',
-    snippet:
-      'Tesla announced plans for a new advanced manufacturing facility that will produce next-generation...',
-    content:
-      'Tesla announced plans for a new advanced manufacturing facility in Austin, Texas, that will produce next-generation electric vehicles and battery systems. CEO Elon Musk unveiled the $5 billion investment during a press conference at the company\'s Gigafactory. The new facility is expected to create 10,000 jobs and begin production by late 2026. "This represents the future of automotive manufacturing," Musk stated. The plant will feature cutting-edge robotics and AI-powered quality control systems. Tesla aims to increase production capacity by 40% with the new facility. Environmental groups have praised the company\'s commitment to sustainable manufacturing practices. Tesla stock rose 5.2% on the announcement. Analysts view the expansion as a strategic move to meet growing EV demand and maintain market leadership.',
-    url: 'https://example.com/news/5',
-    imageUrl: 'https://via.placeholder.com/800x400/0891B2/FFFFFF?text=Tesla+Factory',
-  },
-  {
-    id: 6,
-    title: 'JPMorgan Reports Record Quarterly Profits',
-    source: 'Financial Times',
-    time: '10 hours ago',
-    date: '2025-10-31',
-    category: 'Finance',
-    symbol: 'JPM',
-    snippet:
-      'JPMorgan Chase posted record quarterly earnings, driven by strong investment banking activity...',
-    content:
-      'JPMorgan Chase posted record quarterly earnings of $12.1 billion, driven by strong investment banking activity and higher interest income. The banking giant exceeded analyst expectations across all major business segments. CEO Jamie Dimon attributed the strong performance to "disciplined risk management and strategic investments in technology." Investment banking fees surged 25% year-over-year, reflecting increased M&A activity. The consumer banking division also showed robust growth, with credit card spending up 8%. JPMorgan maintained its strong credit quality metrics, with non-performing loans remaining near historic lows. The bank raised its full-year earnings guidance and announced a 10% dividend increase. Financial sector stocks rallied on the news, with regional banks also posting gains. Dimon expressed cautious optimism about the economic outlook for 2026.',
-    url: 'https://example.com/news/6',
-    imageUrl: 'https://via.placeholder.com/800x400/7C3AED/FFFFFF?text=JPMorgan',
-  },
-  {
-    id: 7,
-    title: 'Semiconductor Shortage Shows Signs of Easing',
-    source: 'Bloomberg',
-    time: '12 hours ago',
-    date: '2025-10-31',
-    category: 'Technology',
-    symbol: 'NVDA',
-    snippet:
-      'Industry data suggests the global semiconductor shortage is finally easing as production ramps up...',
-    content:
-      'Industry data suggests the global semiconductor shortage is finally easing as production ramps up and demand moderates. Leading chipmakers including NVIDIA, Intel, and TSMC report improved supply chain conditions. "We\'re seeing light at the end of the tunnel," noted one industry executive. New fabrication facilities coming online in the U.S., Taiwan, and Europe are adding significant capacity. Automotive manufacturers, which were heavily impacted by chip shortages, report improved parts availability. However, analysts caution that high-end AI chips remain in tight supply due to surging demand for machine learning applications. The normalization of semiconductor supplies could help ease inflationary pressures on consumer electronics. NVIDIA stock gained 3.1% as investors welcomed the improved supply dynamics. Industry observers expect balanced supply-demand conditions by mid-2026.',
-    url: 'https://example.com/news/7',
-    imageUrl: 'https://via.placeholder.com/800x400/EAB308/FFFFFF?text=Semiconductors',
-  },
-  {
-    id: 8,
-    title: 'Inflation Rate Drops to 2.4% in Latest CPI Report',
-    source: 'Reuters',
-    time: '1 day ago',
-    date: '2025-10-30',
-    category: 'Economy',
-    snippet:
-      'Consumer prices rose at a slower pace in October, marking the lowest inflation rate in three years...',
-    content:
-      "Consumer prices rose at a slower pace in October, with the Consumer Price Index showing a 2.4% year-over-year increase, marking the lowest inflation rate in three years. Core inflation, which excludes food and energy, came in at 2.8%. The moderation in price pressures was broad-based, with notable declines in goods prices offsetting continued strength in services. Energy costs fell 4.2% compared to last year, while food prices increased a modest 2.1%. Housing costs, which comprise a large portion of CPI, showed signs of cooling with rental price growth slowing. Economists view the data as validation of the Federal Reserve's monetary policy approach. \"We're approaching the Fed's 2% target,\" one economist noted. The inflation report boosted investor confidence, with bond yields falling and stocks rising. Consumers may see some relief in purchasing power as wage growth continues to outpace inflation.",
-    url: 'https://example.com/news/8',
-    imageUrl: 'https://via.placeholder.com/800x400/DC2626/FFFFFF?text=Inflation',
-  },
-];
+// Transform API response to display format
+const transformNewsRead = (news: NewsRead, index: number): NewsItem => {
+  const published = new Date(news.published_date);
+  const now = new Date();
+  const diffMs = now.getTime() - published.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  let timeStr = 'just now';
+  if (diffHours > 0) timeStr = `${diffHours} hours ago`;
+  if (diffDays > 0) timeStr = `${diffDays} days ago`;
+
+  // Infer category from news content or publisher
+  const categoryMap: Record<string, string> = {
+    technology: 'Technology',
+    tech: 'Technology',
+    finance: 'Finance',
+    bank: 'Finance',
+    markets: 'Markets',
+    economy: 'Economy',
+    energy: 'Energy',
+    oil: 'Energy',
+  };
+
+  let category = 'General';
+  const contentLower = `${news.news_title} ${news.text}`.toLowerCase();
+  for (const [key, val] of Object.entries(categoryMap)) {
+    if (contentLower.includes(key)) {
+      category = val;
+      break;
+    }
+  }
+
+  return {
+    id: index,
+    title: news.news_title,
+    source: news.publisher,
+    time: timeStr,
+    date: published.toISOString().split('T')[0],
+    category: category,
+    symbol: news.symbol,
+    snippet: news.text.substring(0, 150) + '...',
+    content: news.text,
+    url: news.news_url,
+    imageUrl: news.image,
+    ...news,
+  };
+};
 
 export const NewsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [newsData, setNewsData] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDate, setSelectedDate] = useState('all');
@@ -166,22 +95,46 @@ export const NewsPage: React.FC = () => {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
 
+  // Fetch news data from API
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.getLatestNews();
+        const transformed = response.map((news, idx) => transformNewsRead(news, idx));
+        setNewsData(transformed);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch news');
+        setNewsData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
   // Filter news based on search and filters
-  const filteredNews = mockNewsData.filter((news) => {
+  const filteredNews = newsData.filter((news) => {
     const matchesSearch =
       searchQuery === '' ||
       news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      news.snippet.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (news.snippet && news.snippet.toLowerCase().includes(searchQuery.toLowerCase())) ||
       news.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (news.symbol && news.symbol.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCategory = selectedCategory === 'all' || news.category === selectedCategory;
 
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const weekAgo = new Date(Date.now() - 604800000).toISOString().split('T')[0];
+
     const matchesDate =
       selectedDate === 'all' ||
-      (selectedDate === 'today' && news.date === '2025-11-01') ||
-      (selectedDate === 'yesterday' && news.date === '2025-10-31') ||
-      (selectedDate === 'week' && news.date >= '2025-10-25');
+      (selectedDate === 'today' && news.date === today) ||
+      (selectedDate === 'yesterday' && news.date === yesterday) ||
+      (selectedDate === 'week' && news.date >= weekAgo);
 
     const matchesSymbol = !selectedSymbol || news.symbol === selectedSymbol.toUpperCase();
 
@@ -189,11 +142,14 @@ export const NewsPage: React.FC = () => {
   });
 
   // Get unique categories and symbols
-  const categories = ['all', ...Array.from(new Set(mockNewsData.map((n) => n.category)))];
-  const symbols = Array.from(new Set(mockNewsData.filter((n) => n.symbol).map((n) => n.symbol)));
+  const categories = [
+    'all',
+    ...Array.from(new Set(newsData.filter((n) => n.category).map((n) => n.category))),
+  ];
+  const symbols = Array.from(new Set(newsData.filter((n) => n.symbol).map((n) => n.symbol)));
 
   // Simulate filtering delay for loading animation
-  React.useEffect(() => {
+  useEffect(() => {
     setIsFiltering(true);
     const timer = setTimeout(() => {
       setIsFiltering(false);
@@ -366,7 +322,12 @@ export const NewsPage: React.FC = () => {
       {/* Results Count - Compact */}
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {isFiltering ? (
+          {loading ? (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
+              Loading news...
+            </span>
+          ) : isFiltering ? (
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
               Filtering...
@@ -379,86 +340,130 @@ export const NewsPage: React.FC = () => {
         </p>
       </div>
 
-      {/* News List - Compact Grid */}
-      <div className="space-y-2 relative">
-        {/* Loading Overlay */}
-        {isFiltering && (
-          <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[2px] z-10 rounded-xl flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Loading news...
-              </span>
-            </div>
+      {/* Loading State */}
+      {loading && !error && (
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Loading latest news...</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {filteredNews.length === 0 ? (
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-            <div className="text-gray-400 mb-3">
-              <Search className="w-12 h-12 mx-auto opacity-50" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-600 dark:text-gray-300 mb-1">
-              No news found
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Try adjusting your filters or search query
-            </p>
-          </div>
-        ) : (
-          filteredNews.map((news, index) => (
-            <div
-              key={news.id}
-              onClick={() => handleNewsClick(news)}
-              className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all cursor-pointer overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
-              style={{ animationDelay: `${index * 30}ms` }}
+      {/* Error State */}
+      {error && (
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-red-200 dark:border-red-800 p-6 text-center">
+          <div className="text-red-500 mb-3">
+            <svg
+              className="w-12 h-12 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <div className="flex gap-3 p-3">
-                {/* Thumbnail */}
-                {news.imageUrl && (
-                  <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                    <img
-                      src={news.imageUrl}
-                      alt={news.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-red-600 dark:text-red-400 mb-1">
+            Failed to load news
+          </h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 mb-1">
-                    <h3 className="flex-1 text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                      {news.title}
-                    </h3>
-                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded">
-                      {news.category}
-                    </span>
-                  </div>
+      {/* News List - Compact Grid */}
+      {!loading && !error && (
+        <div className="space-y-2 relative">
+          {/* Loading Overlay */}
+          {isFiltering && (
+            <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[2px] z-10 rounded-xl flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Loading news...
+                </span>
+              </div>
+            </div>
+          )}
 
-                  <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
-                    {news.snippet}
-                  </p>
+          {filteredNews.length === 0 ? (
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="text-gray-400 mb-3">
+                <Search className="w-12 h-12 mx-auto opacity-50" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                No news found
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Try adjusting your filters or search query
+              </p>
+            </div>
+          ) : (
+            filteredNews.map((news, index) => (
+              <div
+                key={news.id}
+                onClick={() => handleNewsClick(news)}
+                className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all cursor-pointer overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
+                style={{ animationDelay: `${index * 30}ms` }}
+              >
+                <div className="flex gap-3 p-3">
+                  {/* Thumbnail */}
+                  {(news.imageUrl || news.image) && (
+                    <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                      <img
+                        src={news.imageUrl || news.image}
+                        alt={news.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                    </div>
+                  )}
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="font-medium">{news.source}</span>
-                    <span>•</span>
-                    <span>{news.time}</span>
-                    {news.symbol && (
-                      <>
-                        <span>•</span>
-                        <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded">
-                          {news.symbol}
-                        </span>
-                      </>
-                    )}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 mb-1">
+                      <h3 className="flex-1 text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                        {news.title}
+                      </h3>
+                      <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded">
+                        {news.category}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
+                      {news.snippet}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="font-medium">{news.source}</span>
+                      <span>•</span>
+                      <span>{news.time}</span>
+                      {news.symbol && (
+                        <>
+                          <span>•</span>
+                          <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded">
+                            {news.symbol}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* News Detail Dialog - Modern & Clean */}
       {selectedNews && (

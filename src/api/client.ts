@@ -437,6 +437,16 @@ class ApiClient {
       throw error;
     }
   }
+
+  async getLatestNews(): Promise<any[]> {
+    try {
+      const data = await this.request<any[]>('/news/latest');
+      return data;
+    } catch (error) {
+      console.error('Error fetching latest news:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();
