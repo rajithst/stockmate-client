@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
-import { AlertCircle, Clock, Target } from 'lucide-react';
+import { AlertCircle, Target } from 'lucide-react';
 import type { CompanyPriceTargetRead, CompanyPriceTargetSummaryRead } from '../../types';
 
 export const PriceTargetCard: React.FC<{
@@ -36,17 +36,6 @@ export const PriceTargetCard: React.FC<{
   const range = price_target.target_high! - price_target.target_low!;
   const consensusPos = ((price_target.target_consensus! - price_target.target_low!) / range) * 100;
   const medianPos = ((price_target.target_median! - price_target.target_low!) / range) * 100;
-
-  // Format last updated date
-  const formattedLastUpdated = price_target.updated_at
-    ? new Date(price_target.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl h-full flex flex-col">
@@ -162,15 +151,15 @@ export const PriceTargetSummaryCard: React.FC<{
   ];
 
   // Format last updated date
-  const formattedLastUpdated = price_target_summary.updated_at
-    ? new Date(price_target_summary.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
+  // const formattedLastUpdated = price_target_summary.updated_at
+  //   ? new Date(price_target_summary.updated_at).toLocaleString(undefined, {
+  //       year: 'numeric',
+  //       month: 'short',
+  //       day: 'numeric',
+  //       hour: '2-digit',
+  //       minute: '2-digit',
+  //     })
+  //   : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-xl h-full flex flex-col">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../ui/card';
-import { ArrowDown, ArrowUp, Minus, AlertCircle, Clock, TrendingUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, AlertCircle, TrendingUp } from 'lucide-react';
 import type { CompanyGradingRead } from '../../types';
 
 // --- 🎨 Grading Color Logic ---

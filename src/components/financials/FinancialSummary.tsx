@@ -5,7 +5,7 @@ interface FinancialSummaryProps {
   symbol: string;
 }
 
-export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ symbol }) => {
+export const FinancialSummary: React.FC<FinancialSummaryProps> = () => {
   // Sample static data — replace later with API call
   const summary = {
     pe: 28.5,

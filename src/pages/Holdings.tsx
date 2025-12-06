@@ -441,6 +441,15 @@ const HoldingsPage: React.FC = () => {
         <LoadingIndicator message="Loading portfolios..." minHeight="min-h-[60vh]" />
       ) : (
         <>
+          {error && (
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+              role="alert"
+            >
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
           {/* Header */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-5"></div>

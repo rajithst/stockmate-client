@@ -44,6 +44,7 @@ export interface FMPStockScreenResult {
 
 // Mock API call
 const fetchStockScreen = async (params: ScreenParams): Promise<FMPStockScreenResult[]> => {
+  console.log(params);
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([

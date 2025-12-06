@@ -17,7 +17,7 @@ import type {
   StockSymbol,
 } from '../types/user';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const TOKEN_STORAGE_KEY = 'stockmate_access_token';
 
 interface LoginResponse {

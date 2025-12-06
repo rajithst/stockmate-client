@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import type { CompanyDividendRead } from '../../types/dividend.ts';
+import type { CompanyDividendRead } from '../../types/index.ts';
 
 // Add a mapping for nice labels
 const metricLabels: Record<string, string> = {
   dividend: 'Dividend (USD)',
   adj_dividend: 'Adjusted Dividend (USD)',
-  yield: 'Dividend Yield (%)',
+  dividend_yield: 'Dividend Yield (%)',
   frequency: 'Frequency',
   record_date: 'Record Date',
   payment_date: 'Payment Date',
@@ -27,7 +27,7 @@ export const DividendTab: React.FC<{ dividends: CompanyDividendRead[] }> = ({ di
   const metrics: (keyof CompanyDividendRead)[] = [
     'dividend',
     'adj_dividend',
-    'yield',
+    'dividend_yield',
     'frequency',
     'record_date',
     'payment_date',
@@ -57,8 +57,8 @@ export const DividendTab: React.FC<{ dividends: CompanyDividendRead[] }> = ({ di
                   {dividends
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map((div) => (
-                      <TableRow key={div.date} className="h-6 hover:bg-indigo-50">
-                        <TableCell className="px-2 py-1 text-xs">{div.date}</TableCell>
+                      <TableRow key={String(div.date)} className="h-6 hover:bg-indigo-50">
+                        <TableCell className="px-2 py-1 text-xs">{String(div.date)}</TableCell>
                         {metrics.map((m) => (
                           <TableCell key={m} className="px-2 py-1 text-xs text-right">
                             {(div as any)[m] !== null && (div as any)[m] !== undefined

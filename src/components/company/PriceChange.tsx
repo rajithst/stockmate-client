@@ -11,7 +11,7 @@ import {
   YAxis,
   LabelList,
 } from 'recharts';
-import { Clock, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import type { StockPriceChangeRead } from '../../types';
 
 const ignore_fields = ['symbol', 'created_at', 'updated_at', 'id', 'company_id'];
@@ -56,17 +56,6 @@ export const PriceChangeChart: React.FC<{
       period: periodLabels[period] || period,
       value: parseFloat(value.toFixed(2)),
     }));
-
-  // Format last updated date
-  const lastUpdated = price_change.updated_at
-    ? new Date(price_change.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 via-white to-indigo-100 rounded-2xl">

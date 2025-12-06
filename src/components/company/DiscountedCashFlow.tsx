@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  MinusCircle,
-  Clock,
-  AlertCircle,
-  TrendingDown,
-} from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, MinusCircle, AlertCircle, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import type { CompanyDiscountedCashFlowRead } from '../../types';
@@ -42,7 +35,7 @@ export const DcfSummaryCard: React.FC<{
       </Card>
     );
   }
-  const { dcf, stock_price, date, updated_at } = discounted_cash_flow;
+  const { dcf, stock_price, date } = discounted_cash_flow;
 
   const diff = stock_price! - dcf!;
   const percentageDiff = ((diff / dcf!) * 100).toFixed(1);
@@ -65,15 +58,6 @@ export const DcfSummaryCard: React.FC<{
   }
 
   // Format last updated date
-  const formattedLastUpdated = updated_at
-    ? new Date(updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-amber-50 via-white to-yellow-50 rounded-xl">

@@ -27,7 +27,12 @@ interface NewsItem extends NewsRead {
   time?: string;
   snippet?: string;
   imageUrl?: string;
-  image?: string;
+  image?: string | null;
+  title: string;
+  source: string;
+  content: string;
+  url: string;
+  date: string;
 }
 
 // Transform API response to display format
@@ -74,7 +79,7 @@ const transformNewsRead = (news: NewsRead, index: number): NewsItem => {
     snippet: news.text.substring(0, 150) + '...',
     content: news.text,
     url: news.news_url,
-    imageUrl: news.image,
+    imageUrl: news.image || undefined,
     ...news,
   };
 };
@@ -231,7 +236,7 @@ export const NewsPage: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
+                  <SelectItem key={cat} value={cat || 'unknown'}>
                     {cat === 'all' ? 'All Categories' : cat}
                   </SelectItem>
                 ))}
@@ -421,7 +426,7 @@ export const NewsPage: React.FC = () => {
                   {(news.imageUrl || news.image) && (
                     <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
                       <img
-                        src={news.imageUrl || news.image}
+                        src={news.imageUrl || news.image || undefined}
                         alt={news.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => (e.currentTarget.style.display = 'none')}

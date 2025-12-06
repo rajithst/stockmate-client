@@ -79,8 +79,12 @@ export const RatiosTab: React.FC<{ financial_ratios: CompanyFinancialRatioRead[]
 
   const groupedByYear = data.reduce(
     (acc, stmt) => {
-      if (!acc[stmt.fiscal_year]) acc[stmt.fiscal_year] = {};
-      acc[stmt.fiscal_year][stmt.period] = stmt;
+      if (!stmt.fiscal_year) return acc;
+      const year = stmt.fiscal_year;
+      if (!acc[year]) acc[year] = {};
+      if (stmt.period) {
+        acc[year][stmt.period] = stmt;
+      }
       return acc;
     },
     {} as Record<string, Record<string, CompanyFinancialRatioRead>>,

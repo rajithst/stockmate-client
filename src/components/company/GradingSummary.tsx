@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
 import { Badge } from '../ui/badge.tsx';
-import { Clock, AlertCircle, TrendingUp } from 'lucide-react';
+import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { CompanyGradingSummaryRead } from '../../types';
 
 export const StockGradingSummaryCard: React.FC<{
@@ -51,15 +51,6 @@ export const StockGradingSummaryCard: React.FC<{
   const consensusColor = consensusColorMap[summary.consensus] || 'bg-gray-500 text-white';
 
   // Format last updated date from summary.updated_at
-  const formattedLastUpdated = summary.updated_at
-    ? new Date(summary.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl">

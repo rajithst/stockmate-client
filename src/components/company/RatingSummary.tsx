@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip.tsx';
-import { Info, Clock, AlertCircle, BarChart3 } from 'lucide-react';
+import { Info, AlertCircle, BarChart3 } from 'lucide-react';
 import type { CompanyRatingSummaryRead } from '../../types';
 
 export interface RatingSummary {
@@ -93,15 +93,15 @@ export const RatingSummaryCard: React.FC<{
   };
 
   // Format last updated date
-  const formattedLastUpdated = rating_summary.updated_at
-    ? new Date(rating_summary.updated_at).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
+  // const formattedLastUpdated = rating_summary.updated_at
+  //   ? new Date(rating_summary.updated_at).toLocaleString(undefined, {
+  //       year: 'numeric',
+  //       month: 'short',
+  //       day: 'numeric',
+  //       hour: '2-digit',
+  //       minute: '2-digit',
+  //     })
+  //   : null;
 
   return (
     <Card className="relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-xl">

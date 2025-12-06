@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion.tsx';
-import type { CompanyBalanceSheetRead } from '../../types/balance_sheet.ts';
+import type { CompanyBalanceSheetRead } from '../../types/index.ts';
 
 // Add a mapping for nice labels
 const metricLabels: Record<string, string> = {
